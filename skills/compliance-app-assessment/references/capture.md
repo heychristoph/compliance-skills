@@ -152,3 +152,4 @@ Read each outcome exactly as stated:
 | `no rows visible anonymously` | Nothing was visible at that moment. An empty table without row-level security looks the same, so this alone does not prove protection: combine it with the RLS status from the advisors or the policy query. |
 | `not exposed through the API` | The table is not in the API schema. |
 | `unknown` | The API answered without a count. Proves nothing; use other evidence. |
+| Buckets: `listable by anyone` / `no objects visible` / `denied` / `bucket not found` / `unknown` | Read the same way: only `listable` shows exposure and only `denied` shows protection; an empty listing or an error proves neither. |

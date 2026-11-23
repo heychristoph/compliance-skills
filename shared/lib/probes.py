@@ -40,16 +40,32 @@ def supabase_anon(url: str, key: str, tables: list[str], buckets: list[str]) -> 
         status, body = _request("POST", f"{base}/storage/v1/object/list/{quote(b)}", {**headers, "Content-Type": "application/json"},
                                 json.dumps({"prefix": "", "limit": 1, "offset": 0}).encode(), want_body=True)
         listable = status == 200 and isinstance(body, list) and len(body) > 0
-        out_buckets.append({"bucket": b, "status": status, "listable_by_anyone": listable})
+        out_buckets.append({"bucket": b, "status": status, "listable_by_anyone": listable, "result": _bucket_outcome(status, body)})
     return {"probe": "supabase-anon", "project": urlparse(base).netloc, "at": now_utc(), "api_schema_status": openapi_status,
             "tables": out_tables, "buckets": out_buckets,
             "summary": {"tables_readable_by_anyone": [t["table"] for t in out_tables if t["visible_rows"]],
                         "tables_no_rows_visible": [t["table"] for t in out_tables if t["visible_rows"] == 0],
                         "tables_denied": [t["table"] for t in out_tables if t["status"] in (401, 403)],
                         "tables_unknown": [t["table"] for t in out_tables if t["result"] == "unknown"],
-                        "buckets_listable_by_anyone": [b["bucket"] for b in out_buckets if b["listable_by_anyone"]]},
-            "note": ("'no rows visible' proves only that an anonymous caller saw no rows at the time: an empty table without "
-                     "row-level security looks the same. Only 'denied' shows the API refused anonymous access.")}
+                        "buckets_listable_by_anyone": [b["bucket"] for b in out_buckets if b["listable_by_anyone"]],
+                        "buckets_no_objects_visible": [b["bucket"] for b in out_buckets if b["result"].startswith("no objects visible")],
+                        "buckets_denied": [b["bucket"] for b in out_buckets if b["result"].startswith("denied")],
+                        "buckets_unknown": [b["bucket"] for b in out_buckets if b["result"] == "unknown"]},
+            "note": ("'no rows visible' and 'no objects visible' prove only that an anonymous caller saw nothing at the time: "
+                     "an empty table or bucket without protection looks the same. Only 'denied' shows the API refused anonymous "
+                     "access; 'unknown' proves nothing.")}
+
+
+def _bucket_outcome(status: int, body) -> str:
+    if status in (401, 403):
+        return "denied to anonymous callers"
+    if status == 200 and isinstance(body, list) and body:
+        return "listable by anyone (objects visible)"
+    if status == 200 and isinstance(body, list):
+        return "no objects visible anonymously (an empty bucket looks the same)"
+    if status in (400, 404) and isinstance(body, dict) and "not found" in json.dumps(body).lower():
+        return "bucket not found"
+    return "unknown"  # an error, an unparsable answer or an unexpected status proves nothing
 
 
 def _outcome(status: int, count: int | None) -> str:

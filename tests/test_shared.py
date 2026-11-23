@@ -198,6 +198,9 @@ class Privacy(unittest.TestCase):
         self.assertEqual(probes._outcome(403, None), "denied to anonymous callers")
         self.assertIn("empty table looks the same", probes._outcome(200, 0))
         self.assertIn("readable by anyone", probes._outcome(206, 42))
+        self.assertEqual(probes._bucket_outcome(503, None), "unknown")
+        self.assertIn("empty bucket looks the same", probes._bucket_outcome(200, []))
+        self.assertEqual(probes._bucket_outcome(403, None), "denied to anonymous callers")
 
     def test_sharing_a_first_name_with_the_representative_exempts_nobody(self):
         import json, tempfile

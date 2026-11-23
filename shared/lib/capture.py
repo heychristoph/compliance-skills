@@ -138,7 +138,40 @@ GIT_SAFE = ["-c", "diff.external=", "-c", "core.pager=cat", "-c", "core.fsmonito
             # Signature verification runs a configurable program: never show or verify signatures.
             "-c", "log.showSignature=false", "-c", f"gpg.program={GIT_NO_VERIFIER}", "-c", f"gpg.openpgp.program={GIT_NO_VERIFIER}",
             "-c", f"gpg.ssh.program={GIT_NO_VERIFIER}", "-c", f"gpg.x509.program={GIT_NO_VERIFIER}", "--no-pager"]
-GIT_NO_HELPERS = {"log": ["--no-ext-diff", "--no-textconv"], "show": ["--no-ext-diff", "--no-textconv"]}
+GIT_NO_HELPERS = {"log": ["--no-ext-diff", "--no-textconv", "--diff-merges=off"],
+                  "show": ["--no-ext-diff", "--no-textconv", "--diff-merges=off"]}
+# git options a capture may use, per subcommand. Anything else is refused (fail closed): many git options
+# run configurable programs (diff, textconv, merge drivers, signature verifiers, pagers, viewers).
+_HISTORY = {"--oneline", "--stat", "--shortstat", "--numstat", "--name-only", "--name-status", "--summary", "--no-merges",
+            "--first-parent", "--reverse", "--decorate", "--no-decorate", "--abbrev-commit", "--follow", "-s", "--no-patch"}
+_HISTORY_VALUED = ("--date=", "--since=", "--until=", "--after=", "--before=", "--max-count=", "--format=", "--pretty=",
+                   "--author=", "--grep=", "--abbrev=")
+GIT_OPTIONS = {
+    "log": (_HISTORY, _HISTORY_VALUED, {"-n"}),
+    "show": (_HISTORY, _HISTORY_VALUED, set()),
+    "shortlog": ({"-s", "-n", "-e", "--summary", "--numbered", "--email", "--no-merges"}, ("--since=", "--until=", "--format="), set()),
+    "ls-files": ({"-z", "--cached"}, (), set()),
+    "rev-parse": ({"--is-inside-work-tree", "--show-toplevel", "--abbrev-ref", "--short"}, ("--short=",), set()),
+    "describe": ({"--tags", "--always", "--long"}, ("--abbrev=",), set()),
+}
+
+
+def _check_git_options(sub: str, rest: list[str]) -> None:
+    flags, prefixes, valued = GIT_OPTIONS.get(sub, (set(), (), set()))
+    i = 0
+    while i < len(rest):
+        a = rest[i]
+        if a == "--":
+            return  # paths follow
+        if not a.startswith("-"):
+            i += 1
+            continue
+        if a in flags or a.startswith(prefixes) or re.fullmatch(r"-\d+", a):
+            i += 1
+        elif a in valued:
+            i += 2
+        else:
+            raise AuditError(f"git {sub} option {a} is not allowed in a capture")
 
 
 def harden(command: list[str]) -> list[str]:
@@ -218,6 +251,7 @@ def check_read_only(command: list[str]) -> None:
     unsafe = [a for a in command[1:] for o in UNSAFE_OPTIONS.get(program, ()) if a == o or a.startswith(o + "=")
               or (o.startswith("--") and a.startswith(o))]
     if program == "git":
+        _check_git_options(command[1], command[2:])
         # Signature options and %G format placeholders make git run the signature verifier.
         unsafe += [a for a in command[1:] if a.startswith(("--show-signature", "--verify")) or "%G" in a]
     if unsafe:
