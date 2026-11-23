@@ -246,3 +246,20 @@ class Formatting(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class EventWindow(unittest.TestCase):
+    def test_point_in_time_keeps_earlier_events(self):
+        import datetime as dt
+        from types import SimpleNamespace
+        from lib.sampling import event_window
+
+        day = dt.date(2026, 6, 30)
+        hired, after = dt.date(2026, 2, 1), dt.date(2026, 7, 1)
+        for eng in (SimpleNamespace(period=(day, day), point_in_time=True), SimpleNamespace(period=(day, day), report_type=1)):
+            keep = event_window(eng)
+            self.assertTrue(keep(hired))
+            self.assertFalse(keep(after))
+        period = event_window(SimpleNamespace(period=(dt.date(2026, 3, 1), day), report_type=2))
+        self.assertFalse(period(hired))
+        self.assertTrue(period(dt.date(2026, 4, 1)))

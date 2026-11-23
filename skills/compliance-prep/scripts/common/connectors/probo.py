@@ -38,6 +38,7 @@ import urllib.parse
 import urllib.request
 
 from ..bundle import BundleWriter, slug
+from ..sampling import event_window
 from ..io import AuditError, parse_date
 
 PAGE_SIZE = 100  # Largest page the API accepts; keeps request count low for big orgs.
@@ -185,6 +186,7 @@ def pull(writer: BundleWriter, options: dict, engagement) -> None:
     writer.source = f"{base} organization {org}"
     api = ProboMCP(base, token)
     start, end = engagement.period
+    in_scope = event_window(engagement)
     failed_tools = set()
 
     def fetch(tool: str, key: str, **arguments) -> tuple[list, str | None]:
@@ -290,9 +292,9 @@ def pull(writer: BundleWriter, options: dict, engagement) -> None:
         contract = p.get("contract") or {}
         s, e = parse_date(contract.get("start")), parse_date(contract.get("end"))
         base_row = {"name": p.get("full_name", ""), "email": p.get("email_address", ""), "position": p.get("position") or "", "state": p.get("state", "")}
-        if s and start <= s <= end:
+        if s and in_scope(s):
             hires.append({"id": f"H-{slug(p['id'])[-8:]}", "date": s.isoformat(), **base_row})
-        if e and start <= e <= end:
+        if e and in_scope(e):
             terms.append({"id": f"T-{slug(p['id'])[-8:]}", "date": e.isoformat(), **base_row})
     pop_hires = writer.add_population("hires", hires, title="New hires in period (Probo people, contract start)", source_ref="probo:listUsers")
     pop_terms = writer.add_population("terminations", terms, title="Terminations in period (Probo people, contract end)", source_ref="probo:listUsers")

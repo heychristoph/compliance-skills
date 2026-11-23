@@ -89,6 +89,19 @@ class RecordsConnector(unittest.TestCase):
         self.assertIn("H-joiner", (eng / "bundle" / "populations" / "hires.csv").read_text())
         self.assertIn("T-leaver", (eng / "bundle" / "populations" / "terminations.csv").read_text())
 
+    def test_failed_replacement_keeps_the_previous_bundle(self):
+        eng = self.tmp / "replace"
+        run(sys.executable, SOC2, "init", eng, "--org", "Example Inc.", "--system", "Example", "--type", "1",
+            "--as-of", "2026-06-30", "--connector", "records", "--option", f"path={self.records}")
+        self.assertEqual(run(sys.executable, SOC2, "ingest", eng).returncode, 0)
+        before = (eng / "bundle" / "manifest.json").read_text()
+        shutil.rmtree(self.records / "frameworks")  # the source now fails
+        r = run(sys.executable, SOC2, "ingest", eng, "--replace")
+        self.assertNotEqual(r.returncode, 0)
+        self.assertEqual((eng / "bundle" / "manifest.json").read_text(), before, "the previous bundle stays in place")
+        self.assertFalse((eng / "bundle.staging").exists())
+        self.assertFalse(list(eng.glob("bundle.replaced-*")), "nothing is archived when the replacement fails")
+
     def test_changed_control_invalidates_its_tested_workpaper(self):
         eng = self.tmp / "changed"
         run(sys.executable, SOC2, "init", eng, "--org", "Example Inc.", "--system", "Example", "--type", "1",

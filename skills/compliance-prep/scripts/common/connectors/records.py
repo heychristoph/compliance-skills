@@ -38,6 +38,7 @@ from pathlib import Path
 import yaml
 
 from ..bundle import BundleWriter, slug
+from ..sampling import event_window
 from ..capture import git_read
 from ..io import AuditError, parse_date
 
@@ -62,10 +63,7 @@ def pull(writer: BundleWriter, options: dict, engagement) -> None:
     fw = writer.framework
     hint = fw.hint
     start, end = engagement.period
-    # Point in time (SOC 2 Type 1, ISO Stage 1, assessments): every event up to the as-of date counts.
-    as_of = getattr(engagement, "point_in_time", None)
-    as_of = bool(as_of) if as_of is not None else getattr(engagement, "report_type", None) == 1
-    in_scope = (lambda d: d <= end) if as_of else (lambda d: start <= d <= end)
+    in_scope = event_window(engagement)
     git = _Git(root)
 
     def read(name: str, default=None):

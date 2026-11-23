@@ -57,18 +57,29 @@ def run(eng, replace: bool = False) -> dict:
                              "(the old bundle is kept as bundle.replaced-<timestamp>).")
         if eng.manifest_path.exists():
             previous = json.loads(eng.manifest_path.read_text(encoding="utf-8"))
-        stamp = dt.datetime.now().strftime("%Y%m%d-%H%M%S")
-        shutil.move(str(eng.bundle), str(eng.root / f"bundle.replaced-{stamp}"))
-    writer = BundleWriter(eng.bundle, "+".join(s["connector"] for s in srcs), framework=eng.framework)
+    # Build in a staging folder and swap it in only when every source succeeded, so a failed pull
+    # never leaves a half bundle or loses the previous manifest (and the artifact IDs it fixes).
+    staging = eng.root / "bundle.staging"
+    shutil.rmtree(staging, ignore_errors=True)
+    writer = BundleWriter(staging, "+".join(s["connector"] for s in srcs), framework=eng.framework)
     if previous:
         writer.keep_ids_from(previous)
-    labels = []
-    for src in srcs:
-        writer.source = ""
-        connectors.load(src["connector"]).pull(writer, src.get("options") or {}, eng)
-        labels.append(f"{src['connector']}: {writer.source}" if len(srcs) > 1 and writer.source else writer.source)
-    writer.source = "; ".join(x for x in labels if x)
-    if not any(a["id"] == "SY-controls" for a in writer.artifacts):
-        writer.warn("no source provided a control matrix; every requirement in scope is assessed directly")
-        writer.set_controls([])
-    return writer.finish()
+    try:
+        labels = []
+        for src in srcs:
+            writer.source = ""
+            connectors.load(src["connector"]).pull(writer, src.get("options") or {}, eng)
+            labels.append(f"{src['connector']}: {writer.source}" if len(srcs) > 1 and writer.source else writer.source)
+        writer.source = "; ".join(x for x in labels if x)
+        if not any(a["id"] == "SY-controls" for a in writer.artifacts):
+            writer.warn("no source provided a control matrix; every requirement in scope is assessed directly")
+            writer.set_controls([])
+        manifest = writer.finish()
+    except BaseException:
+        shutil.rmtree(staging, ignore_errors=True)
+        raise
+    if eng.bundle.exists():
+        stamp = dt.datetime.now().strftime("%Y%m%d-%H%M%S")
+        shutil.move(str(eng.bundle), str(eng.root / f"bundle.replaced-{stamp}"))
+    staging.rename(eng.bundle)
+    return manifest

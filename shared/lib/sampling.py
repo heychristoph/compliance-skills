@@ -57,6 +57,15 @@ def plan(*, seed: str, freq: str, nature: str, start: dt.date, end: dt.date, poi
     return {"frequency": freq, "nature": nature, "population": pop, "sample_size": len(chosen), "sample": chosen, "seed": seed}
 
 
+def event_window(engagement):
+    """Which event dates (hires, terminations, changes) a connector keeps: every event up to the as-of date for a
+    point-in-time engagement (SOC 2 Type 1, ISO Stage 1, assessments), the period's events otherwise."""
+    start, end = engagement.period
+    as_of = getattr(engagement, "point_in_time", None)
+    as_of = bool(as_of) if as_of is not None else getattr(engagement, "report_type", None) == 1
+    return (lambda d: d <= end) if as_of else (lambda d: start <= d <= end)
+
+
 def in_period(value: str | None, start: dt.date, end: dt.date, point_in_time: bool) -> bool:
     """Whether a population item's date counts: on or before the as-of date, or inside the period."""
     d = parse_date(value)
