@@ -105,6 +105,12 @@ def forbidden(bundle: Path, description_file: str, allowed: set[str]) -> set[str
         if path.parent.name == "populations" and path.stem in ("hires", "terminations"):
             for row in csv.DictReader(text.splitlines()):
                 _add_named(row.get("name") or "", found)
+        elif path.suffix.lower() == ".csv":
+            # Any CSV export (an HR list captured as an export): the same person fields as JSON and YAML.
+            try:
+                _walk(list(csv.DictReader(text.splitlines())), found)
+            except csv.Error:
+                pass
     allowed = {n for n in allowed if n}
     exact = {a.casefold() for a in allowed}
     squashed = {re.sub(r"[^a-z]", "", a.casefold()) for a in allowed}  # "maralindqvist" for an email local part

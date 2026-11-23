@@ -65,7 +65,9 @@ class Capture(unittest.TestCase):
                     ["gh", "api", "repos/a/b/issues", "-f", "title=x"], ["git", "diff", "--ext-diff"], ["git", "log", "--output=x"],
                     ["git", "-c", "diff.external=x", "log"], ["supabase", "db", "dump", "-f", "out.sql"], ["npm", "audit", "fix"],
                     ["gh", "api", "repos/a/b/subscription", "-XDELETE"], ["git", "blame", "data.txt"], ["git", "diff"], ["git", "status"],
-                    ["git", "--help", "log"], ["git", "-p", "log"], ["yarn", "audit"], ["pnpm", "audit"], ["gh", "repo", "view", "--web"]):
+                    ["git", "--help", "log"], ["git", "-p", "log"], ["yarn", "audit"], ["pnpm", "audit"], ["gh", "repo", "view", "--web"],
+                    ["gh", "api", "repos/a/b", "-iXDELETE"], ["gh", "api", "repos/a/b", "-if", "title=x"], ["gh", "api", "repos/a/b", "-H", "X-HTTP-Method-Override: DELETE"],
+                    ["./git", "log"], ["/tmp/git", "log"]):
             r = self.capture("--via", "cli", "--title", "x", "--", *cmd)
             self.assertNotEqual(r.returncode, 0, cmd)
         self.assertFalse((self.eng / "intake").exists() and list((self.eng / "intake").glob("*.meta.json")))

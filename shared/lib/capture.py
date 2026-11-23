@@ -145,13 +145,60 @@ def harden(command: list[str]) -> list[str]:
     return [command[0], *GIT_SAFE, sub, *GIT_NO_HELPERS.get(sub, []), *command[2:]]
 
 
+# gh api: only these options, so no combination can change the method or add a body (-X, -f, -F,
+# --input, headers such as X-HTTP-Method-Override, or short-option clusters like -iXDELETE).
+GH_API_FLAGS = {"--paginate", "--slurp", "-i", "--include", "--silent", "--verbose"}
+GH_API_VALUED = {"--jq", "-q"}
+
+
+def _check_gh_api(rest: list[str]) -> None:
+    i = 0
+    while i < len(rest):
+        a = rest[i]
+        if not a.startswith("-"):
+            i += 1
+            continue
+        if a in GH_API_FLAGS:
+            i += 1
+        elif a in GH_API_VALUED:
+            i += 2
+        elif a.startswith("--jq="):
+            i += 1
+        else:
+            raise AuditError(f"gh api option {a} is not allowed in a capture; allowed: {', '.join(sorted(GH_API_FLAGS | GH_API_VALUED))}")
+
+
+def resolve_program(name: str, cwd: Path | None) -> str:
+    """The trusted executable for a bare program name: found only in absolute PATH entries outside the
+    assessed repository, never a path the caller supplies (`./git`) and never a relative PATH entry."""
+    import shutil
+
+    if os.sep in name or (os.altsep and os.altsep in name) or name in (".", ".."):
+        raise AuditError(f"give the program by name ({Path(name).name}), not by path; capture runs the installed one")
+    blocked = [Path(cwd).resolve()] if cwd else []  # the assessed repository; relative PATH entries are skipped below
+    safe = []
+    for entry in os.environ.get("PATH", "").split(os.pathsep):
+        if not entry or not os.path.isabs(entry):
+            continue
+        resolved = Path(entry).resolve()
+        if any(resolved == b or b in resolved.parents for b in blocked):
+            continue
+        safe.append(str(resolved))
+    found = shutil.which(name, path=os.pathsep.join(safe))
+    if not found:
+        raise AuditError(f"{name} is not installed (or only found inside the assessed repository)")
+    return found
+
+
 def check_read_only(command: list[str]) -> None:
     if not command:
         raise AuditError("no command given")
     text = " ".join(command)
     if SHELL_META.search(text):
         raise AuditError("capture runs one command without a shell; remove pipes, redirects and substitutions")
-    program = Path(command[0]).name
+    if os.sep in command[0] or (os.altsep and os.altsep in command[0]):
+        raise AuditError(f"give the program by name ({Path(command[0]).name}), not by path; capture runs the installed one")
+    program = command[0]
     forms = READ_ONLY.get(program)
     args = [a for a in command[1:] if not a.startswith("-")]
     # The allowed form must be the literal start of the command: no options before the subcommand,
@@ -163,15 +210,7 @@ def check_read_only(command: list[str]) -> None:
     if HELP & set(command[1:]):
         raise AuditError("help and browser switches are not allowed in a capture")
     if program == "gh" and args[:1] == ["api"]:
-        rest = command[2:]
-        methods = [rest[i + 1] for i, a in enumerate(rest[:-1]) if a in ("-X", "--method")] + \
-                  [a.split("=", 1)[1] for a in rest if a.startswith(("-X=", "--method="))] + \
-                  [a[2:] for a in rest if a.startswith("-X") and len(a) > 2 and not a.startswith("-X=")]
-        if any(a in ("-X", "--method") for a in rest[-1:]):
-            raise AuditError("gh api: -X/--method without a value")
-        body = [a for a in rest if a.startswith(("-f", "-F", "--field", "--raw-field", "--input"))]
-        if body or any(m.upper() != "GET" for m in methods):
-            raise AuditError("gh api may only send GET requests without a body in a capture")
+        _check_gh_api(command[2:])
     unsafe = [a for a in command[1:] for o in UNSAFE_OPTIONS.get(program, ()) if a == o or a.startswith(o + "=")
               or (o.startswith("--") and a.startswith(o))]
     if unsafe:
@@ -186,7 +225,9 @@ def _run(command: list[str], cwd: Path | None = None) -> tuple[bytes, str, int]:
     check_read_only(command)
     try:
         env = {k: v for k, v in os.environ.items() if k not in ("GIT_EXTERNAL_DIFF", "GIT_PAGER", "PAGER", "GIT_CONFIG_PARAMETERS")}
-        out = subprocess.run(harden(command), capture_output=True, timeout=CLI_TIMEOUT, cwd=str(cwd) if cwd else None,
+        run_cmd = harden(command)
+        run_cmd[0] = resolve_program(command[0], cwd)
+        out = subprocess.run(run_cmd, capture_output=True, timeout=CLI_TIMEOUT, cwd=str(cwd) if cwd else None,
                              env={**env, "GIT_PAGER": "cat", "PAGER": "cat", "GIT_TERMINAL_PROMPT": "0"})
     except FileNotFoundError as e:
         raise AuditError(f"{command[0]} is not installed or not on PATH") from e
