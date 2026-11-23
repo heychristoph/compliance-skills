@@ -168,6 +168,10 @@ def _check_workpaper(eng: Engagement, cid: str, wp: dict, plan_row: dict | None)
                 errors.append(f"{where}: item {item['id']} has no result for attributes {missing_attrs}")
             if not item["evidence"] and any(v == "pass" for v in item["results"].values()):
                 errors.append(f"{where}: item {item['id']} passes an attribute but cites no evidence; a pass must be supported")
+            elif any(v == "pass" for v in item["results"].values()) and all(
+                    eng.artifacts.get(ev, {}).get("obtained") == "inquiry" for ev in item["evidence"]):
+                errors.append(f"{where}: item {item['id']} passes on the organization's answers alone; cite the record that shows "
+                              "the item complied, or do not pass it")
             errors += cite(item["evidence"], f"item {item['id']}")
             if any(v == "n/a" for v in item["results"].values()) and not item.get("note"):
                 errors.append(f"{where}: item {item['id']} marks an attribute n/a without a note explaining why")
@@ -186,6 +190,11 @@ def _check_workpaper(eng: Engagement, cid: str, wp: dict, plan_row: dict | None)
                 errors.append(f"{where}: population_check is required; test completeness of {pop['source']} against an independent record")
             else:
                 errors += cite(pc["evidence"], "population_check")
+                if not (pc.get("rationale") or "").strip():
+                    errors.append(f"{where}: population_check.rationale is empty; say what the population was compared with")
+                if pc["complete"] is not False and not [e for e in pc["evidence"] if e != wp["plan"]["population"]["source"]]:
+                    errors.append(f"{where}: population_check cites no independent record; a complete population must be "
+                                  "compared with evidence other than the population itself")
                 if pc["complete"] is False and "population" not in deviated:
                     errors.append(f"{where}: population_check.complete is false, so add a deviation with item 'population'")
 

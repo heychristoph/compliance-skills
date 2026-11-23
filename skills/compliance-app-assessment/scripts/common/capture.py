@@ -304,6 +304,15 @@ def _payload(payload: bytes | None, file: Path | None) -> bytes:
 # --- CLI -----------------------------------------------------------------------------
 
 
+def split_command(argv: list[str]) -> tuple[list[str], list[str]]:
+    """`capture <dir> --via cli ... -- <command>`: argparse (before Python 3.13) cannot resume a trailing
+    positional after options, so engines split the command off first and pass it back in."""
+    if "capture" in argv and "--" in argv and argv.index("capture") < argv.index("--"):
+        i = argv.index("--")
+        return argv[:i], argv[i + 1:]
+    return argv, []
+
+
 def add_parser(sub) -> None:
     """Register `capture` on an engine's command line."""
     s = sub.add_parser("capture", help="record evidence gathered via MCP, a read-only CLI command, an export or an answer")

@@ -116,7 +116,7 @@ def main(root: str, truth_path: str) -> None:
             missing = next((d for d in mine if d["kind"] == "population"), None)
             independent = [a["id"] for a in evidence if a.get("source_ref", "").endswith("-export.csv")]
             wp["population_check"] = {"complete": missing is None, "rationale": "Compared the population to an independent record.",
-                                      "evidence": independent or [pop["source"]]}
+                                      "evidence": independent or [a["id"] for a in evidence if a["id"] != pop["source"]][:1] or [pop["source"]]}
             if missing:
                 wp["deviations"].append({"item": "population", "description": note(missing) + ".", "evidence": independent})
         wp["conclusion"] = "deviations" if wp["deviations"] else "conforming"

@@ -263,3 +263,12 @@ class EventWindow(unittest.TestCase):
         period = event_window(SimpleNamespace(period=(dt.date(2026, 3, 1), day), report_type=2))
         self.assertFalse(period(hired))
         self.assertTrue(period(dt.date(2026, 4, 1)))
+
+
+class CaptureCommandTail(unittest.TestCase):
+    def test_command_after_double_dash_is_split_off(self):
+        from lib.capture import split_command
+
+        argv = ["capture", "/tmp/e", "--via", "cli", "--title", "t", "--", "git", "log", "--oneline"]
+        self.assertEqual(split_command(argv), (argv[:6], ["git", "log", "--oneline"]))
+        self.assertEqual(split_command(["validate", "/tmp/e", "--", "x"]), (["validate", "/tmp/e", "--", "x"], []))

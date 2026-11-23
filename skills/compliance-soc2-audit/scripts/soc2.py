@@ -327,7 +327,10 @@ def main(argv=None) -> int:
 
     capture.add_parser(sub)
 
+    argv, tail = capture.split_command(list(sys.argv[1:] if argv is None else argv))
     a = p.parse_args(argv)
+    if tail:
+        a.command = tail
     try:
         return a.fn(a)
     except AuditError as e:
