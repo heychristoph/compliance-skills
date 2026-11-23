@@ -134,6 +134,20 @@ def leaks(text: str, names: set[str]) -> list[str]:
     return found
 
 
+def scan(obj, names: set[str], where: str = "report") -> list[str]:
+    """Every leak in a nested structure of strings (the assembled report data), with its location."""
+    hits = []
+    if isinstance(obj, str):
+        hits += [f"{where}: {h}" for h in leaks(obj, names)]
+    elif isinstance(obj, dict):
+        for k, v in obj.items():
+            hits += scan(v, names, f"{where}.{k}")
+    elif isinstance(obj, list):
+        for i, v in enumerate(obj):
+            hits += scan(v, names, f"{where}[{i}]")
+    return hits
+
+
 def flatten(value) -> str:
     if isinstance(value, str):
         return value
@@ -154,6 +168,10 @@ def _harvest_prose(text: str, found: set[str]) -> None:
 
 def _walk(obj, found: set[str]) -> None:
     if isinstance(obj, dict):
+        # A people register (records connector, HR export): a `name` next to an email address is a person,
+        # whether or not they joined or left in the period.
+        if isinstance(obj.get("name"), str) and any(isinstance(obj.get(k), str) and "@" in obj[k] for k in ("email", "email_address", "mail")):
+            _add_person(obj["name"], found)
         for key, value in obj.items():
             if key in PERSON_KEYS and isinstance(value, str):
                 _add_person(value, found)

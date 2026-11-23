@@ -104,12 +104,45 @@ def entries(root: Path) -> list[tuple[Path, dict]]:
     return out
 
 
+# Read-only command forms capture may run: program -> the subcommand prefixes allowed. Anything
+# else is refused (fail closed): interpreters, scripts and unknown tools can write whatever their
+# arguments look like. To add a tool, add its read-only forms here, never a whole program.
+READ_ONLY = {
+    "git": [["log"], ["show"], ["ls-files"], ["status"], ["diff"], ["rev-parse"], ["describe"], ["blame"], ["shortlog"]],
+    "gh": [["api"], ["repo", "view"], ["pr", "list"], ["pr", "view"], ["run", "list"], ["run", "view"], ["secret", "list"],
+           ["ruleset", "list"], ["ruleset", "view"], ["api", "--paginate"]],
+    "supabase": [["projects", "list"], ["db", "dump"], ["inspect"], ["functions", "list"], ["secrets", "list"], ["branches", "list"]],
+    "npm": [["audit"], ["ls"], ["outdated"]],
+    "pnpm": [["audit"], ["ls"], ["outdated"]],
+    "yarn": [["audit"], ["list"], ["outdated"]],
+    "vercel": [["env", "ls"], ["project", "ls"], ["ls"], ["inspect"]],
+    "netlify": [["status"], ["sites:list"]],
+    "firebase": [["projects:list"], ["apps:list"]],
+}
+
+
 def check_read_only(command: list[str]) -> None:
+    if not command:
+        raise AuditError("no command given")
     text = " ".join(command)
     if SHELL_META.search(text):
         raise AuditError("capture runs one command without a shell; remove pipes, redirects and substitutions")
-    hit = MUTATING.search(" ".join([Path(command[0]).name, *command[1:]]))
-    if hit:
+    program = Path(command[0]).name
+    forms = READ_ONLY.get(program)
+    args = [a for a in command[1:] if not a.startswith("-")]
+    if not forms or not any(args[:len(f)] == f for f in forms):
+        allowed = "; ".join(f"{p} {' '.join(f)}" for p, fs in READ_ONLY.items() for f in fs)
+        raise AuditError(f"`{' '.join(command[:3])}` is not a known read-only command; capture only runs: {allowed}. "
+                         "For anything else, run it yourself and capture the output as an export (`--via export --file`).")
+    if program == "gh" and args[:1] == ["api"]:
+        rest = command[2:]
+        methods = [rest[i + 1] for i, a in enumerate(rest[:-1]) if a in ("-X", "--method")] + \
+                  [a.split("=", 1)[1] for a in rest if a.startswith(("-X=", "--method="))]
+        body = [a for a in rest if a.startswith(("-f", "-F", "--field", "--raw-field", "--input"))]
+        if body or any(m.upper() != "GET" for m in methods):
+            raise AuditError("gh api may only send GET requests without a body in a capture")
+    hit = MUTATING.search(" ".join(command[1:]))
+    if hit and not (program == "gh" and args[:1] == ["api"]):
         raise AuditError(f"'{hit.group(0)}' could change the system; capture only runs read-only commands. "
                          "If this command only reads, capture its output as an export instead and say so in the title.")
 

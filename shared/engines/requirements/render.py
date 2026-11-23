@@ -47,6 +47,7 @@ def render(eng: Engagement) -> dict:
     final = signed_off(eng)
     text = load_text(eng.language)
     data = _report_data(eng, text, final)
+    privacy.guard(eng, data)
     eng.report.mkdir(parents=True, exist_ok=True)
     stem = f"{PROFILE['report_stem']}-{eng.audit_type}-{re.sub(r'[^a-z0-9]+', '-', eng.config['organization'].lower()).strip('-')}"
     pdf = eng.report / f"{stem}{'' if final else '-DRAFT'}.pdf"

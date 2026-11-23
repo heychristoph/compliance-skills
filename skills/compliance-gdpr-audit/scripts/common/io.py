@@ -99,6 +99,21 @@ def schema_errors(data, schema_name: str, schemas_dir: Path = SCHEMAS) -> list[s
     return errors
 
 
+def bundle_integrity(bundle: Path, manifest: dict) -> list[str]:
+    """Every registered evidence file is present and unchanged since ingest.
+
+    Run at every gate a report passes (final validation, sign-off, render), not only at `check`:
+    a conclusion must never outlive the evidence it cites."""
+    errors = []
+    for a in manifest.get("artifacts") or []:
+        path = bundle / a["path"]
+        if not path.exists():
+            errors.append(f"{a['id']}: evidence file {a['path']} is missing from the bundle; restore it or re-ingest and re-test")
+        elif sha256_file(path) != a["sha256"]:
+            errors.append(f"{a['id']}: evidence file {a['path']} changed after ingest (hash mismatch); re-ingest and re-test the units citing it")
+    return errors
+
+
 def tool_version() -> str:
     """Version of the shared code and catalogs (shared/lib/VERSION), stamped on engagements."""
     path = LIB / "VERSION"

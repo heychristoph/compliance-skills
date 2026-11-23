@@ -42,6 +42,9 @@ def validate(eng: Engagement, final: bool = False) -> tuple[list[str], list[str]
         warnings += w
 
     if final:
+        from common.io import bundle_integrity
+
+        errors += bundle_integrity(eng.bundle, eng.manifest)
         e, w = _check_findings(eng, workpapers)
         errors += e
         warnings += w
@@ -256,6 +259,10 @@ def _check_findings(eng: Engagement, workpapers: dict) -> tuple[list[str], list[
     if unverified and not limits:
         errors.append(f"findings.json: {len(unverified)} units are supported only by answers ({', '.join(unverified[:6])}{' ...' if len(unverified) > 6 else ''}); "
                       "say so in scope_limitations, so the conclusion reflects what was not verified")
+    unaudited = sorted(cid for cid, w in workpapers.items() if w.get("conclusion") == "not-audited")
+    if unaudited and not limits:
+        errors.append(f"findings.json: {len(unaudited)} units were not audited ({', '.join(unaudited[:6])}{' ...' if len(unaudited) > 6 else ''}); "
+                      "list why in scope_limitations, so the conclusion cannot read as if everything in scope was examined")
     rec = doc["recommendation"]
     if rec == "recommended" and (majors or minors or limits):
         errors.append("findings.json: 'recommended' needs no nonconformities and no scope limitations")

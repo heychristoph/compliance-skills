@@ -35,6 +35,9 @@ def validate(eng: Engagement, final: bool = False) -> tuple[list[str], list[str]
         warnings += w
 
     if final:
+        from common.io import bundle_integrity
+
+        errors += bundle_integrity(eng.bundle, eng.manifest)
         errors += _check_opinion(eng, workpapers)
         errors += _check_qa(eng, workpapers)
         system = eng.system

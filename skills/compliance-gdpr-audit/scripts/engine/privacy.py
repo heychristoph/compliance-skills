@@ -12,7 +12,7 @@ says which strings reach this engine's report and which names it may print.
 from __future__ import annotations
 
 from common import privacy as shared
-from core import DESCRIPTION, Engagement, load_json
+from core import DESCRIPTION, Engagement, load_json, load_yaml
 
 
 def activity(eng: Engagement, wp: dict) -> str:
@@ -28,6 +28,13 @@ def report_description(eng: Engagement) -> dict | None:
 def fragments(eng: Engagement) -> list[tuple[str, str]]:
     """Every string that can reach the PDF, with a label for the error."""
     out = []
+    cfg = eng.config
+    mgmt = cfg.get("management") or {}
+    out += [("engagement organization", cfg.get("organization") or ""), ("engagement scope", cfg.get("scope") or ""),
+            ("management title", mgmt.get("title") or ""), ("sign-off model", (cfg.get("signoff") or {}).get("model") or "")]
+    stack = eng.review / "stack.yaml"
+    if stack.exists():
+        out.append(("sub-processors (review/stack.yaml)", shared.flatten(load_yaml(stack).get("subprocessors") or [])))
     desc = report_description(eng)
     if desc:
         out.append((DESCRIPTION["label"], shared.flatten(desc)))
@@ -74,6 +81,16 @@ def check(eng: Engagement) -> tuple[list[str], list[str]]:
         for hit in shared.leaks(text, forbidden):
             errors.append(f"{label}: {hit} The audit report does not identify that person. Keep it in the workpaper observations.")
     return errors, warnings
+
+
+def guard(eng: Engagement, data: dict) -> None:
+    """Last gate before the PDF: no string of the assembled report may identify a person or hold contact details."""
+    from core import AuditError
+
+    hits = shared.scan(data, _forbidden(eng))
+    if hits:
+        raise AuditError("The report would identify someone or show contact details:\n  " + "\n  ".join(hits[:20])
+                         + "\nFix the source (workpaper, findings, description or engagement.yaml), then render again.")
 
 
 def redact(text: str, eng: Engagement) -> str:

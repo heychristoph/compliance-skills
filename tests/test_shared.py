@@ -155,6 +155,21 @@ class Privacy(unittest.TestCase):
         privacy._harvest_prose("Measures follow the Implementing Regulation (EU) 2024/2690. Approved by Dana Leaver (CEO).", found)
         self.assertEqual(found, {"Dana Leaver"})
 
+    def test_people_registers_are_people(self):
+        from lib import privacy
+
+        found = set()
+        privacy._walk([{"id": "dana", "name": "Dana Leaver", "email": "dana@example.invalid", "state": "ACTIVE"},
+                       {"id": "cloud", "name": "Example Cloud", "category": "CLOUD_PROVIDER"}], found)
+        self.assertEqual(found, {"Dana Leaver"})
+
+    def test_scan_finds_contact_details_anywhere(self):
+        from lib import privacy
+
+        hits = privacy.scan({"cover": {"scope": "Ask ops@example.com"}, "rows": [{"text": "fine"}]}, set())
+        self.assertEqual(len(hits), 1)
+        self.assertIn("cover.scope", hits[0])
+
     def test_git_authors_are_people(self):
         from lib import privacy
 

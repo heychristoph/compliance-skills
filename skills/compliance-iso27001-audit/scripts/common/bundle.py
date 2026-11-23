@@ -51,6 +51,9 @@ class BundleWriter:
             if a["id"].startswith("EV-"):
                 self._previous[(a.get("source_ref") or "", a["title"], a["sha256"])] = a["id"]
                 self._reserved.add(a["id"])
+        # Every ID any earlier ingest used, so an ID retired two ingests ago is not handed out again
+        # and an old citation cannot silently point at different evidence.
+        self._reserved |= set(manifest.get("id_history") or [])
 
     # --- helpers for connectors ---
 
@@ -212,6 +215,7 @@ class BundleWriter:
             "collected_at": now_utc(),
             "warnings": self.warnings,
             "artifacts": self.artifacts,
+            "id_history": sorted(self._reserved | {x for x in self._used if x.startswith("EV-")}),
         }
         errors = schema_errors(manifest, "manifest")
         if errors:
