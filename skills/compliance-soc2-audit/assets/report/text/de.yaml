@@ -1,0 +1,297 @@
+# Berichtstext für ein KI-Audit (deutsch).
+#
+# Der Aufbau folgt der Struktur eines Berichts über eine SOC 2 Examination. Das
+# Dokument ist ein KI-Audit. Es ist keine offizielle Prüfung nach SOC 2 und kein
+# Text des AICPA.
+#
+# Gleiche Schlüssel wie en.yaml. Platzhalter siehe en.yaml.
+#
+# Fragmente (labels.fragments, complementary, complementary_mgmt, oe_procedure)
+# werden in andere Sätze eingefügt und sind bei Typ 1 leer. Die Trägersätze sind
+# so gebaut, dass sie mit und ohne Fragment grammatisch korrekt sind; die
+# Fragmente stehen deshalb vor dem Verb am Satzende („angemessen
+# ausgestaltet{and_operating} sind“) bzw. sind zeitneutrale Nominalphrasen
+# („unter der Voraussetzung der Wirksamkeit …“).
+
+standards:
+  description_criteria: "AICPA DC section 200, „2018 Description Criteria for a Description of a Service Organization's System in a SOC 2 Report (With Revised Implementation Guidance, 2022)“"
+  trust_services_criteria: "AICPA TSP section 100, „2017 Trust Services Criteria for Security, Availability, Processing Integrity, Confidentiality, and Privacy (With Revised Points of Focus, 2022)“"
+
+cover:
+  kicker: "KI-Audit"
+  disclaimer: "Keine offizielle Prüfung nach SOC 2. Keine Prüfung nach den Attestation Standards des AICPA. Kein Bericht einer CPA-Firma oder einer Wirtschaftsprüfungsgesellschaft."
+  title: "KI-Audit des Systems „{system}“ von {org} sowie der Angemessenheit{and_oe} der Kontrollen mit Relevanz für {categories_title}"
+  restricted: "Dieses KI-Audit ist kein offizieller Bericht nach SOC 2 und darf nicht als solcher dargestellt werden."
+
+section1:
+  title: "Bericht über das KI-Audit"
+  notice: >-
+    Dies ist ein KI-Audit (AI Audit), das von {model} erstellt und unterzeichnet wurde. Es verwendet die Trust
+    Services Criteria als Rahmenwerk für die Prüfungshandlungen. Es ist keine offizielle Prüfung nach SOC 2, es
+    wurde nicht nach den vom American Institute of Certified Public Accountants festgelegten Attestation Standards
+    durchgeführt, und es ist kein Bericht einer CPA-Firma oder einer Wirtschaftsprüfungsgesellschaft.
+  notice_unsigned: >-
+    Dies ist ein KI-Audit (AI Audit). Es wurde noch nicht unterzeichnet. Es verwendet die Trust Services Criteria
+    als Rahmenwerk für die Prüfungshandlungen. Es ist keine offizielle Prüfung nach SOC 2, es wurde nicht nach den
+    vom American Institute of Certified Public Accountants festgelegten Attestation Standards durchgeführt, und es
+    ist kein Bericht einer CPA-Firma oder einer Wirtschaftsprüfungsgesellschaft.
+  addressee: "An das Management von {org}"
+  scope:
+    type2: >-
+      Wir haben die beigefügte Beschreibung des Systems „{system}“ der Dienstleistungsorganisation {org} {period}
+      (im Folgenden „Beschreibung“) geprüft, die in Übereinstimmung mit {description_criteria} (im Folgenden
+      „Beschreibungskriterien“) erstellt wurde. Gegenstand unserer Prüfung waren außerdem die Angemessenheit und
+      die Wirksamkeit der in der Beschreibung dargestellten Kontrollen {period}, um hinreichende Sicherheit darüber
+      zu bieten, dass die Leistungsverpflichtungen und Systemanforderungen von {org} auf Grundlage der für
+      {categories} relevanten Trust Services Criteria (im Folgenden „anwendbare Trust Services Criteria“) gemäß
+      {trust_services_criteria} erfüllt wurden.
+    type1: >-
+      Wir haben die beigefügte Beschreibung des Systems „{system}“ der Dienstleistungsorganisation {org} {period}
+      (im Folgenden „Beschreibung“) geprüft, die in Übereinstimmung mit {description_criteria} (im Folgenden
+      „Beschreibungskriterien“) erstellt wurde. Gegenstand unserer Prüfung war außerdem die Angemessenheit der in
+      der Beschreibung dargestellten Kontrollen {period}, um hinreichende Sicherheit darüber zu bieten, dass die
+      Leistungsverpflichtungen und Systemanforderungen von {org} auf Grundlage der für {categories} relevanten
+      Trust Services Criteria (im Folgenden „anwendbare Trust Services Criteria“) gemäß {trust_services_criteria}
+      erfüllt würden.
+  type1_no_oe: >-
+    Wir haben keine Prüfungshandlungen zur Wirksamkeit der in der Beschreibung dargestellten Kontrollen
+    durchgeführt und geben daher hierzu kein Prüfungsurteil ab.
+  subservice: >-
+    Die Dienstleistungsorganisation {org} setzt {subservice} ein. Die Beschreibung umfasst nur die Kontrollen von
+    {org} und schließt die Kontrollen dieser Subdienstleister aus (Carve-out-Methode). Die Beschreibung weist
+    außerdem darauf hin, dass einige anwendbare Trust Services Criteria nur dann erfüllt werden, wenn komplementäre
+    Kontrollen bei Subdienstleistern, die bei der Ausgestaltung der Kontrollen von {org} unterstellt wurden,
+    zusammen mit den zugehörigen Kontrollen bei {org} angemessen ausgestaltet{and_operating} sind. Unsere Prüfung
+    erstreckte sich nicht auf die Kontrollen der Subdienstleister, und wir haben die Angemessenheit{or_oe} dieser
+    komplementären Kontrollen nicht beurteilt.
+  cuec: >-
+    Die Beschreibung weist darauf hin, dass einige anwendbare Trust Services Criteria nur dann erfüllt werden, wenn
+    komplementäre Kontrollen bei Nutzerunternehmen, die bei der Ausgestaltung der Kontrollen von {org} unterstellt
+    wurden, zusammen mit den zugehörigen Kontrollen bei {org} angemessen ausgestaltet{and_operating} sind. Unsere
+    Prüfung erstreckte sich nicht auf diese komplementären Kontrollen bei Nutzerunternehmen, und wir haben deren
+    Angemessenheit{or_oe} nicht beurteilt.
+  org_responsibilities:
+    heading: "Verantwortung der Dienstleistungsorganisation"
+    text: >-
+      Die Dienstleistungsorganisation {org} ist verantwortlich für ihre Leistungsverpflichtungen und
+      Systemanforderungen sowie für die Ausgestaltung, Einrichtung und Durchführung wirksamer Kontrollen innerhalb
+      des Systems, um hinreichende Sicherheit zu bieten, dass diese erfüllt werden. Sie hat die beigefügte Erklärung
+      des Managements (Abschnitt II) zur Darstellung der Beschreibung und zur Angemessenheit{and_oe_lc} ihrer
+      Kontrollen abgegeben. Die Dienstleistungsorganisation ist außerdem verantwortlich für die Erstellung der
+      Beschreibung und der Erklärung, einschließlich ihrer Vollständigkeit, Richtigkeit und Darstellungsweise; für
+      die Erbringung der in der Beschreibung dargestellten Dienstleistungen; für die Auswahl der anwendbaren Trust
+      Services Criteria und die Darstellung der zugehörigen Kontrollen; sowie für die Identifizierung der Risiken,
+      die die Erfüllung ihrer Leistungsverpflichtungen und Systemanforderungen gefährden.
+  auditor_responsibilities:
+    heading: "Verantwortung des KI-Audits"
+    text: >-
+      Dieses KI-Audit formuliert eine Schlussfolgerung zur Beschreibung und zur Angemessenheit{and_oe_lc} der darin
+      dargestellten Kontrollen. Im Rahmen der Arbeiten wurden Nachweise aus der im Auftrag genannten Quelle
+      bezogen, jede Kontrolle anhand der anwendbaren Trust Services Criteria getestet und jede Schlussfolgerung auf
+      Artefakte im Nachweispaket zurückgeführt. Das KI-Audit wurde nicht nach den vom American Institute of
+      Certified Public Accountants festgelegten Attestation Standards geplant oder durchgeführt und bietet nicht die
+      Sicherheit einer offiziellen Prüfung nach SOC 2.
+    procedures_intro: "Unsere Prüfung umfasste:"
+    procedures:
+      - "die Gewinnung eines Verständnisses des Systems sowie der Leistungsverpflichtungen und Systemanforderungen der Dienstleistungsorganisation;"
+      - "die Beurteilung der Risiken, dass die Beschreibung nicht in Übereinstimmung mit den Beschreibungskriterien dargestellt ist und dass die Kontrollen nicht angemessen ausgestaltet{or_did_not_operate} waren;"
+      - "die Durchführung von Prüfungshandlungen zur Erlangung von Nachweisen darüber, ob die Beschreibung in Übereinstimmung mit den Beschreibungskriterien dargestellt ist;"
+      - "die Durchführung von Prüfungshandlungen zur Erlangung von Nachweisen darüber, ob die in der Beschreibung dargestellten Kontrollen angemessen ausgestaltet waren, um hinreichende Sicherheit zu bieten, dass die Leistungsverpflichtungen und Systemanforderungen auf Grundlage der anwendbaren Trust Services Criteria erfüllt würden;"
+      - "{oe_procedure}"
+      - "die Beurteilung der Gesamtdarstellung der Beschreibung."
+    oe_procedure: "die Prüfung der Wirksamkeit dieser Kontrollen, um hinreichende Sicherheit zu bieten, dass die Leistungsverpflichtungen und Systemanforderungen auf Grundlage der anwendbaren Trust Services Criteria erfüllt wurden;"
+    independence: >-
+      Das Modell, das dieses KI-Audit unterzeichnet, ist weder Certified Public Accountant (CPA) noch
+      Wirtschaftsprüfer und ist nicht unabhängig in dem Sinne, wie es von einem Prüfer (Service Auditor) bei einer
+      offiziellen Prüfung nach SOC 2 verlangt wird. Die Schlussfolgerung ist die des Modells und beruht
+      ausschließlich auf den Nachweisen im Nachweispaket.
+  limitations:
+    heading: "Inhärente Grenzen"
+    text: >-
+      Die Beschreibung ist darauf ausgerichtet, die gemeinsamen Bedürfnisse eines breiten Kreises von
+      Berichtsadressaten zu erfüllen, und enthält daher möglicherweise nicht jeden Aspekt des Systems, den ein
+      einzelner Nutzer für wichtig hält. Aufgrund ihrer Natur sind Kontrollen möglicherweise nicht immer wirksam,
+      um hinreichende Sicherheit zu bieten, dass die Leistungsverpflichtungen und Systemanforderungen erfüllt
+      werden. Die Übertragung einer Beurteilung der Wirksamkeit auf zukünftige Zeiträume birgt das Risiko, dass
+      Kontrollen aufgrund veränderter Bedingungen unangemessen werden oder dass die Einhaltung von Richtlinien und
+      Verfahren nachlässt.
+  tests_description:
+    heading: "Beschreibung der Kontrolltests"
+    text: "Die von uns getesteten Kontrollen sowie Art, Zeitpunkt und Ergebnisse dieser Tests sind in Abschnitt IV aufgeführt."
+  basis:
+    heading:
+      qualified: "Grundlage für das eingeschränkte Prüfungsurteil"
+      adverse: "Grundlage für das versagte Prüfungsurteil"
+      disclaimer: "Grundlage für die Nichtabgabe eines Prüfungsurteils"
+  opinion:
+    heading: "Prüfungsurteil"
+    unmodified: "Dieses KI-Audit kommt in allen wesentlichen Belangen zu folgendem Ergebnis:"
+    qualified: "Mit Ausnahme der Auswirkungen der im Abschnitt „Grundlage für das eingeschränkte Prüfungsurteil“ beschriebenen Sachverhalte kommt dieses KI-Audit in allen wesentlichen Belangen zu folgendem Ergebnis:"
+    adverse: "Aufgrund der Bedeutung der im Abschnitt „Grundlage für das versagte Prüfungsurteil“ beschriebenen Sachverhalte kommt dieses KI-Audit zu folgendem Ergebnis:"
+    disclaimer: >-
+      Aufgrund der Bedeutung der im Abschnitt „Grundlage für die Nichtabgabe eines Prüfungsurteils“ beschriebenen
+      Sachverhalte konnte dieses KI-Audit keine ausreichenden geeigneten Nachweise erlangen, um eine
+      Schlussfolgerung zu stützen. Dementsprechend trifft es keine Aussage zur Beschreibung oder zur
+      Angemessenheit{and_oe_lc} der darin dargestellten Kontrollen.
+    items:
+      description: "die Beschreibung stellt das System „{system}“ von {org}, das {period} ausgestaltet und eingerichtet war, in Übereinstimmung mit den Beschreibungskriterien dar;"
+      design: "die in der Beschreibung dargestellten Kontrollen waren {period} angemessen ausgestaltet, um hinreichende Sicherheit zu bieten, dass die Leistungsverpflichtungen und Systemanforderungen von {org} auf Grundlage der anwendbaren Trust Services Criteria erfüllt würden, sofern die Kontrollen wirksam funktionierten{complementary};"
+      operating: "die in der Beschreibung dargestellten Kontrollen waren {period} wirksam, um hinreichende Sicherheit zu bieten, dass die Leistungsverpflichtungen und Systemanforderungen von {org} auf Grundlage der anwendbaren Trust Services Criteria erfüllt wurden{complementary}."
+    adverse_items:
+      design: "die in der Beschreibung dargestellten Kontrollen waren {period} nicht angemessen ausgestaltet, um hinreichende Sicherheit zu bieten, dass die Leistungsverpflichtungen und Systemanforderungen von {org} auf Grundlage der anwendbaren Trust Services Criteria erfüllt würden;"
+      operating: "die in der Beschreibung dargestellten Kontrollen waren {period} nicht wirksam, um hinreichende Sicherheit zu bieten, dass die Leistungsverpflichtungen und Systemanforderungen von {org} auf Grundlage der anwendbaren Trust Services Criteria erfüllt wurden."
+    complementary: ", unter der Voraussetzung der Wirksamkeit der bei der Ausgestaltung der Kontrollen von {org} unterstellten komplementären Kontrollen"
+  restricted_use:
+    heading: "Verwendungsbeschränkung"
+    text: >-
+      Dieser Bericht{tests_clause} ist ausschließlich zur Information und Verwendung durch folgende Parteien
+      bestimmt: {org}; Nutzerunternehmen des Systems „{system}“ {period}; Geschäftspartner von {org}, die Risiken
+      aus Interaktionen mit dem System ausgesetzt sind; Berufsträger, die Leistungen für solche Nutzerunternehmen
+      und Geschäftspartner erbringen; potenzielle Nutzerunternehmen und Geschäftspartner; sowie Aufsichtsbehörden.
+      Es wird vorausgesetzt, dass diese Parteien Kenntnisse haben über die Art der erbrachten Dienstleistung, die
+      Interaktion des Systems mit Nutzerunternehmen und Geschäftspartnern, das interne Kontrollsystem und seine
+      Grenzen, komplementäre Kontrollen und deren Zusammenwirken mit den Kontrollen der Dienstleistungsorganisation,
+      die anwendbaren Trust Services Criteria sowie die Risiken, die die Erfüllung der Leistungsverpflichtungen und
+      Systemanforderungen gefährden können. Dieser Bericht ist nicht zur Verwendung durch andere als diese
+      bestimmten Parteien vorgesehen und darf von diesen nicht verwendet werden. Es handelt sich um ein KI-Audit.
+      Es ist kein offizieller Bericht nach SOC 2 und darf nicht als solcher dargestellt werden.
+
+section2:
+  title: "Erklärung des Managements von {org}"
+  intro: >-
+    Wir haben die beigefügte Beschreibung des Systems „{system}“ von {org} {period} (im Folgenden „Beschreibung“)
+    auf Grundlage der Beschreibungskriterien in {description_criteria} erstellt. Die Beschreibung soll Nutzern
+    Informationen über das System geben, die für das Verständnis der Risiken aus Interaktionen mit dem System
+    nützlich sein können, insbesondere Informationen über die Angemessenheit{and_oe_lc} der darin dargestellten
+    Kontrollen zur Erfüllung der anwendbaren Trust Services Criteria gemäß {trust_services_criteria}.
+  confirm: "Wir bestätigen nach bestem Wissen und Gewissen Folgendes:"
+  items:
+    description: "die Beschreibung stellt das System „{system}“, das {period} ausgestaltet und eingerichtet war, in Übereinstimmung mit den Beschreibungskriterien dar;"
+    design: "die in der Beschreibung dargestellten Kontrollen waren {period} angemessen ausgestaltet, um hinreichende Sicherheit zu bieten, dass unsere Leistungsverpflichtungen und Systemanforderungen auf Grundlage der anwendbaren Trust Services Criteria erfüllt würden, sofern die Kontrollen wirksam funktionierten{complementary_mgmt};"
+    operating: "die in der Beschreibung dargestellten Kontrollen waren {period} wirksam, um hinreichende Sicherheit zu bieten, dass unsere Leistungsverpflichtungen und Systemanforderungen auf Grundlage der anwendbaren Trust Services Criteria erfüllt wurden{complementary_mgmt}."
+  complementary_mgmt: ", unter der Voraussetzung der Wirksamkeit der bei der Ausgestaltung unserer Kontrollen unterstellten komplementären Kontrollen"
+  signature: "Management von {org}"
+
+section3:
+  title: "Beschreibung des Systems „{system}“ von {org}"
+  unapproved: >-
+    Diese Systembeschreibung ist nicht als vom Management genehmigt gekennzeichnet.
+  omitted: >-
+    Eine Systembeschreibung für die Leser dieses Berichts wurde nicht bereitgestellt. Aus dem Compliance-System
+    übernommener Text ist Prüfungsnachweis und wird hier nicht wiedergegeben.
+  headings:
+    overview: "Überblick über das Unternehmen"
+    services: "Erbrachte Dienstleistungen"
+    commitments: "Wesentliche Leistungsverpflichtungen und Systemanforderungen"
+    components: "Komponenten des Systems"
+    boundaries: "Systemgrenzen"
+    subservice_organizations: "Subdienstleister und komplementäre Kontrollen bei Subdienstleistern"
+    cuecs: "Komplementäre Kontrollen bei Nutzerunternehmen"
+    incidents: "Systemvorfälle"
+    changes: "Wesentliche Änderungen im Berichtszeitraum"
+  component_names:
+    infrastructure: "Infrastruktur"
+    software: "Software"
+    people: "Personal"
+    procedures: "Verfahren"
+    data: "Daten"
+
+section4:
+  title: "Trust Services Criteria, zugehörige Kontrollen und Kontrolltests"
+  intro:
+    type2: >-
+      Dieser Abschnitt führt für jedes anwendbare Kriterium der Trust Services Criteria die von {org}
+      eingerichteten Kontrollen, die von diesem KI-Audit {period} durchgeführten Tests und deren Ergebnisse auf.
+      Die Kriterien und die darauf ausgerichteten Kontrollen liegen in der Verantwortung der
+      Dienstleistungsorganisation; die Tests und Ergebnisse liegen in der Verantwortung dieses KI-Audits.
+    type1: >-
+      Dieser Abschnitt führt für jedes anwendbare Kriterium der Trust Services Criteria die von {org} {period}
+      eingerichteten Kontrollen auf. Die Kriterien und Kontrollen liegen in der Verantwortung der
+      Dienstleistungsorganisation. Dieses KI-Audit hat die Angemessenheit ihrer Ausgestaltung beurteilt und
+      bestätigt, dass sie eingerichtet waren; die Wirksamkeit wurde nicht getestet.
+  methods: >-
+    Die Tests stützten sich auf eine oder mehrere der folgenden Methoden. Befragung: Gespräche mit geeigneten
+    Mitarbeitern über die Kontrolle. Beobachtung: Beobachtung der Durchführung der Kontrolle. Einsichtnahme:
+    Prüfung von Dokumenten, Aufzeichnungen und Systemkonfigurationen auf Nachweise, dass die Kontrolle durchgeführt
+    wurde. Nachvollzug: unabhängige erneute Durchführung der Kontrolle und Abgleich der Ergebnisse. Eine Befragung
+    allein wurde in keinem Fall als ausreichend angesehen. Wurde eine Kontrolle mehrfach durchgeführt, wurde eine
+    Stichprobe zufällig mit einem dokumentierten Startwert (Seed) gezogen; die Stichprobenumfänge richteten sich
+    nach der Häufigkeit der Kontrolle und dem Umfang der Grundgesamtheit.
+  columns: ["Kontrolle", "Kontrollaktivität", "Durchgeführte Tests", "Ergebnisse"]
+  columns_type1: ["Kontrolle", "Kontrollaktivität"]
+  no_exceptions: "Keine Abweichungen festgestellt."
+  not_tested: "Nicht getestet. {reason}"
+  design_deficiency: "Kontrolle nicht angemessen ausgestaltet. {reason}"
+
+section5:
+  title: "Sonstige Informationen, bereitgestellt von {org}"
+  intro: >-
+    Die Informationen in diesem Abschnitt werden von {org} als zusätzliche Informationen dargestellt und sind
+    nicht Bestandteil der Beschreibung. Sie waren nicht Gegenstand der in diesem KI-Audit durchgeführten
+    Prüfungshandlungen; dementsprechend trifft dieses KI-Audit keine Aussage dazu.
+  none: "Das Management hat keine zusätzlichen Informationen bereitgestellt."
+
+# Kurze Bezeichnungen und Satzfragmente für den Renderer und das PDF-Layout.
+labels:
+  lang: de                     # Typst-Textsprache (Silbentrennung, Anführungszeichen)
+  paper: a4
+  auditor: "KI-Audit"
+  signer_title: "KI-Auditor"
+  model_unsigned: "dem Modell, das dieses KI-Audit noch nicht unterzeichnet hat"  # Dativ: steht nach „von“
+  category_names: {security: Sicherheit, availability: Verfügbarkeit, confidentiality: Vertraulichkeit,
+                   processing-integrity: Integrität der Verarbeitung, privacy: Datenschutz}
+  title_case_categories: false  # deutsche Substantive sind bereits großgeschrieben
+  period:
+    type1: "zum {date}"
+    type2: "im Zeitraum vom {start} bis zum {end}"
+  period_dates:
+    type1: "{date}"
+    type2: "{start} bis {end}"
+  cover_period:
+    type1: "Zum Stichtag {period}"
+    type2: "Für den Zeitraum {period}"
+  subservice:                  # Akkusativ: „… setzt {subservice} ein“
+    one: "den Subdienstleister {names}"
+    many: "die Subdienstleister {names}"
+  fragments:                   # in die Sätze oben eingefügt; bei Typ 1 leer
+    and_oe: " und Wirksamkeit"
+    and_oe_lc: " und Wirksamkeit"
+    or_oe: " und Wirksamkeit"
+    tests_clause: ", einschließlich der Beschreibung der Kontrolltests und ihrer Ergebnisse in Abschnitt IV,"
+    and_operated: " und wirksam"
+    and_operating: " und wirksam"
+    or_did_not_operate: " oder nicht wirksam"
+  scope_heading: "Gegenstand und Umfang"
+  signature_note: "Keine offizielle Prüfung nach SOC 2."
+  pending_approval_suffix: " – Genehmigung durch das Management ausstehend"
+  pending_approval: >-
+    Das Management hat die Systembeschreibung nicht genehmigt und keine unterzeichnete Erklärung für diese
+    vorläufige KI-Beurteilung vorgelegt. In diesem Abschnitt wird keine Erklärung des Managements abgegeben.
+  list_labels:
+    csocs: "Bei der Ausgestaltung unserer Kontrollen unterstellte komplementäre Kontrollen bei Subdienstleistern:"
+  sample: "Stichprobe von {sample} aus einer Grundgesamtheit von {population}."
+  group_title: "{code}: {group}"
+  # PDF-Layout
+  header: "KI-Audit – keine offizielle Prüfung nach SOC 2"
+  footer_final: "KI-Audit. Keine offizielle Prüfung nach SOC 2."
+  footer_draft: "Entwurf eines KI-Audits. Nicht unterzeichnet. Keine offizielle Prüfung nach SOC 2."
+  page_of: "1 von 1"           # Typst-Zählermuster
+  kicker: "KI-AUDIT"
+  not_official: "Keine offizielle Prüfung nach SOC 2"
+  signed_by: "Unterzeichnet von:"
+  watermark: "ENTWURF"
+  draft_note: "ENTWURF. Erstellt am {generated}. Noch nicht von dem Modell unterzeichnet, das das Audit durchgeführt hat."
+  contents: "Inhalt"
+  section: "Abschnitt"
+  no_controls: "Diesem Kriterium sind keine Kontrollen zugeordnet."
+  control: "Kontrolle"
+  exception_noted: "Festgestellte Abweichung:"
+  management_response: "Stellungnahme des Managements:"
+  # workpapers.xlsx
+  xlsx:
+    sheets: {controls: Kontrollen, samples: Stichproben, exceptions: Abweichungen, evidence: Nachweise}
+    controls: [Kontrolle, Kriterien, Häufigkeit, Art, Grundgesamtheit, Stichprobe, Ausgestaltung angemessen, Ergebnis,
+               Abweichungen, Konfidenz, Erstellt von, Kontrollaktivität]
+    samples: [Kontrolle, Element, Ergebnisse, Nachweise, Anmerkung]
+    exceptions: [Kontrolle, Element, Beschreibung, Nachweise, Stellungnahme des Managements]
+    evidence: [ID, Titel, Art, Pfad, SHA-256, Herkunft, Datum, Kontrollen]

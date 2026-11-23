@@ -1,0 +1,40 @@
+# Framework profile for the requirements engine (scripts/engine/, copied from
+# shared/engines/requirements by tools/sync.py). Everything ISO-specific the engine
+# needs is here; the wording is in assets/report/text/<lang>.yaml.
+framework: iso27001
+name: ISO/IEC 27001:2022
+cli: iso27001.py
+report_stem: iso27001
+not_official: It is not an ISO/IEC 27001 certification.
+scope_help: ISMS scope statement, as a certificate would print it
+id_examples: 9.2.1, A.5.18
+
+audit_types:
+  stage1: {label: Stage 1, as_of: true}
+  stage2: {label: Stage 2}
+  surveillance: {label: Surveillance, partial: true}
+  recertification: {label: Recertification}
+
+# A surveillance audit may leave units out, but must cover the clauses the catalog
+# flags `surveillance: true`, and should rotate through Annex A over the cycle.
+partial: {must_cover: surveillance, rotate_prefix: "A."}
+
+applicability:
+  always: [clause]                                     # clauses 4-10 always apply
+  soa: {kind: annex, requirement: "6.1.3", file: soa.csv}   # Annex A applies per the Statement of Applicability
+
+description:
+  file: isms.yaml
+  label: ISMS scope and context
+  fields: [scope_statement, boundaries, context, interested_parties]
+  request_requirement: "4.3"
+
+# Internal audit and management review are reported on in every audit (ISO/IEC 17021-1 9.4.8.2).
+always_reported: ["9.2", "9.3"]
+always_reported_label: internal audit and management review
+
+report:
+  plain_group_prefixes: ["A."]           # Annex A groups print their own title; clauses print "Clause 4: ..."
+  highlights:                             # Section I states a result for these (text: section1.highlights.<key>)
+    - {key: internal_audit, requirements: ["9.2.1", "9.2.2"]}
+    - {key: management_review, requirements: ["9.3.1", "9.3.2", "9.3.3"]}

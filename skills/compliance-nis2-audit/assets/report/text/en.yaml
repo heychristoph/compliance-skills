@@ -1,0 +1,301 @@
+# Report wording for an AI Audit against the NIS 2 Directive, Directive (EU) 2022/2555,
+# and, for the digital providers it lists, Commission Implementing Regulation (EU) 2024/2690.
+#
+# The layout follows the content of an audit report under ISO 19011:2018 (6.5) and the
+# structure the requirements engine shares with the ISO/IEC 27001 and GDPR skills. The
+# document is an AI Audit. It is not an audit, inspection or decision of a competent
+# authority or CSIRT, not a security audit under Art. 32(2)(b) of the Directive or national
+# law (such as § 61 BSIG), not legal advice, and it is not the text of the Directive.
+#
+# Placeholders: {org} {scope} {model} {representative} {type_label} {period} {period_dates}
+# {standard} {standard_full} {certification} {scope_values} {applicable} {excluded}
+# {sampled} {majors} {minors} {ofis}
+
+standards:
+  full: "Directive (EU) 2022/2555 of the European Parliament and of the Council of 14 December 2022 on measures for a high common level of cybersecurity across the Union (NIS 2 Directive); and, for the digital providers it lists, Commission Implementing Regulation (EU) 2024/2690 of 17 October 2024 on the technical and methodological requirements of cybersecurity risk-management measures and the cases in which an incident is considered to be significant"
+  short: "the NIS 2 Directive (EU) 2022/2555"
+  certification: "ISO 19011:2018 and ISO/IEC 27007:2020"
+  auditing: "ISO 19011:2018"
+
+audit_types:
+  assessment:
+    label: "Assessment (documentation and readiness as of a date)"
+    period_heading: "Documentation reviewed as of"
+    objectives:
+      - "review the entity's determination of its classification as an essential or important entity (Art. 3) and of the member states with jurisdiction over it (Art. 26);"
+      - "review whether the cybersecurity risk-management measures required by Art. 21, and for digital providers by the Annex to Implementing Regulation (EU) 2024/2690, are documented and in place;"
+      - "review whether the management body has approved the measures, oversees their implementation and has followed training (Art. 20);"
+      - "review whether the entity is prepared to report significant incidents within the deadlines of Art. 23 and has submitted its information to the competent authority (Art. 3(4), Art. 27);"
+      - "identify gaps that could be classified as nonconformities in an audit of the measures in operation."
+  audit:
+    label: "Audit (measures in operation over a period)"
+    period_heading: "Records sampled from"
+    objectives:
+      - "evaluate whether the cybersecurity risk-management measures required by Art. 21, and for digital providers by the Annex to Implementing Regulation (EU) 2024/2690, were implemented and operated effectively over the period;"
+      - "evaluate approval and oversight of the measures by the management body, and the training of its members (Art. 20);"
+      - "evaluate how incidents were handled and classified, and whether significant incidents were reported within the deadlines for the early warning, the incident notification and the final report (Art. 23);"
+      - "evaluate how the entity assesses the effectiveness of its measures and takes corrective measures (Art. 21(2)(f), Art. 21(4));"
+      - "conclude on whether the entity demonstrated compliance with these obligations in the scope audited."
+
+cover:
+  kicker: "AI Audit"
+  disclaimer: "Not an audit, inspection or decision of a competent authority or CSIRT. Not a security audit under Art. 32(2)(b) of Directive (EU) 2022/2555 or national law, such as § 61 BSIG. Not legal advice. Not performed by an accredited or authority-recognized body."
+  title: "AI Audit of the Cybersecurity Risk-Management Measures of {org} against {standard}"
+  restricted: "This AI Audit does not demonstrate compliance to a competent authority or CSIRT and must not be presented as an official audit, a security audit, a certification or a legal opinion."
+
+section1:
+  title: "AI Audit Report"
+  notice: >-
+    This is an AI Audit prepared and signed by {model}. It uses the NIS 2 Directive and, for the digital providers it
+    lists, Implementing Regulation (EU) 2024/2690 as the audit criteria, and follows the audit practice described in
+    {certification}. It is not an audit, inspection or decision of a competent authority or CSIRT, it is not a security
+    audit under Art. 32(2)(b) of the Directive or national law (such as § 61 BSIG), and it is not legal advice. It does
+    not establish that {org} complies with the national law transposing the Directive.
+  notice_unsigned: >-
+    This is an AI Audit. It has not been signed yet. It uses the NIS 2 Directive and, for the digital providers it
+    lists, Implementing Regulation (EU) 2024/2690 as the audit criteria, and follows the audit practice described in
+    {certification}. It is not an audit, inspection or decision of a competent authority or CSIRT, it is not a security
+    audit under Art. 32(2)(b) of the Directive or national law (such as § 61 BSIG), and it is not legal advice. It does
+    not establish that {org} complies with the national law transposing the Directive.
+  addressee: "To the Management Body of {org}"
+  facts_heading: "Audit Details"
+  facts:
+    organization: "Entity"
+    representative: "Entity's representative"
+    audit_type: "Type of audit"
+    criteria: "Audit criteria"
+    records: "Period"
+    auditor: "Audit performed and signed by"
+    method: "Audit method"
+    method_value: "Remote review of a hashed evidence bundle; no site visit and no interviews"
+  criteria: >-
+    {standard_full}; the entity's documented classification ({scope_values}) and its determination of jurisdiction;
+    and its own policies, procedures and records on cybersecurity risk management, incident handling and reporting.
+    National law transposing the Directive was not used as audit criteria.
+  objectives_heading: "Audit Objectives"
+  objectives_intro: "The objectives of this audit were to:"
+  scope_heading: "Audit Scope"
+  scope: >-
+    {org} (classification: {scope_values}), with the scope: {scope}
+  coverage:
+    full: >-
+      The audit covered every requirement of the audit criteria that applies to the entity types in scope, {applicable}
+      in total, including the determination of the entity's classification (Art. 3) and of jurisdiction (Art. 26).
+      Requirements that apply only to other entity types ({excluded} for this entity) were not audited; Section V lists
+      them with the reason.
+    surveillance: >-
+      The audit covered a sample of {sampled} of the {applicable} requirements that apply to the entity types in scope.
+      Section V shows which.
+  method_heading: "Audit Method"
+  method: >-
+    The connector named in the engagement pulled the entity's evidence into a bundle, and every file was hashed on
+    receipt. Each measure the entity operates, and each requirement no measure is mapped to, was audited against the
+    documented information and records in that bundle by inspection and, where possible, reperformance. Where an
+    activity occurred many times, items were selected at random using a recorded seed. Findings are recorded against a
+    specific requirement with the objective evidence they rest on, and graded as major nonconformities, minor
+    nonconformities or opportunities for improvement.
+  sampling: >-
+    Auditing is based on a sampling process of the available information. Nonconformities may exist that this audit
+    did not identify, and the absence of a finding is not a statement that none exists.
+  summary_heading: "Summary of Findings"
+  summary_counts: "This audit identified {majors} major nonconformities, {minors} minor nonconformities and {ofis} opportunities for improvement. Each is set out in Section III."
+  grades:
+    major: "Major nonconformity: an obligation is not met in a way that prevents the entity from demonstrating that its cybersecurity risk-management measures, governance or reporting achieve their purpose, for example a required measure that is absent or has broken down, or a significant incident that was not reported."
+    minor: "Minor nonconformity: an obligation was not met in an isolated case, or a record is missing or incomplete, without calling into question the entity's ability to manage cybersecurity risks and to report significant incidents."
+    ofi: "Opportunity for improvement: the obligation is met, but the audit identified a way the measures could be improved."
+  stage1_grades: "In an assessment, findings are gaps as of the assessment date. Their grade shows how they would be classified if still present in an audit of the measures in operation."
+  conformity_heading: "Implementation and Effectiveness of the Measures"
+  highlights_heading: "Governance, Risk Management and Reporting"
+  highlights:
+    governance: "Approval, oversight and training by the management body (Art. 20): {result}"
+    risk_management: "Risk-management measures and the assessment of their effectiveness (Art. 21(1) and 21(2)(f)): {result}"
+    reporting: "Classification and reporting of significant incidents (Art. 23(3) and 23(4)): {result}"
+  scope_appropriate_heading: "Appropriateness of the Scope and Classification"
+  scope_appropriate:
+    "yes": "The audit scope and the entity's classification are consistent with its documented sector, size, services and establishments."
+    "no": "The audit scope or the entity's classification is not appropriate in its current form."
+  objectives_met_heading: "Fulfilment of the Audit Objectives"
+  objectives_met:
+    "yes": "The audit objectives were fulfilled."
+    "no": "The audit objectives were not fully fulfilled because of the scope limitations described below."
+  limitations_heading: "Scope Limitations"
+  recommendation_heading: "Conclusion"
+  recommendation:
+    assessment:
+      recommended: "As of the assessment date, the cybersecurity risk-management measures, governance arrangements and reporting procedures the audit criteria require of {org} are documented and in place. No gaps were identified. Whether they operate effectively can only be shown by an audit of the measures over a period."
+      recommended-with-actions: "As of the assessment date, the measures, governance arrangements and reporting procedures the audit criteria require of {org} are documented and in place, except for the gaps in Section III. These do not call into question the entity's ability to manage cybersecurity risks and to report significant incidents. If still present in an audit of the measures in operation, they could be raised as nonconformities."
+      not-recommended: "As of the assessment date, the major gaps in Section III mean that {org} cannot demonstrate that the measures, governance arrangements or reporting procedures the audit criteria require are in place. They should be resolved before the measures are audited in operation."
+      no-conclusion: "No conclusion on the state of the measures as of the assessment date is stated, because of the scope limitations described above."
+    audit:
+      recommended: "Over the period audited, {org} implemented and effectively operated the cybersecurity risk-management measures, governance arrangements and reporting procedures the audit criteria require. No nonconformities were identified."
+      recommended-with-actions: "Over the period audited, {org} implemented and effectively operated the cybersecurity risk-management measures, governance arrangements and reporting procedures the audit criteria require, except for the minor nonconformities in Section III, which do not call into question its ability to manage cybersecurity risks and to report significant incidents. Art. 21(4) requires the entity to take corrective measures without undue delay; their effectiveness has not been verified."
+      not-recommended: "The major nonconformities in Section III mean that {org} did not demonstrate, over the period audited, that the measures, governance arrangements or reporting procedures the audit criteria require were in place and effective. Art. 21(4) requires corrective measures without undue delay. Compliance with the audited obligations cannot be concluded until they are implemented and verified."
+      no-conclusion: "No conclusion on the measures in operation over the period is stated, because of the scope limitations described above."
+  ai_disclaimer: >-
+    These conclusions are the model's, based only on the evidence in the bundle. Only a competent authority can decide
+    whether an entity complies with the national law transposing the Directive, in its own supervisory procedure. This
+    report is not legal advice.
+  independence_heading: "Independence and Limitations"
+  independence: >-
+    The model that signs this AI Audit is not a competent authority, not a CSIRT, not an independent body carrying out
+    security audits under Art. 32(2)(b) of the Directive or national law, and not an auditor accredited or recognized by
+    any authority or accreditation body. It is not independent of {org} in the sense those roles require. It did not
+    visit any site or interview personnel; it relied on the documented information and records the entity's systems
+    provided. It did not audit national law beyond the Directive, nor sector-specific Union law that applies instead of
+    the Directive's obligations (Art. 4).
+  restricted_use_heading: "Use of This Report"
+  restricted_use: >-
+    This report is intended for the management body of {org} and for parties {org} chooses to share it with to describe
+    the state of its cybersecurity risk-management measures. It is an AI Audit. It is not an audit, inspection, decision
+    or certification by a competent authority, a CSIRT or an accredited body, it is not evidence of a security audit
+    under Art. 32(2)(b) of the Directive or national law, it is not legal advice, and it must not be presented as any of
+    these.
+  signature_footer: "Not an audit by a competent authority. Not legal advice."
+
+section2:
+  title: "Scope and Context of the Entity"
+  intro: >-
+    This section is the entity's own description of its scope, services, classification and context. It is the
+    entity's documented information, not a conclusion of this AI Audit.
+  unapproved: "This description is not marked management-approved."
+  omitted: >-
+    A description of the entity's scope and context for readers of this report has not been provided. Text pulled from
+    the compliance system is evidence and is not printed here.
+  headings:
+    scope_statement: "Scope"
+    services: "Services Provided"
+    role: "Classification Under the Directive"
+    boundaries: "Boundaries"
+    sites: "Establishments and Locations"
+    outsourced: "Key Suppliers and Service Providers"
+    changes: "Significant Changes"
+    people: "Organization and People"
+    processes: "Key Processes"
+
+section3:
+  title: "Audit Findings"
+  intro: >-
+    Each finding is recorded against one requirement of the audit criteria, with a statement of the nonconformity and
+    the objective evidence it rests on. This AI Audit does not suggest the cause of a nonconformity or its solution. Art.
+    21(4) requires the entity to take the necessary, appropriate and proportionate corrective measures without undue
+    delay.
+  intro_stage1: >-
+    In an assessment, findings are gaps as of the assessment date. Each is recorded against one requirement of the audit
+    criteria, with the objective evidence it rests on, and graded as it would be if still present in an audit of the
+    measures in operation.
+  none: "No nonconformities or opportunities for improvement were identified."
+  labels:
+    requirement: "Requirement"
+    statement: "Statement"
+    statement_ofi: "Opportunity"
+    evidence: "Objective evidence"
+    units: "Related audit units"
+  grade_names:
+    major: "Major nonconformity"
+    minor: "Minor nonconformity"
+    ofi: "Opportunity for improvement"
+
+section4:
+  title: "Requirements, Measures and Audit Results"
+  intro: >-
+    This section lists, for each requirement in scope, the measures {org} operates to meet it, the procedures this AI
+    Audit performed and the results. The measures are the responsibility of {org}; the procedures and results are the
+    responsibility of this AI Audit. Where no measure is mapped to a requirement, the requirement was audited directly
+    against the entity's documented information and records.
+  methods: >-
+    Procedures used one or more of these methods. Inspection: examining documents, records and system configurations.
+    Reperformance: independently executing a control and comparing the result. Observation: examining a system's live
+    behaviour as recorded in an export. Inquiry: considering written statements from the entity; inquiry alone was never
+    relied on. Where an activity occurred many times, a sample was selected at random using a recorded seed, with sample
+    sizes based on the frequency of the activity and the size of the population.
+  columns: ["Requirement", "Unit", "Measure", "Procedures performed", "Result"]
+  conforming: "No deviations noted."
+  not_audited: "Not audited. {reason}"
+  design_gap: "Not suitably designed. {reason}"
+  not_sampled: "Not covered in this audit."
+
+section5:
+  title: "Applicability of the Requirements"
+  intro: >-
+    Which requirements apply follows from the entity's classification ({scope_values}). {applicable} requirements of the
+    audit criteria apply to {org} and were audited; the remaining {excluded} apply only to other entity types. The Annex to
+    Implementing Regulation (EU) 2024/2690 and Art. 27 apply only to the digital providers they list. The table shows
+    each requirement, whether it applies, why not when it does not, and the result of this audit.
+  missing: >-
+    The entity did not document its classification. The requirements were applied for the entity types set for this
+    engagement.
+  columns: ["Requirement", "Title", "Applies", "Reason it does not apply", "Audit result"]
+  results:
+    conforming: "Conforming"
+    excluded: "Not applicable"
+    not_audited: "Not audited"
+    not_sampled: "Not in this audit's sample"
+
+section6:
+  title: "The Entity's Response to Findings"
+  intro: >-
+    The information in this section is the entity's own response to the findings, including the corrective measures
+    taken or planned (Art. 21(4)). It has not been verified by this AI Audit unless a later audit says so.
+  none: "The entity has not provided a response to the findings."
+
+# Short labels and sentences the renderer and the PDF layout use.
+labels:
+  lang: en                     # Typst text language (hyphenation, quotes)
+  paper: a4
+  auditor: "AI Audit"
+  signer_title: "AI Auditor"
+  auditor_line: "{model}, AI Auditor"
+  period:                      # "stage1" is the engine's key for every point-in-time audit (here: assessment)
+    stage1: "as of {date}"
+    other: "for records from {start} to {end}"
+  period_dates:
+    stage1: "{date}"
+    other: "{start} to {end}"
+  clause_group: "{title}"      # Section IV group heading; NIS2 groups print their own title
+  "yes": "Yes"
+  "no": "No"
+  no_justification: "None given."
+  see: "; see {ids}"
+  req_unit_title: "{title} (no mapped measure; audited against the requirement)"
+  excluded:                    # Section V reason when a requirement is out of scope
+    scope: "Applies only to other entity types. Classification of the entity: {scope_values}."
+    optional: "Optional; not relied on by the entity."
+  scope_values:                # entity_types in engagement.yaml, as the report prints them
+    essential: "essential entity"
+    important: "important entity"
+    digital-providers: "digital provider under Implementing Regulation (EU) 2024/2690"
+  grade_short: {major: major, minor: minor}   # after a finding ID: "NC-01 (major)"
+  see_sentence: " See {ids}."
+  sample: "Sample of {sample} selected from a population of {population}."
+  lowercase_states: true       # "Art.20(2) not audited" rather than "Art.20(2) Not audited"
+  clause_result:
+    nonconforming: "nonconforming. See {ids}."
+    conforming: "conforming. No nonconformity was raised against these requirements."
+    related: " A related finding is recorded against another requirement: {ids}."
+  # PDF layout
+  header: "AI Audit — not an audit by a competent authority"
+  footer_final: "AI Audit. Not an audit by a competent authority. Not legal advice."
+  footer_draft: "Draft AI Audit. Not signed. Not an audit by a competent authority."
+  page_of: "1 of 1"            # Typst counter pattern
+  kicker: "AI AUDIT · NIS 2 DIRECTIVE (EU) 2022/2555"
+  not_official: "Not an audit by a competent authority · Not legal advice"
+  scope_label: "Scope:"
+  signed_by: "Signed by:"
+  watermark: "DRAFT"
+  draft_note: "DRAFT. Generated {generated}. Not yet signed by the model that ran the audit."
+  contents: "Contents"
+  section: "Section"
+  finding: "Finding:"
+  response: "Entity's response:"
+  # workpapers.xlsx
+  xlsx:
+    sheets: {units: Units, samples: Samples, deviations: Deviations, findings: Findings, soa: Applicability, evidence: Evidence}
+    units: [Unit, Requirements, Frequency, Nature, Population, Sample, Design effective, Conclusion, Deviations,
+            Confidence, Prepared by, Measure]
+    samples: [Unit, Item, Results, Evidence, Note]
+    deviations: [Unit, Item, Description, Evidence]
+    findings: [ID, Grade, Requirement, Statement, Objective evidence, Deviations, Evidence, "Entity's response"]
+    soa: [Requirement, Applies, Justification, Status, Units]
+    evidence: [ID, Title, Kind, Path, SHA-256, Obtained, Date, Measures, Requirements]
+    "yes": "yes"
+    "no": "no"

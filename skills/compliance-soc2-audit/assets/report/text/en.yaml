@@ -1,0 +1,274 @@
+# Report wording for an AI Audit.
+#
+# The layout follows the structure of a SOC 2 examination report. The document
+# is an AI Audit. It is not an official SOC 2 audit and it is not AICPA text.
+#
+# One file per report language: text/<lang>.yaml, chosen by `language` in
+# engagement.yaml. Every file has the same keys; tests check that.
+#
+# Placeholders: {org} {system} {auditor} {model} {period} {period_dates}
+# {categories} {categories_title} {subservice} {and_oe} {and_oe_lc} {and_operated}
+# {and_operating} {or_oe} {or_did_not_operate} {tests_clause} {complementary}
+# {complementary_mgmt} {oe_procedure}
+
+standards:
+  description_criteria: "DC section 200, 2018 Description Criteria for a Description of a Service Organization's System in a SOC 2 Report (With Revised Implementation Guidance, 2022)"
+  trust_services_criteria: "TSP section 100, 2017 Trust Services Criteria for Security, Availability, Processing Integrity, Confidentiality, and Privacy (With Revised Points of Focus, 2022)"
+
+cover:
+  kicker: "AI Audit"
+  disclaimer: "Not an official SOC 2 audit. Not an examination under AICPA attestation standards. Not a report of a CPA firm."
+  title: "AI Audit of {org}'s {system} and of the Suitability of the Design{and_oe} of Its Controls Relevant to {categories_title}"
+  restricted: "This AI Audit is not an official SOC 2 report and must not be presented as one."
+
+section1:
+  title: "AI Audit Report"
+  notice: >-
+    This is an AI Audit prepared and signed by {model}. It uses the Trust Services Criteria as the framework for
+    the tests. It is not an official SOC 2 audit, it was not conducted under attestation standards established by
+    the American Institute of Certified Public Accountants, and it is not a report issued by a CPA firm.
+  notice_unsigned: >-
+    This is an AI Audit. It has not been signed yet. It uses the Trust Services Criteria as the framework for
+    the tests. It is not an official SOC 2 audit, it was not conducted under attestation standards established by
+    the American Institute of Certified Public Accountants, and it is not a report issued by a CPA firm.
+  addressee: "To the Management of {org}"
+  scope:
+    type2: >-
+      We have examined {org}'s accompanying description of its {system} {period} (the description), prepared in
+      accordance with {description_criteria} (the description criteria), and the suitability of the design and
+      operating effectiveness of the controls stated in the description {period} to provide reasonable assurance
+      that {org}'s service commitments and system requirements were achieved based on the trust services criteria
+      relevant to {categories} (the applicable trust services criteria) set forth in {trust_services_criteria}.
+    type1: >-
+      We have examined {org}'s accompanying description of its {system} {period} (the description), prepared in
+      accordance with {description_criteria} (the description criteria), and the suitability of the design of the
+      controls stated in the description {period} to provide reasonable assurance that {org}'s service commitments
+      and system requirements would be achieved based on the trust services criteria relevant to {categories} (the
+      applicable trust services criteria) set forth in {trust_services_criteria}.
+  type1_no_oe: >-
+    We did not perform procedures on the operating effectiveness of the controls stated in the description and
+    therefore express no opinion on it.
+  subservice: >-
+    {org} uses {subservice}. The description covers only the controls of {org} and
+    excludes the controls of these subservice organizations (the carve-out method). The description also states
+    that some applicable trust services criteria are met only if complementary subservice organization controls,
+    assumed in the design of {org}'s controls, are suitably designed{and_operating}, together with the related controls
+    at {org}. Our examination did not extend to the controls of the subservice organizations, and we have not
+    evaluated the suitability of design{or_oe} of those complementary controls.
+  cuec: >-
+    The description states that some applicable trust services criteria are met only if complementary user entity
+    controls, assumed in the design of {org}'s controls, are suitably designed{and_operating}, together with the related
+    controls at {org}. Our examination did not extend to those complementary user entity controls, and we have not
+    evaluated their suitability of design{or_oe}.
+  org_responsibilities:
+    heading: "Service Organization's Responsibilities"
+    text: >-
+      {org} is responsible for its service commitments and system requirements, and for designing, implementing
+      and operating effective controls within the system to provide reasonable assurance that they are achieved.
+      {org} has provided the accompanying assertion (Section II) about the presentation of the description and the
+      suitability of design{and_oe_lc} of its controls. {org} is also responsible for preparing the description and
+      assertion, including their completeness, accuracy and method of presentation; for providing the services the
+      description covers; for selecting the applicable trust services criteria and stating the related controls;
+      and for identifying the risks that threaten the achievement of its service commitments and system requirements.
+  auditor_responsibilities:
+    heading: "AI Audit Responsibilities"
+    text: >-
+      This AI Audit states a conclusion on the description and on the suitability of design{and_oe_lc} of the
+      controls stated in it. The work pulled evidence from the source named in the engagement, tested each control
+      against the applicable trust services criteria, and tied every conclusion to artifacts in the evidence bundle.
+      It was not planned or performed under attestation standards established by the American Institute of Certified
+      Public Accountants, and it does not provide the assurance of an official SOC 2 examination.
+    procedures_intro: "Our examination included:"
+    procedures:
+      - "obtaining an understanding of the system and of the service organization's service commitments and system requirements;"
+      - "assessing the risks that the description is not presented in accordance with the description criteria and that controls were not suitably designed{or_did_not_operate};"
+      - "performing procedures to obtain evidence about whether the description is presented in accordance with the description criteria;"
+      - "performing procedures to obtain evidence about whether the controls stated in the description were suitably designed to provide reasonable assurance that the service commitments and system requirements would be achieved based on the applicable trust services criteria;"
+      - "{oe_procedure}"
+      - "evaluating the overall presentation of the description."
+    oe_procedure: "testing the operating effectiveness of those controls to provide reasonable assurance that the service commitments and system requirements were achieved based on the applicable trust services criteria; and"
+    independence: >-
+      The model that signs this AI Audit is not a certified public accountant and is not independent in the sense
+      required of a service auditor on an official SOC 2 examination. The conclusion is the model's, based only on
+      the evidence in the bundle.
+  limitations:
+    heading: "Inherent Limitations"
+    text: >-
+      The description is prepared to meet the common needs of a broad range of report users and may not include
+      every aspect of the system that an individual user considers important. Because of their nature, controls may
+      not always operate effectively to provide reasonable assurance that the service commitments and system
+      requirements are achieved. Projecting any evaluation of effectiveness to future periods carries the risk that
+      controls become inadequate because conditions change, or that compliance with policies and procedures declines.
+  tests_description:
+    heading: "Description of Tests of Controls"
+    text: "The specific controls we tested, and the nature, timing and results of those tests, are listed in Section IV."
+  basis:
+    heading:
+      qualified: "Basis for Qualified Opinion"
+      adverse: "Basis for Adverse Opinion"
+      disclaimer: "Basis for Disclaimer of Opinion"
+  opinion:
+    heading: "Opinion"
+    unmodified: "This AI Audit concludes that, in all material respects:"
+    qualified: "This AI Audit concludes that, except for the effects of the matters described in the Basis for Qualified Opinion paragraph, in all material respects:"
+    adverse: "This AI Audit concludes that, because of the significance of the matters described in the Basis for Adverse Opinion paragraph:"
+    disclaimer: >-
+      Because of the significance of the matters described in the Basis for Disclaimer of Opinion paragraph, this
+      AI Audit did not obtain sufficient appropriate evidence to support a conclusion. Accordingly, it states no
+      conclusion on the description or on the suitability of design{and_oe_lc} of the controls stated in it.
+    items:
+      description: "the description presents {org}'s {system} that was designed and implemented {period} in accordance with the description criteria;"
+      design: "the controls stated in the description were suitably designed {period} to provide reasonable assurance that {org}'s service commitments and system requirements would be achieved based on the applicable trust services criteria, if its controls operated effectively{complementary};"
+      operating: "the controls stated in the description operated effectively {period} to provide reasonable assurance that {org}'s service commitments and system requirements were achieved based on the applicable trust services criteria{complementary}."
+    adverse_items:
+      design: "the controls stated in the description were not suitably designed {period} to provide reasonable assurance that {org}'s service commitments and system requirements would be achieved based on the applicable trust services criteria;"
+      operating: "the controls stated in the description did not operate effectively {period} to provide reasonable assurance that {org}'s service commitments and system requirements were achieved based on the applicable trust services criteria."
+    complementary: ", and if the complementary controls assumed in the design of {org}'s controls operated effectively"
+  restricted_use:
+    heading: "Restricted Use"
+    text: >-
+      This report{tests_clause} is intended solely for the information and use of {org}; user entities of the {system} {period}; business partners of {org}
+      that are subject to risks arising from interactions with the system; practitioners who provide services to such
+      user entities and business partners; prospective user entities and business partners; and regulators. These
+      parties are expected to understand the nature of the service provided, how the system interacts with user
+      entities and business partners, internal control and its limitations, complementary controls and how they
+      interact with the service organization's controls, the applicable trust services criteria, and the risks that
+      may threaten the achievement of the service commitments and system requirements. This report is not intended
+      to be, and should not be, used by anyone other than these specified parties. It is an AI Audit. It is not an
+      official SOC 2 report and must not be presented as one.
+
+section2:
+  title: "{org}'s Management Assertion"
+  intro: >-
+    We have prepared the accompanying description of {org}'s {system} {period} (the description) based on the
+    description criteria in {description_criteria}. The description is intended to give users information about the
+    system that may be useful in understanding the risks arising from interactions with it, particularly information
+    about the suitability of design{and_oe_lc} of the controls stated in it to meet the applicable trust services
+    criteria set forth in {trust_services_criteria}.
+  confirm: "We confirm, to the best of our knowledge and belief, that:"
+  items:
+    description: "the description presents the {system} that was designed and implemented {period} in accordance with the description criteria;"
+    design: "the controls stated in the description were suitably designed {period} to provide reasonable assurance that our service commitments and system requirements would be achieved based on the applicable trust services criteria, if the controls operated effectively{complementary_mgmt};"
+    operating: "the controls stated in the description operated effectively {period} to provide reasonable assurance that our service commitments and system requirements were achieved based on the applicable trust services criteria{complementary_mgmt}."
+  complementary_mgmt: ", and if the complementary controls assumed in the design of our controls operated effectively"
+  signature: "Management of {org}"
+
+section3:
+  title: "{org}'s Description of Its {system}"
+  unapproved: >-
+    This system description is not marked management-approved.
+  omitted: >-
+    A system description for readers of this report has not been provided. Text pulled from the compliance
+    system is evidence and is not printed here.
+  headings:
+    overview: "Company Overview"
+    services: "Services Provided"
+    commitments: "Principal Service Commitments and System Requirements"
+    components: "Components of the System"
+    boundaries: "System Boundaries"
+    subservice_organizations: "Subservice Organizations and Complementary Subservice Organization Controls"
+    cuecs: "Complementary User Entity Controls"
+    incidents: "System Incidents"
+    changes: "Significant Changes During the Period"
+  component_names:
+    infrastructure: "Infrastructure"
+    software: "Software"
+    people: "People"
+    procedures: "Procedures"
+    data: "Data"
+
+section4:
+  title: "Trust Services Criteria, Related Controls, and Tests of Controls"
+  intro:
+    type2: >-
+      This section lists, for each applicable trust services criterion, the controls {org} has in place, the tests
+      this AI Audit performed {period}, and the results. The criteria and the controls that address them are the
+      responsibility of {org}; the tests and results are the responsibility of this AI Audit.
+    type1: >-
+      This section lists, for each applicable trust services criterion, the controls {org} has in place {period}.
+      The criteria and controls are the responsibility of {org}. This AI Audit evaluated the suitability of their design
+      and confirmed that they were implemented; operating effectiveness was not tested.
+  methods: >-
+    Tests used one or more of these methods. Inquiry: asking appropriate personnel about the control. Observation:
+    watching the control being performed. Inspection: examining documents, records and system configurations for
+    evidence the control operated. Reperformance: independently executing the control and comparing results.
+    Inquiry alone was never relied on. Where a control operated many times, a sample was selected at random using
+    a recorded seed, with sample sizes based on the frequency of the control and the size of the population.
+  columns: ["Control", "Control activity", "Tests performed", "Results"]
+  columns_type1: ["Control", "Control activity"]
+  no_exceptions: "No exceptions noted."
+  not_tested: "Not tested. {reason}"
+  design_deficiency: "Control not suitably designed. {reason}"
+
+section5:
+  title: "Other Information Provided by {org}"
+  intro: >-
+    The information in this section is presented by {org} to provide additional information and is not part of the
+    description. It has not been subjected to the procedures applied in this AI Audit, and accordingly this AI Audit
+    states no conclusion on it.
+  none: "Management did not provide additional information."
+
+# Short labels and sentence fragments the renderer and the PDF layout use.
+labels:
+  lang: en                     # Typst text language (hyphenation, quotes)
+  paper: us-letter
+  auditor: "AI Audit"
+  signer_title: "AI Auditor"
+  model_unsigned: "the model that has not yet signed this AI Audit"
+  category_names: {security: security, availability: availability, confidentiality: confidentiality,
+                   processing-integrity: processing integrity, privacy: privacy}
+  title_case_categories: true  # title-case the category list in the cover title (English headline style)
+  period:
+    type1: "as of {date}"
+    type2: "throughout the period {start} to {end}"
+  period_dates:
+    type1: "{date}"
+    type2: "{start} to {end}"
+  cover_period:
+    type1: "As of {period}"
+    type2: "Throughout the period {period}"
+  subservice:
+    one: "the subservice organization {names}"
+    many: "the subservice organizations {names}"
+  fragments:                   # inserted into the sentences above; empty for Type 1
+    and_oe: " and Operating Effectiveness"
+    and_oe_lc: " and operating effectiveness"
+    or_oe: " or operating effectiveness"
+    tests_clause: ", including the description of tests of controls and their results in Section IV,"
+    and_operated: " and operated effectively"
+    and_operating: " and operating effectively"
+    or_did_not_operate: " or did not operate effectively"
+  scope_heading: "Scope"
+  signature_note: "Not an official SOC 2 audit."
+  pending_approval_suffix: " — Pending Management Approval"
+  pending_approval: >-
+    Management has not approved the system description or supplied a signed assertion for this provisional AI
+    assessment. No management assertion is made in this section.
+  list_labels:
+    csocs: "Complementary subservice organization controls assumed in the design of our controls:"
+  sample: "Sample of {sample} selected from a population of {population}."
+  group_title: "{code}: {group}"
+  # PDF layout
+  header: "AI Audit — not an official SOC 2 audit"
+  footer_final: "AI Audit. Not an official SOC 2 audit."
+  footer_draft: "Draft AI Audit. Not signed. Not an official SOC 2 audit."
+  page_of: "1 of 1"            # Typst counter pattern
+  kicker: "AI AUDIT"
+  not_official: "Not an official SOC 2 audit"
+  signed_by: "Signed by:"
+  watermark: "DRAFT"
+  draft_note: "DRAFT. Generated {generated}. Not yet signed by the model that ran the audit."
+  contents: "Contents"
+  section: "Section"
+  no_controls: "No controls are mapped to this criterion."
+  control: "Control"
+  exception_noted: "Exception noted:"
+  management_response: "Management's response:"
+  # workpapers.xlsx
+  xlsx:
+    sheets: {controls: Controls, samples: Samples, exceptions: Exceptions, evidence: Evidence}
+    controls: [Control, Criteria, Frequency, Nature, Population, Sample, Design effective, Conclusion, Exceptions,
+               Confidence, Prepared by, Control activity]
+    samples: [Control, Item, Results, Evidence, Note]
+    exceptions: [Control, Item, Description, Evidence, Management response]
+    evidence: [ID, Title, Kind, Path, SHA-256, Obtained, Date, Controls]

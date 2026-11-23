@@ -1,0 +1,109 @@
+# German text for soc2.yaml. Keys are the ids in soc2.yaml; every id there appears here.
+# Paraphrases, not AICPA text. A licensed firm can add `text:` with an official translation.
+language: de
+framework: {name: SOC 2, title: "Trust Services Criteria"}
+
+categories:
+  security: {name: Sicherheit}
+  availability: {name: Verfügbarkeit}
+  confidentiality: {name: Vertraulichkeit}
+  processing-integrity: {name: Integrität der Verarbeitung}
+  privacy: {name: Datenschutz}
+
+groups:
+  "Control Environment": Kontrollumfeld
+  "Communication and Information": Information und Kommunikation
+  "Risk Assessment": Risikobeurteilung
+  "Monitoring Activities": Überwachungsaktivitäten
+  "Control Activities": Kontrollaktivitäten
+  "Logical and Physical Access Controls": Logische und physische Zugriffskontrollen
+  "System Operations": Systembetrieb
+  "Change Management": Änderungsmanagement
+  "Risk Mitigation": Risikominderung
+  "Additional Criteria for Availability": Zusätzliche Kriterien für Verfügbarkeit
+  "Additional Criteria for Confidentiality": Zusätzliche Kriterien für Vertraulichkeit
+  "Additional Criteria for Processing Integrity": Zusätzliche Kriterien für die Integrität der Verarbeitung
+  "Notice": Information der betroffenen Personen
+  "Choice and Consent": Wahlmöglichkeiten und Einwilligung
+  "Collection": Erhebung
+  "Use, Retention, and Disposal": Nutzung, Aufbewahrung und Löschung
+  "Access": Auskunft und Zugang
+  "Disclosure and Notification": Offenlegung und Benachrichtigung
+  "Quality": Datenqualität
+  "Monitoring and Enforcement": Überwachung und Durchsetzung
+
+items:
+  # CC1 Kontrollumfeld
+  CC1.1: {summary: "Das Unternehmen verpflichtet sich nachweislich zu Integrität und ethischen Werten."}
+  CC1.2: {summary: "Das Aufsichtsorgan ist von der Unternehmensleitung unabhängig und überwacht Ausgestaltung und Wirksamkeit des internen Kontrollsystems."}
+  CC1.3: {summary: "Die Unternehmensleitung legt unter Aufsicht des Aufsichtsorgans Strukturen, Berichtswege, Befugnisse und Verantwortlichkeiten zur Erreichung der Ziele fest."}
+  CC1.4: {summary: "Das Unternehmen gewinnt, entwickelt und bindet fachlich geeignete Mitarbeitende im Einklang mit seinen Zielen."}
+  CC1.5: {summary: "Das Unternehmen zieht Personen für ihre Aufgaben im internen Kontrollsystem zur Verantwortung."}
+  # CC2 Information und Kommunikation
+  CC2.1: {summary: "Das Unternehmen beschafft oder erzeugt relevante, qualitativ hochwertige Informationen und nutzt sie zur Unterstützung des internen Kontrollsystems."}
+  CC2.2: {summary: "Das Unternehmen kommuniziert Ziele und Verantwortlichkeiten des internen Kontrollsystems intern."}
+  CC2.3: {summary: "Das Unternehmen kommuniziert mit externen Parteien über Sachverhalte, die das interne Kontrollsystem beeinflussen."}
+  # CC3 Risikobeurteilung
+  CC3.1: {summary: "Ziele werden so klar festgelegt, dass die damit verbundenen Risiken identifiziert und beurteilt werden können."}
+  CC3.2: {summary: "Risiken für die Zielerreichung werden unternehmensweit identifiziert und analysiert, um über den Umgang mit ihnen zu entscheiden."}
+  CC3.3: {summary: "Bei der Risikobeurteilung wird das Potenzial für dolose Handlungen berücksichtigt."}
+  CC3.4: {summary: "Veränderungen, die das interne Kontrollsystem wesentlich beeinflussen können, werden identifiziert und beurteilt."}
+  # CC4 Überwachungsaktivitäten
+  CC4.1: {summary: "Laufende oder gesonderte Beurteilungen bestätigen, dass die Komponenten des internen Kontrollsystems vorhanden und funktionsfähig sind."}
+  CC4.2: {summary: "Mängel im internen Kontrollsystem werden beurteilt und rechtzeitig an die für Korrekturmaßnahmen Verantwortlichen kommuniziert."}
+  # CC5 Kontrollaktivitäten
+  CC5.1: {summary: "Kontrollaktivitäten werden ausgewählt und entwickelt, um Risiken auf ein akzeptables Maß zu reduzieren."}
+  CC5.2: {summary: "Generelle IT-Kontrollaktivitäten werden ausgewählt und entwickelt."}
+  CC5.3: {summary: "Kontrollaktivitäten werden durch Richtlinien und die zu ihrer Umsetzung dienenden Verfahren eingeführt."}
+  # CC6 Logische und physische Zugriffskontrollen
+  CC6.1: {summary: "Software, Infrastruktur und Architektur für die logische Zugriffssicherheit schützen die Informationswerte."}
+  CC6.2: {summary: "Neue Benutzer werden vor der Ausgabe von Zugangsdaten registriert und autorisiert, und Zugangsdaten werden entzogen, sobald sie nicht mehr benötigt werden."}
+  CC6.3: {summary: "Zugriffsrechte werden auf Grundlage von Rollen, dem Prinzip der minimalen Rechte und der Funktionstrennung erteilt, geändert und entzogen."}
+  CC6.4: {summary: "Der physische Zugang zu Einrichtungen und geschützten Informationswerten ist auf autorisierte Personen beschränkt."}
+  CC6.5: {summary: "Logische und physische Schutzmaßnahmen werden erst aufgehoben, nachdem die Daten von ausgesonderten Vermögenswerten entfernt wurden."}
+  CC6.6: {summary: "Maßnahmen der logischen Zugriffssicherheit schützen vor Bedrohungen von außerhalb der Systemgrenzen."}
+  CC6.7: {summary: "Übertragung, Verschiebung und Entfernung von Informationen sind auf autorisierte Parteien beschränkt und geschützt."}
+  CC6.8: {summary: "Kontrollen verhindern oder erkennen nicht autorisierte oder schädliche Software und leiten Gegenmaßnahmen ein."}
+  # CC7 Systembetrieb
+  CC7.1: {summary: "Erkennungs- und Überwachungsmaßnahmen identifizieren Konfigurationsänderungen und neu entdeckte Schwachstellen."}
+  CC7.2: {summary: "Systemkomponenten werden auf Anomalien überwacht, die auf böswillige Handlungen, Fehler oder Naturereignisse hindeuten können."}
+  CC7.3: {summary: "Sicherheitsereignisse werden beurteilt, um zu entscheiden, ob es sich um Vorfälle handelt, die eine Reaktion erfordern."}
+  CC7.4: {summary: "Identifizierte Sicherheitsvorfälle werden im Rahmen eines festgelegten Programms zur Reaktion auf Vorfälle behandelt."}
+  CC7.5: {summary: "Wiederherstellungsmaßnahmen nach Sicherheitsvorfällen werden identifiziert, entwickelt und durchgeführt."}
+  # CC8 Änderungsmanagement
+  CC8.1: {summary: "Änderungen an Infrastruktur, Daten, Software und Verfahren werden autorisiert, konzipiert, dokumentiert, getestet, freigegeben und umgesetzt."}
+  # CC9 Risikominderung
+  CC9.1: {summary: "Maßnahmen zur Risikominderung werden für Risiken aus möglichen Geschäftsunterbrechungen ausgewählt und entwickelt."}
+  CC9.2: {summary: "Risiken im Zusammenhang mit Lieferanten und Geschäftspartnern werden beurteilt und gesteuert."}
+  # A1 Verfügbarkeit
+  A1.1: {summary: "Die Verarbeitungskapazität wird aufrechterhalten, überwacht und beurteilt, und die Nachfrage wird gesteuert, damit Verpflichtungen eingehalten werden können."}
+  A1.2: {summary: "Umgebungsschutzmaßnahmen, Software, Datensicherung und Wiederherstellungsinfrastruktur werden autorisiert, aufgebaut, betrieben und überwacht."}
+  A1.3: {summary: "Die Verfahren des Wiederherstellungsplans, die die Systemwiederherstellung unterstützen, werden getestet."}
+  # C1 Vertraulichkeit
+  C1.1: {summary: "Vertrauliche Informationen werden identifiziert und gemäß den eingegangenen Verpflichtungen vertraulich behandelt."}
+  C1.2: {summary: "Vertrauliche Informationen werden gemäß den eingegangenen Verpflichtungen entsorgt."}
+  # PI1 Integrität der Verarbeitung
+  PI1.1: {summary: "Relevante, qualitativ hochwertige Informationen über die Verarbeitungsziele, einschließlich Datendefinitionen und Produktspezifikationen, werden beschafft und genutzt."}
+  PI1.2: {summary: "Richtlinien und Verfahren für Systemeingaben führen zu vollständigen und richtigen Eingaben."}
+  PI1.3: {summary: "Richtlinien und Verfahren für die Verarbeitung führen zu Produkten und Dienstleistungen, die den Spezifikationen entsprechen."}
+  PI1.4: {summary: "Richtlinien und Verfahren stellen Ausgaben vollständig, richtig und zeitgerecht ausschließlich den vorgesehenen Empfängern bereit."}
+  PI1.5: {summary: "Eingaben, in Verarbeitung befindliche Daten und Ausgaben werden vollständig, richtig und zeitgerecht gespeichert."}
+  # P Datenschutz
+  P1.1: {summary: "Betroffene Personen werden über die Datenschutzpraktiken informiert."}
+  P2.1: {summary: "Wahlmöglichkeiten zu Erhebung, Nutzung, Aufbewahrung, Offenlegung und Löschung werden mitgeteilt, und die Einwilligung wird eingeholt."}
+  P3.1: {summary: "Personenbezogene Daten werden nur in dem für die Ziele des Unternehmens erforderlichen Umfang erhoben."}
+  P3.2: {summary: "Wo erforderlich, wird vor der Erhebung personenbezogener Daten eine ausdrückliche Einwilligung eingeholt."}
+  P4.1: {summary: "Die Nutzung personenbezogener Daten ist auf die angegebenen Zwecke beschränkt."}
+  P4.2: {summary: "Personenbezogene Daten werden nur so lange aufbewahrt, wie es erforderlich ist."}
+  P4.3: {summary: "Personenbezogene Daten werden sicher gelöscht oder vernichtet."}
+  P5.1: {summary: "Betroffene Personen können auf ihre gespeicherten personenbezogenen Daten zugreifen."}
+  P5.2: {summary: "Personenbezogene Daten werden auf Verlangen der betroffenen Personen berichtigt, geändert oder ergänzt."}
+  P6.1: {summary: "Personenbezogene Daten werden nur für festgelegte Zwecke und mit Einwilligung an Dritte offengelegt."}
+  P6.2: {summary: "Autorisierte Offenlegungen personenbezogener Daten werden vollständig und richtig aufgezeichnet."}
+  P6.3: {summary: "Nicht autorisierte Offenlegungen, einschließlich Datenschutzverletzungen, werden vollständig und richtig aufgezeichnet."}
+  P6.4: {summary: "Von Lieferanten und Dritten, die personenbezogene Daten verarbeiten, werden Datenschutzverpflichtungen eingeholt."}
+  P6.5: {summary: "Lieferanten und Dritte sind verpflichtet, tatsächliche oder vermutete nicht autorisierte Offenlegungen zu melden."}
+  P6.6: {summary: "Betroffene Personen, Aufsichtsbehörden und weitere Beteiligte werden über Datenschutzverletzungen und Vorfälle benachrichtigt."}
+  P6.7: {summary: "Betroffene Personen können eine Aufstellung ihrer personenbezogenen Daten und deren Offenlegungen erhalten."}
+  P7.1: {summary: "Personenbezogene Daten werden richtig, vollständig und relevant gehalten."}
+  P8.1: {summary: "Datenschutzanfragen, Beschwerden und Streitfälle werden entgegengenommen, bearbeitet und überwacht."}

@@ -1,0 +1,37 @@
+# Framework profile for the requirements engine (scripts/engine/, copied from
+# shared/engines/requirements by tools/sync.py). The wording is in assets/report/text/<lang>.yaml.
+framework: nis2
+name: NIS2 (Directive (EU) 2022/2555)
+cli: nis2.py
+report_stem: nis2
+not_official: It is not an audit, inspection or decision of a competent authority, not a security audit under Art. 32(2)(b) NIS2 or national law (such as § 61 BSIG), and not legal advice.
+scope_help: the services and entity in scope, as the report prints them
+id_examples: Art.21(2)(d), IR.6.6
+
+audit_types:
+  assessment: {label: Assessment, as_of: true}
+  audit: {label: Audit}
+
+applicability:
+  always: [scoping]                              # Art. 3 and 26 (classification, jurisdiction) always apply
+  # Directive obligations bind essential and important entities; the annex of
+  # Implementing Regulation (EU) 2024/2690 binds the digital providers it lists.
+  scope: {field: applies_to, config: entity_types, choices: [essential, important, digital-providers],
+          help: "essential or important, plus digital-providers when Implementing Regulation (EU) 2024/2690 applies"}
+
+description:
+  file: context.yaml
+  label: entity scope and context
+  fields: [scope_statement, services, role, boundaries]
+  request_requirement: Art.3
+
+# Governance by the management body is reported on in every audit.
+always_reported: ["Art.20"]
+always_reported_label: management body governance (Art. 20)
+
+report:
+  plain_group_prefixes: []
+  highlights:
+    - {key: governance, requirements: ["Art.20(1)", "Art.20(2)"]}
+    - {key: risk_management, requirements: ["Art.21(1)", "Art.21(2)(f)"]}
+    - {key: reporting, requirements: ["Art.23(3)", "Art.23(4)(a)", "Art.23(4)(b)", "Art.23(4)(c)", "Art.23(4)(d)"]}

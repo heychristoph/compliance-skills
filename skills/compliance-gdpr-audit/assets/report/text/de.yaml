@@ -1,0 +1,314 @@
+# Berichtstext für ein KI-Audit (AI Audit) nach der DSGVO (Verordnung (EU) 2016/679).
+#
+# Der Aufbau folgt den Inhalten eines Auditberichts für Managementsysteme (ISO 19011:2018,
+# 6.5.1), mit der DSGVO als Auditkriterien. Das Dokument ist ein KI-Audit. Es ist weder
+# eine Prüfung, Untersuchung oder Entscheidung einer Datenschutz-Aufsichtsbehörde noch
+# eine Zertifizierung nach Art. 42 DSGVO; es wird nicht von einer nach Art. 43
+# akkreditierten Zertifizierungsstelle herausgegeben, und es ist keine Rechtsberatung.
+#
+# Die Schlüssel sind dieselben wie in en.yaml (siehe dort). Einige tragen Namen aus
+# ISO/IEC 27001 (stage1 steht für eine Bewertung zum Stichtag).
+#
+# Platzhalter: {org} {scope} {model} {type_label} {period} {period_dates}
+# {standard} {standard_full} {certification} {scope_values} {applicable} {excluded}
+# {sampled} {majors} {minors} {ofis} {representative}
+
+standards:
+  full: "Verordnung (EU) 2016/679 des Europäischen Parlaments und des Rates vom 27. April 2016 zum Schutz natürlicher Personen bei der Verarbeitung personenbezogener Daten, zum freien Datenverkehr und zur Aufhebung der Richtlinie 95/46/EG (Datenschutz-Grundverordnung)"
+  short: "Verordnung (EU) 2016/679 (DSGVO)"
+  certification: "Art. 42 und 43 DSGVO"
+  auditing: "ISO 19011:2018"
+
+audit_types:
+  assessment:
+    label: "Bewertung zum Stichtag (Dokumentation und Umsetzungsstand)"
+    period_heading: "Dokumentation geprüft mit Stand vom"
+    objectives:
+      - "Feststellung der Rollen der Organisation als Verantwortlicher und als Auftragsverarbeiter für die Verarbeitungen im Auditumfang sowie der Pflichten der Verordnung, die sich aus diesen Rollen ergeben;"
+      - "Prüfung der Datenschutzdokumentation der Organisation, einschließlich des Verzeichnisses von Verarbeitungstätigkeiten, der Richtlinien, der Datenschutzhinweise, der Auftragsverarbeitungsverträge, der Garantien für Drittlandübermittlungen und des Verfahrens bei Verletzungen des Schutzes personenbezogener Daten;"
+      - "Bewertung, ob die Prozesse, die die Verordnung verlangt (Anträge betroffener Personen, Meldung von Datenschutzverletzungen, Steuerung von Auftragsverarbeitern, Datenschutz-Folgenabschätzung, internationale Übermittlungen), zum Stichtag angemessen gestaltet und eingerichtet sind;"
+      - "Bewertung, wie die Organisation die Einhaltung nachweist (Rechenschaftspflicht, Art. 5 Abs. 2 und Art. 24);"
+      - "Ermittlung von Lücken, die in einem Audit von Aufzeichnungen über einen Zeitraum als Abweichungen festgestellt würden."
+  audit:
+    label: "Audit von Aufzeichnungen über einen Zeitraum"
+    period_heading: "Stichprobe aus Aufzeichnungen vom"
+    objectives:
+      - "Bewertung, ob die Verarbeitungen im Auditumfang die Pflichten der Verordnung erfüllt haben, die sich aus den Rollen der Organisation als Verantwortlicher und als Auftragsverarbeiter ergeben;"
+      - "Bewertung der Durchführung der Datenschutzprozesse der Organisation im Zeitraum anhand von Stichproben aus Aufzeichnungen, etwa zu Anträgen betroffener Personen, Verletzungen des Schutzes personenbezogener Daten, neuen Auftragsverarbeitern, Änderungen bei weiteren Auftragsverarbeitern, neuen Verarbeitungstätigkeiten und personellen Veränderungen;"
+      - "Bewertung des Verzeichnisses von Verarbeitungstätigkeiten (Art. 30) und der Sicherheit der Verarbeitung (Art. 32);"
+      - "Bewertung, wie die Organisation die Einhaltung nachweist (Rechenschaftspflicht, Art. 5 Abs. 2 und Art. 24);"
+      - "Schlussfolgerung, ob die Verarbeitungen im Auditumfang im Zeitraum die Verordnung eingehalten haben, soweit die geprüften Nachweise dies zeigen."
+
+cover:
+  kicker: "KI-Audit"
+  disclaimer: "Keine Prüfung, Untersuchung oder Entscheidung einer Datenschutz-Aufsichtsbehörde. Keine Zertifizierung nach Art. 42 DSGVO. Keine Rechtsberatung. Auf Grundlage dieses Berichts wird kein Zertifikat, Siegel oder Prüfzeichen erteilt, und es kann auch keines erteilt werden."
+  title: "KI-Audit der Verarbeitung personenbezogener Daten durch {org} nach der {standard}"
+  restricted: "Dieses KI-Audit ist weder eine Zertifizierung nach der DSGVO noch eine Feststellung einer Aufsichtsbehörde noch eine Rechtsberatung und darf nicht als eines davon dargestellt werden."
+
+section1:
+  title: "KI-Auditbericht"
+  notice: >-
+    Dies ist ein KI-Audit (AI Audit), erstellt und unterzeichnet von {model}. Es legt die DSGVO als Auditkriterien
+    zugrunde und folgt der Methodik eines Managementsystem-Audits (ISO 19011:2018). Es ist keine Prüfung, Untersuchung
+    oder Entscheidung einer Datenschutz-Aufsichtsbehörde, keine Zertifizierung nach {certification} und keine
+    Rechtsberatung. Ob eine Verarbeitung mit der DSGVO vereinbar ist, können nur eine Aufsichtsbehörde oder ein Gericht
+    entscheiden.
+  notice_unsigned: >-
+    Dies ist ein KI-Audit (AI Audit). Es ist noch nicht unterzeichnet. Es legt die DSGVO als Auditkriterien zugrunde
+    und folgt der Methodik eines Managementsystem-Audits (ISO 19011:2018). Es ist keine Prüfung, Untersuchung oder
+    Entscheidung einer Datenschutz-Aufsichtsbehörde, keine Zertifizierung nach {certification} und keine
+    Rechtsberatung. Ob eine Verarbeitung mit der DSGVO vereinbar ist, können nur eine Aufsichtsbehörde oder ein Gericht
+    entscheiden.
+  addressee: "An die Leitung von {org}"
+  facts_heading: "Angaben zum Audit"
+  facts:
+    organization: "Organisation"
+    representative: "Vertretung der Organisation"
+    audit_type: "Auditart"
+    criteria: "Auditkriterien"
+    records: "Zeitraum"
+    auditor: "Durchgeführt und unterzeichnet von"
+    method: "Auditmethode"
+    method_value: "Remote-Prüfung eines gehashten Nachweispakets; keine Begehung vor Ort und keine Interviews"
+  criteria: >-
+    {standard_full}; das Verzeichnis von Verarbeitungstätigkeiten, die Datenschutzrichtlinien und -verfahren, die
+    Datenschutzhinweise und die Auftragsverarbeitungsverträge der Organisation; sowie die Vorschriften des Rechts der
+    Mitgliedstaaten zur Ergänzung der Verordnung, die die Organisation als zutreffend ermittelt hat.
+  objectives_heading: "Auditziele"
+  objectives_intro: "Ziele dieses Audits waren:"
+  scope_heading: "Auditumfang"
+  scope: >-
+    Die Verarbeitung personenbezogener Daten durch {org} (Rollen nach der Verordnung: {scope_values}) mit dem
+    Auditumfang: {scope}
+  coverage:
+    full: >-
+      Das Audit umfasste die {applicable} Pflichten der Verordnung, die sich aus den Rollen der Organisation ergeben.
+      Nicht umfasst waren die {excluded} Pflichten, die nur andere Rollen treffen oder Verhaltensregeln und
+      Zertifizierungsverfahren (Art. 40 bis 43) betreffen, auf die sich die Organisation nicht stützt. Teil V führt jede
+      Pflicht auf und gibt an, warum sie gilt oder nicht.
+    surveillance: >-
+      Dieses Audit umfasste eine Stichprobe von {sampled} der {applicable} Pflichten der Verordnung, die sich aus den
+      Rollen der Organisation ergeben. Welche dies sind, zeigt Teil V.
+  method_heading: "Auditmethode"
+  method: >-
+    Der im Auftrag benannte Konnektor hat die Nachweise der Organisation in einem Paket zusammengeführt; jede Datei
+    wurde bei Eingang gehasht. Jede Maßnahme, die die Organisation betreibt, und jede Pflicht, der keine Maßnahme
+    zugeordnet ist, wurde anhand der dokumentierten Information und der Aufzeichnungen in diesem Paket durch
+    Einsichtnahme und, soweit möglich, durch erneute Durchführung auditiert. Wo eine Tätigkeit häufig stattfand
+    (Anträge betroffener Personen, Datenschutzverletzungen, neue Auftragsverarbeiter), wurden Elemente mithilfe eines
+    aufgezeichneten Startwerts („Seed“) zufällig ausgewählt. Feststellungen werden mit dem objektiven Nachweis, auf dem
+    sie beruhen, zu einer bestimmten Vorschrift der Verordnung erfasst und als Hauptabweichungen, Nebenabweichungen oder
+    Verbesserungspotenziale eingestuft.
+  sampling: >-
+    Das Audit beruht auf Stichproben aus den verfügbaren Informationen. Es können Abweichungen bestehen, die dieses
+    Audit nicht festgestellt hat; das Fehlen einer Feststellung bedeutet weder, dass keine Abweichungen bestehen, noch,
+    dass die Verarbeitung in jeder Hinsicht mit der Verordnung vereinbar ist.
+  summary_heading: "Zusammenfassung der Feststellungen"
+  summary_counts: "Dieses Audit hat folgende Feststellungen ergeben: Hauptabweichungen: {majors}, Nebenabweichungen: {minors}, Verbesserungspotenziale: {ofis}. Jede Feststellung ist in Teil III dargestellt."
+  grades:
+    major: "Hauptabweichung: Eine Pflicht der Verordnung ist so nicht erfüllt, dass ein erforderlicher Prozess oder eine erforderliche Dokumentation fehlt oder versagt hat oder die Rechte betroffener Personen ungeschützt bleiben."
+    minor: "Nebenabweichung: Eine Pflicht der Verordnung ist in einem Einzelfall nicht erfüllt, ohne dass der Prozess, der sie erfüllt, fehlt oder unwirksam ist."
+    ofi: "Verbesserungspotenzial: Die Pflicht ist erfüllt, das Audit hat jedoch eine Möglichkeit zur Verbesserung des Datenschutzes der Organisation festgestellt."
+  stage1_grades: "Bei einer Bewertung zum Stichtag sind Feststellungen Lücken in der Dokumentation und den Prozessen zum Stichtag. Ihre Einstufung gibt an, wie sie in einem Audit von Aufzeichnungen über einen Zeitraum zu bewerten wären."
+  conformity_heading: "Rechtskonformität der Verarbeitung und Wirksamkeit des Datenschutzes"
+  highlights_heading: "Rechenschaftspflicht, Verzeichnis, Sicherheit und Datenschutzverletzungen"
+  highlights:
+    accountability: "Rechenschaftspflicht (Art. 5 Abs. 2 und Art. 24): {result}"
+    records: "Verzeichnis von Verarbeitungstätigkeiten (Art. 30): {result}"
+    security: "Sicherheit der Verarbeitung (Art. 32): {result}"
+    breaches: "Verletzungen des Schutzes personenbezogener Daten (Art. 33 und 34): {result}"
+  scope_appropriate_heading: "Angemessenheit des Auditumfangs"
+  scope_appropriate:
+    "yes": "Der Auditumfang und die angegebenen Rollen der Organisation sind den Verarbeitungen personenbezogener Daten, die sie durchführt, angemessen."
+    "no": "Der Auditumfang oder die angegebenen Rollen der Organisation sind den Verarbeitungen personenbezogener Daten, die sie durchführt, nicht angemessen."
+  objectives_met_heading: "Erfüllung der Auditziele"
+  objectives_met:
+    "yes": "Die Auditziele wurden erfüllt."
+    "no": "Die Auditziele wurden aufgrund der nachstehend beschriebenen Einschränkungen des Auditumfangs nicht vollständig erfüllt."
+  limitations_heading: "Einschränkungen des Auditumfangs"
+  recommendation_heading: "Schlussfolgerung"
+  recommendation:
+    assessment:
+      recommended: "Konform zum Stichtag: Die geprüfte Dokumentation und die geprüften Prozesse erfüllen die Pflichten der Verordnung, die sich aus den Rollen der Organisation ergeben. Es wurden keine Lücken festgestellt."
+      recommended-with-actions: "Konform mit Korrekturmaßnahmen zum Stichtag: Die geprüfte Dokumentation und die geprüften Prozesse erfüllen die Pflichten der Verordnung, die sich aus den Rollen der Organisation ergeben, mit Ausnahme der Nebenabweichungen in Teil III. Jede erfordert Korrektur und Korrekturmaßnahme durch die Organisation; bestehen sie bei einem Audit von Aufzeichnungen über einen Zeitraum noch, wären sie Abweichungen."
+      not-recommended: "Nicht konform zum Stichtag: Die Hauptabweichungen in Teil III zeigen, dass Pflichten der Verordnung, die sich aus den Rollen der Organisation ergeben, nicht erfüllt sind. Eine Konformität kann erst festgestellt werden, wenn Korrektur und Korrekturmaßnahme zu jeder dieser Abweichungen umgesetzt und verifiziert sind."
+      no-conclusion: "Aufgrund der oben beschriebenen Einschränkungen des Auditumfangs wird keine Schlussfolgerung zur Konformität zum Stichtag gezogen."
+    audit:
+      recommended: "Konform: Die Verarbeitungen im Auditumfang haben im Zeitraum die Pflichten der Verordnung erfüllt, die sich aus den Rollen der Organisation ergeben, soweit die geprüften Nachweise dies zeigen. Es wurden keine Abweichungen festgestellt."
+      recommended-with-actions: "Konform mit Korrekturmaßnahmen: Die Verarbeitungen im Auditumfang haben im Zeitraum die Pflichten der Verordnung erfüllt, die sich aus den Rollen der Organisation ergeben, soweit die geprüften Nachweise dies zeigen, mit Ausnahme der Nebenabweichungen in Teil III. Jede erfordert Korrektur und Korrekturmaßnahme durch die Organisation."
+      not-recommended: "Nicht konform: Die Hauptabweichungen in Teil III zeigen, dass Pflichten der Verordnung, die sich aus den Rollen der Organisation ergeben, im Zeitraum nicht erfüllt wurden. Eine Konformität kann erst festgestellt werden, wenn Korrektur und Korrekturmaßnahme zu jeder Hauptabweichung umgesetzt und verifiziert sind."
+      no-conclusion: "Aufgrund der oben beschriebenen Einschränkungen des Auditumfangs wird keine Schlussfolgerung zur Konformität gezogen."
+  ai_disclaimer: >-
+    Diese Schlussfolgerungen sind die des Modells und beruhen ausschließlich auf den Nachweisen im Paket. Sie sind
+    keine Rechtsberatung und binden niemanden. Ob eine Verarbeitung mit der Verordnung vereinbar ist, können nur die
+    zuständige Aufsichtsbehörde oder ein Gericht entscheiden, und eine Zertifizierung nach Art. 42 können nur eine nach
+    Art. 43 akkreditierte Zertifizierungsstelle oder eine Aufsichtsbehörde erteilen.
+  independence_heading: "Unabhängigkeit und Einschränkungen"
+  independence: >-
+    Das Modell, das dieses KI-Audit unterzeichnet, ist keine Datenschutz-Aufsichtsbehörde, keine nach {certification}
+    akkreditierte Zertifizierungsstelle, nicht der Datenschutzbeauftragte der Organisation und kein Rechtsanwalt, und
+    es ist nicht unabhängig in dem Sinne, wie es von einer Zertifizierungsstelle verlangt wird. Es hat keine Standorte
+    besucht, weder Personal noch betroffene Personen befragt und nicht auf die Systeme der Organisation zugegriffen; es
+    stützte sich auf die dokumentierte Information und die Aufzeichnungen, die die Systeme der Organisation
+    bereitgestellt haben.
+  restricted_use_heading: "Verwendung dieses Berichts"
+  restricted_use: >-
+    Dieser Bericht ist für die Leitung von {org} bestimmt sowie für Parteien, denen {org} ihn zur Beschreibung des
+    Stands ihres Datenschutzes zugänglich macht. Er ist ein KI-Audit. Er ist weder eine Zertifizierung, ein Siegel oder
+    ein Prüfzeichen nach {certification} noch eine Feststellung einer Aufsichtsbehörde noch eine Rechtsberatung. Er
+    berechtigt {org} weder, eine Zertifizierung für sich in Anspruch zu nehmen, noch, ein Datenschutzsiegel oder
+    -prüfzeichen zu verwenden, und er darf nicht als eines davon dargestellt werden.
+  signature_footer: "Keine Zertifizierung nach der DSGVO. Keine Rechtsberatung."
+
+section2:
+  title: "Verarbeitungen im Auditumfang und Kontext"
+  intro: >-
+    Dieser Teil enthält die Beschreibung der Verarbeitungen im Auditumfang und ihres Kontexts durch die Organisation.
+    Es handelt sich um dokumentierte Information der Organisation, nicht um eine Schlussfolgerung dieses KI-Audits.
+  unapproved: "Diese Beschreibung ist nicht als von der Leitung freigegeben gekennzeichnet."
+  omitted: >-
+    Eine Beschreibung der Verarbeitungen im Auditumfang und ihres Kontexts für die Leser dieses Berichts wurde nicht
+    bereitgestellt. Aus dem Compliance-System übernommener Text ist Nachweismaterial und wird hier nicht abgedruckt.
+  headings:
+    scope_statement: "Verarbeitungen im Auditumfang"
+    services: "Leistungen, betroffene Personen und personenbezogene Daten"
+    role: "Rollen der Organisation nach der Verordnung"
+    boundaries: "Abgrenzung"
+    sites: "Standorte"
+    outsourced: "Auftragsverarbeiter und wesentliche Dienstleister"
+    changes: "Wesentliche Änderungen"
+    people: "Organisation und Zuständigkeiten"
+    processes: "Datenschutzprozesse"
+
+section3:
+  title: "Auditfeststellungen"
+  intro: >-
+    Jede Feststellung ist zu genau einer Vorschrift der Verordnung erfasst, mit einer Beschreibung der Abweichung und
+    dem objektiven Nachweis, auf dem sie beruht. Dieses KI-Audit nennt weder die Ursache einer Abweichung noch deren
+    Lösung, und es bewertet weder Bußgelder noch andere rechtliche Folgen; von der Organisation wird erwartet, die
+    Ursache zu analysieren sowie Korrektur und Korrekturmaßnahme zu planen.
+  intro_stage1: >-
+    Bei einer Bewertung zum Stichtag sind Feststellungen Lücken in der Dokumentation und den Prozessen zum Stichtag.
+    Jede ist zu genau einer Vorschrift der Verordnung erfasst, mit dem objektiven Nachweis, auf dem sie beruht, und so
+    eingestuft, wie sie in einem Audit von Aufzeichnungen über einen Zeitraum einzustufen wäre.
+  none: "Es wurden keine Abweichungen und keine Verbesserungspotenziale festgestellt."
+  labels:
+    requirement: "Vorschrift"
+    statement: "Beschreibung"
+    statement_ofi: "Verbesserungspotenzial"
+    evidence: "Objektiver Nachweis"
+    units: "Zugehörige Auditeinheiten"
+  grade_names:
+    major: "Hauptabweichung"
+    minor: "Nebenabweichung"
+    ofi: "Verbesserungspotenzial"
+
+section4:
+  title: "Pflichten, Maßnahmen und Auditergebnisse"
+  intro: >-
+    Dieser Teil führt für jede Pflicht im Auditumfang die Maßnahmen auf, die {org} zu ihrer Erfüllung betreibt, die
+    Prüfhandlungen, die dieses KI-Audit durchgeführt hat, und die Ergebnisse. Für die Maßnahmen ist {org}
+    verantwortlich; für die Prüfhandlungen und Ergebnisse ist dieses KI-Audit verantwortlich. Ist einer Pflicht keine
+    Maßnahme zugeordnet, wurde die Pflicht unmittelbar anhand der dokumentierten Information und der Aufzeichnungen
+    der Organisation auditiert.
+  methods: >-
+    Die Prüfhandlungen nutzten eine oder mehrere der folgenden Methoden. Einsichtnahme: Untersuchung von Dokumenten,
+    Aufzeichnungen und Systemkonfigurationen. Erneute Durchführung: unabhängige Ausführung einer Maßnahme und
+    Vergleich des Ergebnisses. Beobachtung: Untersuchung des laufenden Verhaltens eines Systems, wie es in einem Export
+    aufgezeichnet ist. Befragung: Berücksichtigung schriftlicher Aussagen der Organisation; eine Befragung allein galt
+    nie als ausreichender Nachweis. Wo eine Tätigkeit häufig stattfand, wurde mithilfe eines aufgezeichneten
+    Startwerts („Seed“) eine Zufallsstichprobe gezogen; der Stichprobenumfang richtete sich nach der Häufigkeit der
+    Tätigkeit und der Größe der Grundgesamtheit.
+  columns: ["Vorschrift", "Einheit", "Maßnahmenbeschreibung", "Durchgeführte Prüfhandlungen", "Ergebnis"]
+  conforming: "Keine Auffälligkeiten festgestellt."
+  not_audited: "Nicht auditiert. {reason}"
+  design_gap: "Nicht angemessen gestaltet. {reason}"
+  not_sampled: "Nicht Gegenstand dieses Audits."
+
+section5:
+  title: "Anwendbarkeit der Pflichten"
+  intro: >-
+    Für die Verarbeitungen im Auditumfang hat die Organisation nach der Verordnung folgende Rollen: {scope_values}. Von
+    den Pflichten im Katalog dieses Audits gelten {applicable} für diese Rollen und {excluded} nicht, weil sie nur
+    andere Rollen treffen oder Verhaltensregeln und Zertifizierung (Art. 40 bis 43) betreffen, auf die sich die
+    Organisation nicht stützt. Die Tabelle zeigt für jede Pflicht, ob sie gilt, den Grund, wenn sie nicht gilt, und das
+    Ergebnis dieses Audits. Art. 1 bis 4 und Art. 23 begründen keine Pflicht, die eine Organisation unmittelbar
+    nachweist, und sind nicht aufgeführt.
+  missing: >-
+    Die Rollen der Organisation nach der Verordnung ließen sich aus den Nachweisen nicht feststellen. Für dieses Audit
+    wurde jede Pflicht als anwendbar behandelt.
+  columns: ["Vorschrift", "Titel", "Anwendbar", "Grund der Nichtanwendbarkeit", "Auditergebnis"]
+  results:
+    conforming: "Konform"
+    excluded: "Nicht anwendbar"
+    not_audited: "Nicht auditiert"
+    not_sampled: "Nicht in der Stichprobe dieses Audits"
+
+section6:
+  title: "Stellungnahme der Organisation zu den Feststellungen"
+  intro: >-
+    Die Informationen in diesem Teil sind die eigene Stellungnahme der Organisation zu den Feststellungen,
+    einschließlich ergriffener oder geplanter Korrekturen und Korrekturmaßnahmen. Sie wurden von diesem KI-Audit nicht
+    verifiziert, sofern nicht ein späteres Audit dies ausweist.
+  none: "Die Organisation hat keine Stellungnahme zu den Feststellungen abgegeben."
+
+# Kurze Bezeichnungen und Sätze, die der Renderer und das PDF-Layout verwenden.
+labels:
+  lang: de                     # Typst-Textsprache (Silbentrennung, Anführungszeichen)
+  paper: a4
+  auditor: "KI-Audit"
+  signer_title: "KI-Auditor"
+  auditor_line: "{model}, KI-Auditor"
+  period:                      # stage1: Bewertung zum Stichtag; other: Aufzeichnungen über einen Zeitraum
+    stage1: "Stand: {date}"
+    other: "für Aufzeichnungen vom {start} bis {end}"
+  period_dates:
+    stage1: "{date}"
+    other: "{start} bis {end}"
+  clause_group: "Kapitel {code}: {title}"
+  "yes": "Ja"
+  "no": "Nein"
+  no_justification: "Keine angegeben."
+  see: "; siehe {ids}"
+  req_unit_title: "{title} (keine zugeordnete Maßnahme; direkt gegen die Vorschrift auditiert)"
+  excluded:
+    scope: "Trifft nur andere Rollen als die der Organisation ({scope_values})."
+    optional: "Optional; die Organisation stützt sich nicht auf genehmigte Verhaltensregeln oder eine Zertifizierung."
+  scope_values:
+    controller: "Verantwortlicher"
+    processor: "Auftragsverarbeiter"
+  grade_short: {major: Hauptabweichung, minor: Nebenabweichung}
+  see_sentence: " Siehe {ids}."
+  sample: "Stichprobe von {sample} aus einer Grundgesamtheit von {population}."
+  lowercase_states: false      # Substantive werden großgeschrieben: „Art.30(1) Nicht auditiert“
+  clause_result:
+    nonconforming: "nicht konform. Siehe {ids}."
+    conforming: "konform. Zu diesen Vorschriften wurde keine Abweichung festgestellt."
+    related: " Eine zugehörige Feststellung ist zu einer anderen Vorschrift erfasst: {ids}."
+  # PDF-Layout
+  header: "KI-Audit – keine Zertifizierung nach der DSGVO, keine Rechtsberatung"
+  footer_final: "KI-Audit. Keine Prüfung durch eine Aufsichtsbehörde, keine Zertifizierung nach der DSGVO, keine Rechtsberatung."
+  footer_draft: "Entwurf eines KI-Audits. Nicht unterzeichnet. Keine Zertifizierung nach der DSGVO, keine Rechtsberatung."
+  page_of: "1 von 1"           # Typst-Zählermuster
+  kicker: "KI-AUDIT · DSGVO (EU) 2016/679"
+  not_official: "Keine Prüfung durch eine Aufsichtsbehörde, keine Zertifizierung nach der DSGVO, keine Rechtsberatung"
+  scope_label: "Verarbeitungen im Auditumfang:"
+  signed_by: "Unterzeichnet von:"
+  watermark: "ENTWURF"
+  draft_note: "ENTWURF. Erstellt am {generated}. Noch nicht von dem Modell unterzeichnet, das das Audit durchgeführt hat."
+  contents: "Inhalt"
+  section: "Teil"
+  finding: "Feststellung:"
+  response: "Stellungnahme der Organisation:"
+  # workpapers.xlsx
+  xlsx:
+    sheets: {units: Einheiten, samples: Stichproben, deviations: Auffälligkeiten, findings: Feststellungen, soa: Anwendbarkeit, evidence: Nachweise}
+    units: [Einheit, Vorschriften, Häufigkeit, Art, Grundgesamtheit, Stichprobe, Angemessen gestaltet, Schlussfolgerung,
+            Auffälligkeiten, Konfidenz, Erstellt von, Maßnahmenbeschreibung]
+    samples: [Einheit, Element, Ergebnisse, Nachweise, Anmerkung]
+    deviations: [Einheit, Element, Beschreibung, Nachweise]
+    findings: [ID, Einstufung, Vorschrift, Beschreibung, Objektiver Nachweis, Auffälligkeiten, Nachweise, Stellungnahme der Organisation]
+    soa: [Vorschrift, Anwendbar, Begründung, Status, Einheiten]
+    evidence: [ID, Titel, Art, Pfad, SHA-256, Erhalten am, Datum, Maßnahmen, Vorschriften]
+    "yes": "ja"
+    "no": "nein"

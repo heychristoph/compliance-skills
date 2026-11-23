@@ -1,0 +1,305 @@
+# Report wording for an AI Audit against the GDPR (Regulation (EU) 2016/679).
+#
+# The layout follows the content of a management system audit report (ISO 19011:2018,
+# 6.5.1), with the GDPR as the audit criteria. The document is an AI Audit. It is not
+# an audit, investigation or decision of a data protection supervisory authority, it
+# is not a certification under Art. 42 GDPR, it is not issued by a certification body
+# accredited under Art. 43, and it is not legal advice.
+#
+# The key structure is the one the requirements engine reads (scripts/engine/render.py),
+# shared with the ISO/IEC 27001 skill. Some keys keep ISO names (stage1 means a
+# point-in-time assessment; coverage.surveillance is unused while the profile has no
+# partial audit type).
+#
+# Placeholders: {org} {scope} {model} {type_label} {period} {period_dates}
+# {standard} {standard_full} {certification} {scope_values} {applicable} {excluded}
+# {sampled} {majors} {minors} {ofis} {representative}
+
+standards:
+  full: "Regulation (EU) 2016/679 of the European Parliament and of the Council of 27 April 2016 on the protection of natural persons with regard to the processing of personal data and on the free movement of such data, and repealing Directive 95/46/EC (General Data Protection Regulation)"
+  short: "Regulation (EU) 2016/679 (GDPR)"
+  certification: "Art. 42 and 43 GDPR"
+  auditing: "ISO 19011:2018"
+
+audit_types:
+  assessment:
+    label: "Assessment as of a date (documentation and readiness)"
+    period_heading: "Documentation reviewed as of"
+    objectives:
+      - "establish the organization's roles as controller and processor for the processing in scope, and the obligations of the Regulation that apply to those roles;"
+      - "review the organization's data protection documentation, including the records of processing activities, policies, privacy notices, data processing agreements, transfer safeguards and the personal data breach procedure;"
+      - "evaluate whether the processes the Regulation requires (data subject requests, breach notification, processor management, data protection impact assessment, international transfers) are designed and in place as of the review date;"
+      - "evaluate how the organization demonstrates compliance (accountability, Art. 5(2) and Art. 24);"
+      - "identify gaps that would be nonconformities in an audit of records over a period."
+  audit:
+    label: "Audit of records over a period"
+    period_heading: "Records sampled from"
+    objectives:
+      - "evaluate whether the processing in scope complied with the obligations of the Regulation that apply to the organization's roles as controller and processor;"
+      - "evaluate the operation of the organization's data protection processes over the period through samples of records, such as data subject requests, personal data breaches, new processors, sub-processor changes, new processing activities and personnel changes;"
+      - "evaluate the records of processing activities (Art. 30) and the security of processing (Art. 32);"
+      - "evaluate how the organization demonstrates compliance (accountability, Art. 5(2) and Art. 24);"
+      - "conclude on whether the processing in scope complied with the Regulation over the period, as far as the evidence examined shows."
+
+cover:
+  kicker: "AI Audit"
+  disclaimer: "Not an audit, investigation or decision of a data protection supervisory authority. Not a certification under Art. 42 GDPR. Not legal advice. No certificate, seal or mark is or can be issued on the basis of this report."
+  title: "AI Audit of the Processing of Personal Data by {org} against {standard}"
+  restricted: "This AI Audit is not a GDPR certification, a finding of a supervisory authority or legal advice, and must not be presented as any of them."
+
+section1:
+  title: "AI Audit Report"
+  notice: >-
+    This is an AI Audit prepared and signed by {model}. It uses the GDPR as the audit criteria and follows the method
+    of a management system audit (ISO 19011:2018). It is not an audit, investigation or decision of a data protection
+    supervisory authority, it is not a certification under {certification}, and it is not legal advice. Only a
+    supervisory authority or a court can decide whether processing complies with the GDPR.
+  notice_unsigned: >-
+    This is an AI Audit. It has not been signed yet. It uses the GDPR as the audit criteria and follows the method of a
+    management system audit (ISO 19011:2018). It is not an audit, investigation or decision of a data protection
+    supervisory authority, it is not a certification under {certification}, and it is not legal advice. Only a
+    supervisory authority or a court can decide whether processing complies with the GDPR.
+  addressee: "To the Management of {org}"
+  facts_heading: "Audit Details"
+  facts:
+    organization: "Organization"
+    representative: "Organization's representative"
+    audit_type: "Type of audit"
+    criteria: "Audit criteria"
+    records: "Period"
+    auditor: "Audit performed and signed by"
+    method: "Audit method"
+    method_value: "Remote review of a hashed evidence bundle; no site visit and no interviews"
+  criteria: >-
+    {standard_full}; the organization's records of processing activities, data protection policies and procedures,
+    privacy notices and data processing agreements; and the provisions of Member State law supplementing the Regulation
+    that the organization has identified as applicable.
+  objectives_heading: "Audit Objectives"
+  objectives_intro: "The objectives of this audit were to:"
+  scope_heading: "Audit Scope"
+  scope: >-
+    The processing of personal data by {org} (roles under the Regulation: {scope_values}) with the scope: {scope}
+  coverage:
+    full: >-
+      The audit covered the {applicable} obligations of the Regulation that apply to the organization's roles. It did
+      not cover the {excluded} obligations that bind only other roles or concern codes of conduct and certification
+      mechanisms (Art. 40 to 43) the organization does not rely on. Section V lists every obligation and why it applies
+      or not.
+    surveillance: >-
+      This audit covered a sample of {sampled} of the {applicable} obligations of the Regulation that apply to the
+      organization's roles. Section V shows which.
+  method_heading: "Audit Method"
+  method: >-
+    The connector named in the engagement pulled the organization's evidence into a bundle, and every file was hashed
+    on receipt. Each control the organization operates, and each obligation no control is mapped to, was audited
+    against the documented information and records in that bundle by inspection and, where possible, reperformance.
+    Where an activity occurred many times (data subject requests, breaches, new processors), items were selected at
+    random using a recorded seed. Findings are recorded against a specific provision of the Regulation with the
+    objective evidence they rest on, and graded as major nonconformities, minor nonconformities or opportunities for
+    improvement.
+  sampling: >-
+    Auditing is based on a sampling process of the available information. Nonconformities may exist that this audit
+    did not identify, and the absence of a finding is not a statement that none exists or that the processing complies
+    with the Regulation in every respect.
+  summary_heading: "Summary of Findings"
+  summary_counts: "This audit identified {majors} major nonconformities, {minors} minor nonconformities and {ofis} opportunities for improvement. Each is set out in Section III."
+  grades:
+    major: "Major nonconformity: an obligation of the Regulation is not met in a way that shows a required process or record is absent or has broken down, or that leaves the rights of data subjects unprotected."
+    minor: "Minor nonconformity: an obligation of the Regulation is not met in an isolated case, without showing that the process that meets it is absent or ineffective."
+    ofi: "Opportunity for improvement: the obligation is met, but the audit identified a way the organization's data protection could be improved."
+  stage1_grades: "In an assessment, findings are gaps in the documentation and processes as of the review date. Their grade shows how they would be classified in an audit of records over a period."
+  conformity_heading: "Compliance of the Processing and Effectiveness of Data Protection"
+  highlights_heading: "Accountability, Records, Security and Breaches"
+  highlights:
+    accountability: "Accountability (Art. 5(2) and Art. 24): {result}"
+    records: "Records of processing activities (Art. 30): {result}"
+    security: "Security of processing (Art. 32): {result}"
+    breaches: "Personal data breaches (Art. 33 and 34): {result}"
+  scope_appropriate_heading: "Appropriateness of the Scope"
+  scope_appropriate:
+    "yes": "The scope of the audit and the organization's roles as stated are appropriate to the processing of personal data it carries out."
+    "no": "The scope of the audit or the organization's roles as stated are not appropriate to the processing of personal data it carries out."
+  objectives_met_heading: "Fulfilment of the Audit Objectives"
+  objectives_met:
+    "yes": "The audit objectives were fulfilled."
+    "no": "The audit objectives were not fully fulfilled because of the scope limitations described below."
+  limitations_heading: "Scope Limitations"
+  recommendation_heading: "Conclusion"
+  recommendation:
+    assessment:
+      recommended: "Compliant as of the review date: the documentation and processes examined meet the obligations of the Regulation that apply to the organization's roles. No gaps were identified."
+      recommended-with-actions: "Compliant with corrective actions as of the review date: the documentation and processes examined meet the obligations of the Regulation that apply to the organization's roles, except for the minor gaps in Section III. Each requires correction and corrective action by the organization; if still present when records over a period are audited, they would be nonconformities."
+      not-recommended: "Not compliant as of the review date: the major gaps in Section III show that obligations of the Regulation that apply to the organization's roles are not met. Compliance cannot be concluded until correction and corrective action for each of them are implemented and verified."
+      no-conclusion: "No conclusion on compliance as of the review date is stated, because of the scope limitations described above."
+    audit:
+      recommended: "Compliant: the processing in scope complied with the obligations of the Regulation that apply to the organization's roles over the period, as far as the evidence examined shows. No nonconformities were identified."
+      recommended-with-actions: "Compliant with corrective actions: the processing in scope complied with the obligations of the Regulation that apply to the organization's roles over the period, as far as the evidence examined shows, except for the minor nonconformities in Section III. Each requires correction and corrective action by the organization."
+      not-recommended: "Not compliant: the major nonconformities in Section III show that obligations of the Regulation that apply to the organization's roles were not met over the period. Compliance cannot be concluded until correction and corrective action for each major nonconformity are implemented and verified."
+      no-conclusion: "No conclusion on compliance is stated, because of the scope limitations described above."
+  ai_disclaimer: >-
+    These conclusions are the model's, based only on the evidence in the bundle. They are not legal advice and do not
+    bind anyone. Only the competent supervisory authority or a court can decide whether processing complies with the
+    Regulation, and only a certification body accredited under Art. 43 or a supervisory authority can issue a
+    certification under Art. 42.
+  independence_heading: "Independence and Limitations"
+  independence: >-
+    The model that signs this AI Audit is not a data protection supervisory authority, not a certification body
+    accredited under {certification}, not the organization's data protection officer, and not a lawyer, and it is not
+    independent in the sense required of a certification body. It did not visit any site, interview personnel or data
+    subjects, or access the organization's systems; it relied on the documented information and records the
+    organization's systems provided.
+  restricted_use_heading: "Use of This Report"
+  restricted_use: >-
+    This report is intended for the management of {org} and for parties {org} chooses to share it with to describe
+    the state of its data protection. It is an AI Audit. It is not a certification, seal or mark under {certification},
+    not a finding of a supervisory authority and not legal advice. It does not entitle {org} to claim certification or
+    to use any data protection seal or mark, and it must not be presented as any of these.
+  signature_footer: "Not a GDPR certification. Not legal advice."
+
+section2:
+  title: "Processing Scope and Context"
+  intro: >-
+    This section is the organization's description of the processing in scope and its context. It is the
+    organization's documented information, not a conclusion of this AI Audit.
+  unapproved: "This description is not marked management-approved."
+  omitted: >-
+    A description of the processing scope and context for readers of this report has not been provided. Text pulled
+    from the compliance system is evidence and is not printed here.
+  headings:
+    scope_statement: "Processing in Scope"
+    services: "Services, Data Subjects and Personal Data"
+    role: "Roles of the Organization under the Regulation"
+    boundaries: "Boundaries"
+    sites: "Locations"
+    outsourced: "Processors and Key Suppliers"
+    changes: "Significant Changes"
+    people: "Organization and Responsibilities"
+    processes: "Data Protection Processes"
+
+section3:
+  title: "Audit Findings"
+  intro: >-
+    Each finding is recorded against one provision of the Regulation, with a statement of the nonconformity and the
+    objective evidence it rests on. This AI Audit does not suggest the cause of a nonconformity or its solution, and it
+    does not assess fines or other legal consequences; the organization is expected to analyse the cause and to plan
+    correction and corrective action.
+  intro_stage1: >-
+    In an assessment, findings are gaps in the documentation and processes as of the review date. Each is recorded
+    against one provision of the Regulation, with the objective evidence it rests on, and graded as it would be in an
+    audit of records over a period.
+  none: "No nonconformities or opportunities for improvement were identified."
+  labels:
+    requirement: "Provision"
+    statement: "Statement"
+    statement_ofi: "Opportunity"
+    evidence: "Objective evidence"
+    units: "Related audit units"
+  grade_names:
+    major: "Major nonconformity"
+    minor: "Minor nonconformity"
+    ofi: "Opportunity for improvement"
+
+section4:
+  title: "Obligations, Controls and Audit Results"
+  intro: >-
+    This section lists, for each obligation in scope, the controls {org} operates to meet it, the procedures this AI
+    Audit performed and the results. The controls are the responsibility of {org}; the procedures and results are the
+    responsibility of this AI Audit. Where no control is mapped to an obligation, the obligation was audited directly
+    against the organization's documented information and records.
+  methods: >-
+    Procedures used one or more of these methods. Inspection: examining documents, records and system
+    configurations. Reperformance: independently executing a control and comparing the result. Observation: examining
+    a system's live behaviour as recorded in an export. Inquiry: considering written statements from the organization;
+    inquiry alone was never relied on. Where an activity occurred many times, a sample was selected at random using a
+    recorded seed, with sample sizes based on the frequency of the activity and the size of the population.
+  columns: ["Provision", "Unit", "Control activity", "Procedures performed", "Result"]
+  conforming: "No deviations noted."
+  not_audited: "Not audited. {reason}"
+  design_gap: "Not suitably designed. {reason}"
+  not_sampled: "Not covered in this audit."
+
+section5:
+  title: "Applicability of the Obligations"
+  intro: >-
+    For the processing in scope, the organization's roles under the Regulation are: {scope_values}. Of the obligations
+    in this audit's catalog, {applicable} apply to these roles and {excluded} do not, because they bind only other
+    roles or concern codes of conduct and certification (Art. 40 to 43) the organization does not rely on. The table
+    shows each obligation, whether it applies, the reason when it does not, and the result of this audit. Articles 1 to
+    4 and 23 impose no obligation an organization evidences directly and are not listed.
+  missing: >-
+    The organization's roles under the Regulation could not be established from the evidence. Every obligation was
+    treated as applicable for this audit.
+  columns: ["Provision", "Title", "Applicable", "Reason it does not apply", "Audit result"]
+  results:
+    conforming: "Conforming"
+    excluded: "Not applicable"
+    not_audited: "Not audited"
+    not_sampled: "Not in this audit's sample"
+
+section6:
+  title: "The Organization's Response to Findings"
+  intro: >-
+    The information in this section is the organization's own response to the findings, including correction and
+    corrective action taken or planned. It has not been verified by this AI Audit unless a later audit says so.
+  none: "The organization has not provided a response to the findings."
+
+# Short labels and sentences the renderer and the PDF layout use.
+labels:
+  lang: en                     # Typst text language (hyphenation, quotes)
+  paper: a4
+  auditor: "AI Audit"
+  signer_title: "AI Auditor"
+  auditor_line: "{model}, AI Auditor"
+  period:                      # stage1: point-in-time audit types (assessment); other: records over a period (audit)
+    stage1: "as of {date}"
+    other: "for records from {start} to {end}"
+  period_dates:
+    stage1: "{date}"
+    other: "{start} to {end}"
+  clause_group: "Chapter {code}: {title}"
+  "yes": "Yes"
+  "no": "No"
+  no_justification: "None given."
+  see: "; see {ids}"
+  req_unit_title: "{title} (no mapped control; audited against the provision)"
+  excluded:                    # Section V reason when an obligation does not apply
+    scope: "Binds only roles other than the organization's ({scope_values})."
+    optional: "Optional; the organization does not rely on an approved code of conduct or certification."
+  scope_values:                # engagement roles as printed
+    controller: "controller"
+    processor: "processor"
+  grade_short: {major: major, minor: minor}   # after a finding ID: "NC-01 (major)"
+  see_sentence: " See {ids}."
+  sample: "Sample of {sample} selected from a population of {population}."
+  lowercase_states: true       # "Art.30(1) not audited" rather than "Art.30(1) Not audited"
+  clause_result:
+    nonconforming: "nonconforming. See {ids}."
+    conforming: "conforming. No nonconformity was raised against these provisions."
+    related: " A related finding is recorded against another provision: {ids}."
+  # PDF layout
+  header: "AI Audit — not a GDPR certification, not legal advice"
+  footer_final: "AI Audit. Not a supervisory authority audit, not a GDPR certification, not legal advice."
+  footer_draft: "Draft AI Audit. Not signed. Not a GDPR certification, not legal advice."
+  page_of: "1 of 1"            # Typst counter pattern
+  kicker: "AI AUDIT · GDPR (EU) 2016/679"
+  not_official: "Not a supervisory authority audit, not a GDPR certification, not legal advice"
+  scope_label: "Processing in scope:"
+  signed_by: "Signed by:"
+  watermark: "DRAFT"
+  draft_note: "DRAFT. Generated {generated}. Not yet signed by the model that ran the audit."
+  contents: "Contents"
+  section: "Section"
+  finding: "Finding:"
+  response: "Organization's response:"
+  # workpapers.xlsx
+  xlsx:
+    sheets: {units: Units, samples: Samples, deviations: Deviations, findings: Findings, soa: Applicability, evidence: Evidence}
+    units: [Unit, Provisions, Frequency, Nature, Population, Sample, Design effective, Conclusion, Deviations,
+            Confidence, Prepared by, Control activity]
+    samples: [Unit, Item, Results, Evidence, Note]
+    deviations: [Unit, Item, Description, Evidence]
+    findings: [ID, Grade, Provision, Statement, Objective evidence, Deviations, Evidence, "Organization's response"]
+    soa: [Provision, Applicable, Justification, Status, Units]
+    evidence: [ID, Title, Kind, Path, SHA-256, Obtained, Date, Controls, Provisions]
+    "yes": "yes"
+    "no": "no"

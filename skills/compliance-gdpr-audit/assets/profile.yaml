@@ -1,0 +1,38 @@
+# Framework profile for the requirements engine (scripts/engine/, copied from
+# shared/engines/requirements by tools/sync.py). The wording is in assets/report/text/<lang>.yaml.
+framework: gdpr
+name: GDPR (Regulation (EU) 2016/679)
+cli: gdpr.py
+report_stem: gdpr
+not_official: It is not an audit or decision of a data protection supervisory authority, not a certification under Art. 42 GDPR, and not legal advice.
+scope_help: the processing activities in scope, as the report prints them
+id_examples: Art.30(1), Art.32(1)(b)
+
+audit_types:
+  assessment: {label: Assessment, as_of: true}   # documentation and readiness as of a date
+  audit: {label: Audit}                          # records sampled over a period
+
+applicability:
+  always: []
+  # Each GDPR obligation names the roles it binds (controller, processor). The engagement
+  # sets the organization's roles for the processing in scope.
+  scope: {field: roles, config: roles, choices: [controller, processor], help: "the organization's GDPR roles for the processing in scope"}
+  optional_field: optional                       # Art. 40-43 only when the organization relies on a code or certification
+
+description:
+  file: context.yaml
+  label: processing scope and context
+  fields: [scope_statement, services, role, boundaries]
+  request_requirement: Art.30(1)
+
+# Accountability is reported on in every audit: it cannot be "not audited".
+always_reported: ["Art.5(2)", "Art.24"]
+always_reported_label: accountability (Art. 5(2) and Art. 24)
+
+report:
+  plain_group_prefixes: []
+  highlights:
+    - {key: accountability, requirements: ["Art.5(2)", "Art.24(1)", "Art.24(2)"]}
+    - {key: records, requirements: ["Art.30(1)", "Art.30(2)"]}
+    - {key: security, requirements: ["Art.32(1)", "Art.32(1)(a)", "Art.32(1)(b)", "Art.32(1)(c)", "Art.32(1)(d)"]}
+    - {key: breaches, requirements: ["Art.33(1)", "Art.33(2)", "Art.33(5)", "Art.34"]}

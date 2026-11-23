@@ -1,0 +1,320 @@
+# Berichtstext für ein KI-Audit (AI Audit) nach der NIS-2-Richtlinie, Richtlinie (EU) 2022/2555,
+# und, für die dort genannten digitalen Anbieter, nach der Durchführungsverordnung (EU) 2024/2690.
+#
+# Der Aufbau folgt den Inhalten eines Auditberichts nach ISO 19011:2018 (6.5) und der
+# Struktur, die die Anforderungs-Engine mit den Skills für ISO/IEC 27001 und DSGVO teilt.
+# Das Dokument ist ein KI-Audit. Es ist weder ein Audit, eine Prüfung oder eine
+# Entscheidung einer zuständigen Behörde oder eines CSIRT noch eine Sicherheitsprüfung nach
+# Art. 32 Abs. 2 Buchst. b der Richtlinie oder nach nationalem Recht (etwa § 61 BSIG), es ist
+# keine Rechtsberatung und kein Wortlaut der Richtlinie.
+#
+# Begriffe folgen der amtlichen deutschen Fassung der Richtlinie und der
+# Durchführungsverordnung: Risikomanagementmaßnahmen im Bereich der Cybersicherheit,
+# Leitungsorgane, wesentliche und wichtige Einrichtungen, erheblicher Sicherheitsvorfall,
+# Frühwarnung, Meldung über den Sicherheitsvorfall, Abschlussbericht, Korrekturmaßnahmen.
+#
+# Platzhalter: {org} {scope} {model} {representative} {type_label} {period} {period_dates}
+# {standard} {standard_full} {certification} {scope_values} {applicable} {excluded}
+# {sampled} {majors} {minors} {ofis}
+
+standards:
+  full: "Richtlinie (EU) 2022/2555 des Europäischen Parlaments und des Rates vom 14. Dezember 2022 über Maßnahmen für ein hohes gemeinsames Cybersicherheitsniveau in der Union (NIS-2-Richtlinie); sowie, für die dort genannten digitalen Anbieter, Durchführungsverordnung (EU) 2024/2690 der Kommission vom 17. Oktober 2024 zu den technischen und methodischen Anforderungen der Risikomanagementmaßnahmen im Bereich der Cybersicherheit und zu den Fällen, in denen ein Sicherheitsvorfall als erheblich anzusehen ist"
+  short: "der NIS-2-Richtlinie (EU) 2022/2555"
+  certification: "ISO 19011:2018 und ISO/IEC 27007:2020"
+  auditing: "ISO 19011:2018"
+
+audit_types:
+  assessment:
+    label: "Bewertung (Dokumentation und Umsetzungsstand zu einem Stichtag)"
+    period_heading: "Dokumentation geprüft mit Stand vom"
+    objectives:
+      - "Prüfung, wie die Einrichtung ihre Einstufung als wesentliche oder wichtige Einrichtung (Art. 3) und die für sie zuständigen Mitgliedstaaten (Art. 26) festgestellt hat;"
+      - "Prüfung, ob die nach Art. 21 und, für digitale Anbieter, nach dem Anhang der Durchführungsverordnung (EU) 2024/2690 erforderlichen Risikomanagementmaßnahmen im Bereich der Cybersicherheit dokumentiert und umgesetzt sind;"
+      - "Prüfung, ob die Leitungsorgane die Maßnahmen gebilligt haben, ihre Umsetzung überwachen und an Schulungen teilgenommen haben (Art. 20);"
+      - "Prüfung, ob die Einrichtung darauf vorbereitet ist, erhebliche Sicherheitsvorfälle innerhalb der Fristen des Art. 23 zu melden, und ob sie ihre Angaben der zuständigen Behörde übermittelt hat (Art. 3 Abs. 4, Art. 27);"
+      - "Ermittlung von Lücken, die in einem Audit der Maßnahmen im Betrieb als Abweichungen eingestuft werden könnten."
+  audit:
+    label: "Audit (Maßnahmen im Betrieb über einen Zeitraum)"
+    period_heading: "Stichprobe aus Aufzeichnungen vom"
+    objectives:
+      - "Bewertung, ob die nach Art. 21 und, für digitale Anbieter, nach dem Anhang der Durchführungsverordnung (EU) 2024/2690 erforderlichen Risikomanagementmaßnahmen im Bereich der Cybersicherheit im Zeitraum umgesetzt und wirksam betrieben wurden;"
+      - "Bewertung der Billigung und Überwachung der Maßnahmen durch die Leitungsorgane sowie der Schulung ihrer Mitglieder (Art. 20);"
+      - "Bewertung, wie Sicherheitsvorfälle bewältigt und eingestuft wurden und ob erhebliche Sicherheitsvorfälle innerhalb der Fristen für Frühwarnung, Meldung über den Sicherheitsvorfall und Abschlussbericht gemeldet wurden (Art. 23);"
+      - "Bewertung, wie die Einrichtung die Wirksamkeit ihrer Maßnahmen bewertet und Korrekturmaßnahmen ergreift (Art. 21 Abs. 2 Buchst. f, Art. 21 Abs. 4);"
+      - "Schlussfolgerung, ob die Einrichtung im auditierten Umfang die Einhaltung dieser Pflichten nachgewiesen hat."
+
+cover:
+  kicker: "KI-Audit"
+  disclaimer: "Kein Audit, keine Prüfung und keine Entscheidung einer zuständigen Behörde oder eines CSIRT. Keine Sicherheitsprüfung nach Art. 32 Abs. 2 Buchst. b der Richtlinie (EU) 2022/2555 oder nach nationalem Recht, etwa § 61 BSIG. Keine Rechtsberatung. Nicht von einer akkreditierten oder behördlich anerkannten Stelle durchgeführt."
+  title: "KI-Audit der Risikomanagementmaßnahmen im Bereich der Cybersicherheit von {org} nach {standard}"
+  restricted: "Dieses KI-Audit weist gegenüber einer zuständigen Behörde oder einem CSIRT keine Einhaltung nach und darf weder als behördliches Audit noch als Sicherheitsprüfung, Zertifizierung oder Rechtsgutachten dargestellt werden."
+
+section1:
+  title: "KI-Auditbericht"
+  notice: >-
+    Dies ist ein KI-Audit (AI Audit), erstellt und unterzeichnet von {model}. Es legt die NIS-2-Richtlinie und, für die
+    dort genannten digitalen Anbieter, die Durchführungsverordnung (EU) 2024/2690 als Auditkriterien zugrunde und folgt
+    der in {certification} beschriebenen Auditpraxis. Es ist weder ein Audit, eine Prüfung oder eine Entscheidung einer
+    zuständigen Behörde oder eines CSIRT noch eine Sicherheitsprüfung nach Art. 32 Abs. 2 Buchst. b der Richtlinie oder
+    nach nationalem Recht (etwa § 61 BSIG), und es ist keine Rechtsberatung. Es stellt nicht fest, dass {org} das
+    nationale Recht zur Umsetzung der Richtlinie einhält.
+  notice_unsigned: >-
+    Dies ist ein KI-Audit (AI Audit). Es ist noch nicht unterzeichnet. Es legt die NIS-2-Richtlinie und, für die dort
+    genannten digitalen Anbieter, die Durchführungsverordnung (EU) 2024/2690 als Auditkriterien zugrunde und folgt der
+    in {certification} beschriebenen Auditpraxis. Es ist weder ein Audit, eine Prüfung oder eine Entscheidung einer
+    zuständigen Behörde oder eines CSIRT noch eine Sicherheitsprüfung nach Art. 32 Abs. 2 Buchst. b der Richtlinie oder
+    nach nationalem Recht (etwa § 61 BSIG), und es ist keine Rechtsberatung. Es stellt nicht fest, dass {org} das
+    nationale Recht zur Umsetzung der Richtlinie einhält.
+  addressee: "An die Leitungsorgane von {org}"
+  facts_heading: "Angaben zum Audit"
+  facts:
+    organization: "Einrichtung"
+    representative: "Vertretung der Einrichtung"
+    audit_type: "Auditart"
+    criteria: "Auditkriterien"
+    records: "Zeitraum"
+    auditor: "Durchgeführt und unterzeichnet von"
+    method: "Auditmethode"
+    method_value: "Remote-Prüfung eines gehashten Nachweispakets; keine Begehung vor Ort und keine Interviews"
+  criteria: >-
+    {standard_full}; die dokumentierte Einstufung der Einrichtung ({scope_values}) und ihre Feststellung der
+    Zuständigkeit; sowie ihre eigenen Konzepte, Verfahren und Aufzeichnungen zum Risikomanagement im Bereich der
+    Cybersicherheit, zur Bewältigung von Sicherheitsvorfällen und zu Meldungen. Nationales Recht zur Umsetzung der
+    Richtlinie wurde nicht als Auditkriterium herangezogen.
+  objectives_heading: "Auditziele"
+  objectives_intro: "Ziele dieses Audits waren:"
+  scope_heading: "Auditumfang"
+  scope: >-
+    {org} (Einstufung: {scope_values}) mit dem Anwendungsbereich: {scope}
+  coverage:
+    full: >-
+      Das Audit umfasste sämtliche Anforderungen der Auditkriterien, die für die Arten von Einrichtungen im Umfang
+      gelten, insgesamt {applicable}, einschließlich der Feststellung der Einstufung der Einrichtung (Art. 3) und der
+      Zuständigkeit (Art. 26). Anforderungen, die nur für andere Arten von Einrichtungen gelten (für diese Einrichtung:
+      {excluded}), wurden nicht auditiert; Teil V führt sie mit Begründung auf.
+    surveillance: >-
+      Das Audit umfasste eine Stichprobe von {sampled} der {applicable} Anforderungen, die für die Arten von
+      Einrichtungen im Umfang gelten. Welche dies sind, zeigt Teil V.
+  method_heading: "Auditmethode"
+  method: >-
+    Der im Auftrag benannte Konnektor hat die Nachweise der Einrichtung in einem Paket zusammengeführt; jede Datei wurde
+    bei Eingang gehasht. Jede Maßnahme, die die Einrichtung betreibt, und jede Anforderung, der keine Maßnahme
+    zugeordnet ist, wurde anhand der dokumentierten Information und der Aufzeichnungen in diesem Paket durch
+    Einsichtnahme und, soweit möglich, durch erneute Durchführung auditiert. Wo eine Tätigkeit häufig stattfand, wurden
+    Elemente mithilfe eines aufgezeichneten Startwerts („Seed“) zufällig ausgewählt. Feststellungen werden mit dem
+    objektiven Nachweis, auf dem sie beruhen, zu einer bestimmten Anforderung erfasst und als Hauptabweichungen,
+    Nebenabweichungen oder Verbesserungspotenziale eingestuft.
+  sampling: >-
+    Das Audit beruht auf Stichproben aus den verfügbaren Informationen. Es können Abweichungen bestehen, die dieses
+    Audit nicht festgestellt hat; das Fehlen einer Feststellung bedeutet nicht, dass keine Abweichungen bestehen.
+  summary_heading: "Zusammenfassung der Feststellungen"
+  summary_counts: "Dieses Audit hat folgende Feststellungen ergeben: Hauptabweichungen: {majors}, Nebenabweichungen: {minors}, Verbesserungspotenziale: {ofis}. Jede Feststellung ist in Teil III dargestellt."
+  grades:
+    major: "Hauptabweichung: Eine Pflicht ist so nicht erfüllt, dass die Einrichtung nicht nachweisen kann, dass ihre Risikomanagementmaßnahmen im Bereich der Cybersicherheit, ihre Governance oder ihre Meldungen ihren Zweck erfüllen, etwa weil eine erforderliche Maßnahme fehlt oder nicht mehr funktioniert oder ein erheblicher Sicherheitsvorfall nicht gemeldet wurde."
+    minor: "Nebenabweichung: Eine Pflicht wurde in einem Einzelfall nicht erfüllt, oder eine Aufzeichnung fehlt oder ist unvollständig, ohne dass die Fähigkeit der Einrichtung infrage steht, Cybersicherheitsrisiken zu beherrschen und erhebliche Sicherheitsvorfälle zu melden."
+    ofi: "Verbesserungspotenzial: Die Pflicht ist erfüllt, das Audit hat jedoch eine Möglichkeit zur Verbesserung der Maßnahmen festgestellt."
+  stage1_grades: "In einer Bewertung sind Feststellungen Lücken zum Stichtag. Ihre Einstufung gibt an, wie sie zu bewerten wären, falls sie in einem Audit der Maßnahmen im Betrieb noch vorliegen."
+  conformity_heading: "Umsetzung und Wirksamkeit der Maßnahmen"
+  highlights_heading: "Governance, Risikomanagement und Meldungen"
+  highlights:
+    governance: "Billigung, Überwachung und Schulung durch die Leitungsorgane (Art. 20): {result}"
+    risk_management: "Risikomanagementmaßnahmen und Bewertung ihrer Wirksamkeit (Art. 21 Abs. 1 und Abs. 2 Buchst. f): {result}"
+    reporting: "Einstufung und Meldung erheblicher Sicherheitsvorfälle (Art. 23 Abs. 3 und 4): {result}"
+  scope_appropriate_heading: "Angemessenheit des Auditumfangs und der Einstufung"
+  scope_appropriate:
+    "yes": "Der Auditumfang und die Einstufung der Einrichtung stehen im Einklang mit ihrem dokumentierten Sektor, ihrer Größe, ihren Diensten und ihren Niederlassungen."
+    "no": "Der Auditumfang oder die Einstufung der Einrichtung ist in der derzeitigen Form nicht angemessen."
+  objectives_met_heading: "Erfüllung der Auditziele"
+  objectives_met:
+    "yes": "Die Auditziele wurden erfüllt."
+    "no": "Die Auditziele wurden aufgrund der nachstehend beschriebenen Einschränkungen des Auditumfangs nicht vollständig erfüllt."
+  limitations_heading: "Einschränkungen des Auditumfangs"
+  recommendation_heading: "Schlussfolgerung"
+  recommendation:
+    assessment:
+      recommended: "Zum Stichtag sind die Risikomanagementmaßnahmen im Bereich der Cybersicherheit, die Governance-Regelungen und die Meldeverfahren, die die Auditkriterien von {org} verlangen, dokumentiert und umgesetzt. Es wurden keine Lücken festgestellt. Ob sie wirksam funktionieren, kann nur ein Audit der Maßnahmen über einen Zeitraum zeigen."
+      recommended-with-actions: "Zum Stichtag sind die Maßnahmen, Governance-Regelungen und Meldeverfahren, die die Auditkriterien von {org} verlangen, dokumentiert und umgesetzt, mit Ausnahme der Lücken in Teil III. Diese stellen die Fähigkeit der Einrichtung, Cybersicherheitsrisiken zu beherrschen und erhebliche Sicherheitsvorfälle zu melden, nicht infrage. Bestehen sie in einem Audit der Maßnahmen im Betrieb noch, könnten sie als Abweichungen festgestellt werden."
+      not-recommended: "Zum Stichtag kann {org} aufgrund der schwerwiegenden Lücken in Teil III nicht nachweisen, dass die Maßnahmen, Governance-Regelungen oder Meldeverfahren, die die Auditkriterien verlangen, umgesetzt sind. Sie sollten behoben werden, bevor die Maßnahmen im Betrieb auditiert werden."
+      no-conclusion: "Aufgrund der oben beschriebenen Einschränkungen des Auditumfangs wird keine Schlussfolgerung zum Stand der Maßnahmen zum Stichtag gezogen."
+    audit:
+      recommended: "Im auditierten Zeitraum hat {org} die Risikomanagementmaßnahmen im Bereich der Cybersicherheit, die Governance-Regelungen und die Meldeverfahren, die die Auditkriterien verlangen, umgesetzt und wirksam betrieben. Es wurden keine Abweichungen festgestellt."
+      recommended-with-actions: "Im auditierten Zeitraum hat {org} die Risikomanagementmaßnahmen im Bereich der Cybersicherheit, die Governance-Regelungen und die Meldeverfahren, die die Auditkriterien verlangen, umgesetzt und wirksam betrieben, mit Ausnahme der Nebenabweichungen in Teil III, die ihre Fähigkeit, Cybersicherheitsrisiken zu beherrschen und erhebliche Sicherheitsvorfälle zu melden, nicht infrage stellen. Nach Art. 21 Abs. 4 hat die Einrichtung unverzüglich Korrekturmaßnahmen zu ergreifen; deren Wirksamkeit wurde nicht verifiziert."
+      not-recommended: "Aufgrund der Hauptabweichungen in Teil III hat {org} für den auditierten Zeitraum nicht nachgewiesen, dass die Maßnahmen, Governance-Regelungen oder Meldeverfahren, die die Auditkriterien verlangen, umgesetzt und wirksam waren. Nach Art. 21 Abs. 4 sind unverzüglich Korrekturmaßnahmen zu ergreifen. Auf die Einhaltung der auditierten Pflichten kann erst geschlossen werden, wenn diese umgesetzt und verifiziert sind."
+      no-conclusion: "Aufgrund der oben beschriebenen Einschränkungen des Auditumfangs wird keine Schlussfolgerung zu den Maßnahmen im Betrieb im Zeitraum gezogen."
+  ai_disclaimer: >-
+    Diese Schlussfolgerungen sind die des Modells und beruhen ausschließlich auf den Nachweisen im Paket. Ob eine
+    Einrichtung das nationale Recht zur Umsetzung der Richtlinie einhält, kann nur eine zuständige Behörde in ihrem
+    eigenen Aufsichtsverfahren entscheiden. Dieser Bericht ist keine Rechtsberatung.
+  independence_heading: "Unabhängigkeit und Einschränkungen"
+  independence: >-
+    Das Modell, das dieses KI-Audit unterzeichnet, ist keine zuständige Behörde, kein CSIRT, keine unabhängige Stelle,
+    die Sicherheitsprüfungen nach Art. 32 Abs. 2 Buchst. b der Richtlinie oder nach nationalem Recht durchführt, und kein
+    von einer Behörde oder Akkreditierungsstelle akkreditierter oder anerkannter Prüfer. Es ist von {org} nicht in dem
+    Sinne unabhängig, den diese Rollen verlangen. Es hat keine Standorte besucht und kein Personal befragt; es stützte
+    sich auf die dokumentierte Information und die Aufzeichnungen, die die Systeme der Einrichtung bereitgestellt haben.
+    Es hat weder nationales Recht über die Richtlinie hinaus auditiert noch sektorspezifische Rechtsakte der Union, die
+    an die Stelle der Pflichten der Richtlinie treten (Art. 4).
+  restricted_use_heading: "Verwendung dieses Berichts"
+  restricted_use: >-
+    Dieser Bericht ist für die Leitungsorgane von {org} bestimmt sowie für Parteien, denen {org} ihn zur Beschreibung
+    des Zustands ihrer Risikomanagementmaßnahmen im Bereich der Cybersicherheit zugänglich macht. Er ist ein KI-Audit.
+    Er ist weder ein Audit, eine Prüfung, eine Entscheidung oder eine Zertifizierung einer zuständigen Behörde, eines
+    CSIRT oder einer akkreditierten Stelle noch ein Nachweis einer Sicherheitsprüfung nach Art. 32 Abs. 2 Buchst. b der
+    Richtlinie oder nach nationalem Recht, er ist keine Rechtsberatung, und er darf nicht als eines davon dargestellt
+    werden.
+  signature_footer: "Kein Audit einer zuständigen Behörde. Keine Rechtsberatung."
+
+section2:
+  title: "Anwendungsbereich und Kontext der Einrichtung"
+  intro: >-
+    Dieser Teil enthält die Beschreibung der Einrichtung zu ihrem Anwendungsbereich, ihren Diensten, ihrer Einstufung
+    und ihrem Kontext. Es handelt sich um dokumentierte Information der Einrichtung, nicht um eine Schlussfolgerung
+    dieses KI-Audits.
+  unapproved: "Diese Beschreibung ist nicht als von der Leitung freigegeben gekennzeichnet."
+  omitted: >-
+    Eine Beschreibung des Anwendungsbereichs und des Kontexts der Einrichtung für die Leser dieses Berichts wurde nicht
+    bereitgestellt. Aus dem Compliance-System übernommener Text ist Nachweismaterial und wird hier nicht abgedruckt.
+  headings:
+    scope_statement: "Anwendungsbereich"
+    services: "Erbrachte Dienste"
+    role: "Einstufung nach der Richtlinie"
+    boundaries: "Grenzen"
+    sites: "Niederlassungen und Standorte"
+    outsourced: "Wesentliche Anbieter und Diensteanbieter"
+    changes: "Wesentliche Änderungen"
+    people: "Organisation und Personal"
+    processes: "Wesentliche Prozesse"
+
+section3:
+  title: "Auditfeststellungen"
+  intro: >-
+    Jede Feststellung ist zu genau einer Anforderung der Auditkriterien erfasst, mit einer Beschreibung der Abweichung
+    und dem objektiven Nachweis, auf dem sie beruht. Dieses KI-Audit nennt weder die Ursache einer Abweichung noch deren
+    Lösung. Nach Art. 21 Abs. 4 hat die Einrichtung unverzüglich alle erforderlichen, angemessenen und
+    verhältnismäßigen Korrekturmaßnahmen zu ergreifen.
+  intro_stage1: >-
+    In einer Bewertung sind Feststellungen Lücken zum Stichtag. Jede ist zu genau einer Anforderung der Auditkriterien
+    erfasst, mit dem objektiven Nachweis, auf dem sie beruht, und so eingestuft, wie sie einzustufen wäre, falls sie in
+    einem Audit der Maßnahmen im Betrieb noch vorliegt.
+  none: "Es wurden keine Abweichungen und keine Verbesserungspotenziale festgestellt."
+  labels:
+    requirement: "Anforderung"
+    statement: "Beschreibung"
+    statement_ofi: "Verbesserungspotenzial"
+    evidence: "Objektiver Nachweis"
+    units: "Zugehörige Auditeinheiten"
+  grade_names:
+    major: "Hauptabweichung"
+    minor: "Nebenabweichung"
+    ofi: "Verbesserungspotenzial"
+
+section4:
+  title: "Anforderungen, Maßnahmen und Auditergebnisse"
+  intro: >-
+    Dieser Teil führt für jede Anforderung im Auditumfang die Maßnahmen auf, die {org} zu ihrer Erfüllung betreibt, die
+    Prüfhandlungen, die dieses KI-Audit durchgeführt hat, und die Ergebnisse. Für die Maßnahmen ist {org}
+    verantwortlich; für die Prüfhandlungen und Ergebnisse ist dieses KI-Audit verantwortlich. Ist einer Anforderung
+    keine Maßnahme zugeordnet, wurde die Anforderung unmittelbar anhand der dokumentierten Information und der
+    Aufzeichnungen der Einrichtung auditiert.
+  methods: >-
+    Die Prüfhandlungen nutzten eine oder mehrere der folgenden Methoden. Einsichtnahme: Untersuchung von Dokumenten,
+    Aufzeichnungen und Systemkonfigurationen. Erneute Durchführung: unabhängige Ausführung einer Maßnahme und Vergleich
+    des Ergebnisses. Beobachtung: Untersuchung des laufenden Verhaltens eines Systems, wie es in einem Export
+    aufgezeichnet ist. Befragung: Berücksichtigung schriftlicher Aussagen der Einrichtung; eine Befragung allein galt
+    nie als ausreichender Nachweis. Wo eine Tätigkeit häufig stattfand, wurde mithilfe eines aufgezeichneten Startwerts
+    („Seed“) eine Zufallsstichprobe gezogen; der Stichprobenumfang richtete sich nach der Häufigkeit der Tätigkeit und
+    der Größe der Grundgesamtheit.
+  columns: ["Anforderung", "Einheit", "Maßnahme", "Durchgeführte Prüfhandlungen", "Ergebnis"]
+  conforming: "Keine Auffälligkeiten festgestellt."
+  not_audited: "Nicht auditiert. {reason}"
+  design_gap: "Nicht angemessen gestaltet. {reason}"
+  not_sampled: "Nicht Gegenstand dieses Audits."
+
+section5:
+  title: "Anwendbarkeit der Anforderungen"
+  intro: >-
+    Welche Anforderungen gelten, folgt aus der Einstufung der Einrichtung ({scope_values}). {applicable} Anforderungen
+    der Auditkriterien gelten für {org} und wurden auditiert; die übrigen {excluded} gelten nur für andere Arten von
+    Einrichtungen.
+    Der Anhang der Durchführungsverordnung (EU) 2024/2690 und Art. 27 gelten nur für die dort genannten digitalen
+    Anbieter. Die Tabelle zeigt für jede Anforderung, ob sie gilt, warum nicht, wenn sie nicht gilt, und das Ergebnis
+    dieses Audits.
+  missing: >-
+    Die Einrichtung hat ihre Einstufung nicht dokumentiert. Die Anforderungen wurden für die in diesem Auftrag
+    festgelegten Arten von Einrichtungen angewandt.
+  columns: ["Anforderung", "Titel", "Gilt", "Grund für die Nichtanwendung", "Auditergebnis"]
+  results:
+    conforming: "Konform"
+    excluded: "Nicht anwendbar"
+    not_audited: "Nicht auditiert"
+    not_sampled: "Nicht in der Stichprobe dieses Audits"
+
+section6:
+  title: "Stellungnahme der Einrichtung zu den Feststellungen"
+  intro: >-
+    Die Informationen in diesem Teil sind die eigene Stellungnahme der Einrichtung zu den Feststellungen, einschließlich
+    ergriffener oder geplanter Korrekturmaßnahmen (Art. 21 Abs. 4). Sie wurden von diesem KI-Audit nicht verifiziert,
+    sofern nicht ein späteres Audit dies ausweist.
+  none: "Die Einrichtung hat keine Stellungnahme zu den Feststellungen abgegeben."
+
+# Kurze Bezeichnungen und Sätze, die der Renderer und das PDF-Layout verwenden.
+labels:
+  lang: de                     # Typst-Textsprache (Silbentrennung, Anführungszeichen)
+  paper: a4
+  auditor: "KI-Audit"
+  signer_title: "KI-Auditor"
+  auditor_line: "{model}, KI-Auditor"
+  period:                      # „stage1“ ist der Schlüssel der Engine für jede Stichtagsprüfung (hier: Bewertung)
+    stage1: "Stand: {date}"
+    other: "für Aufzeichnungen vom {start} bis {end}"
+  period_dates:
+    stage1: "{date}"
+    other: "{start} bis {end}"
+  clause_group: "{title}"      # Gruppenüberschrift in Teil IV; NIS-2-Gruppen tragen ihren eigenen Titel
+  "yes": "Ja"
+  "no": "Nein"
+  no_justification: "Keine angegeben."
+  see: "; siehe {ids}"
+  req_unit_title: "{title} (keine zugeordnete Maßnahme; direkt gegen die Anforderung auditiert)"
+  excluded:
+    scope: "Gilt nur für andere Arten von Einrichtungen. Einstufung der Einrichtung: {scope_values}."
+    optional: "Optional; von der Einrichtung nicht in Anspruch genommen."
+  scope_values:
+    essential: "wesentliche Einrichtung"
+    important: "wichtige Einrichtung"
+    digital-providers: "digitaler Anbieter nach der Durchführungsverordnung (EU) 2024/2690"
+  grade_short: {major: Hauptabweichung, minor: Nebenabweichung}
+  see_sentence: " Siehe {ids}."
+  sample: "Stichprobe von {sample} aus einer Grundgesamtheit von {population}."
+  lowercase_states: false      # Substantive werden großgeschrieben: „Art.20(2) Nicht auditiert“
+  clause_result:
+    nonconforming: "nicht konform. Siehe {ids}."
+    conforming: "konform. Zu diesen Anforderungen wurde keine Abweichung festgestellt."
+    related: " Eine zugehörige Feststellung ist zu einer anderen Anforderung erfasst: {ids}."
+  # PDF-Layout
+  header: "KI-Audit – kein Audit einer zuständigen Behörde"
+  footer_final: "KI-Audit. Kein Audit einer zuständigen Behörde. Keine Rechtsberatung."
+  footer_draft: "Entwurf eines KI-Audits. Nicht unterzeichnet. Kein Audit einer zuständigen Behörde."
+  page_of: "1 von 1"           # Typst-Zählermuster
+  kicker: "KI-AUDIT · NIS-2-RICHTLINIE (EU) 2022/2555"
+  not_official: "Kein Audit einer zuständigen Behörde · Keine Rechtsberatung"
+  scope_label: "Anwendungsbereich:"
+  signed_by: "Unterzeichnet von:"
+  watermark: "ENTWURF"
+  draft_note: "ENTWURF. Erstellt am {generated}. Noch nicht von dem Modell unterzeichnet, das das Audit durchgeführt hat."
+  contents: "Inhalt"
+  section: "Teil"
+  finding: "Feststellung:"
+  response: "Stellungnahme der Einrichtung:"
+  # workpapers.xlsx
+  xlsx:
+    sheets: {units: Einheiten, samples: Stichproben, deviations: Auffälligkeiten, findings: Feststellungen, soa: Anwendbarkeit, evidence: Nachweise}
+    units: [Einheit, Anforderungen, Häufigkeit, Art, Grundgesamtheit, Stichprobe, Angemessen gestaltet, Schlussfolgerung,
+            Auffälligkeiten, Konfidenz, Erstellt von, Maßnahme]
+    samples: [Einheit, Element, Ergebnisse, Nachweise, Anmerkung]
+    deviations: [Einheit, Element, Beschreibung, Nachweise]
+    findings: [ID, Einstufung, Anforderung, Beschreibung, Objektiver Nachweis, Auffälligkeiten, Nachweise, Stellungnahme der Einrichtung]
+    soa: [Anforderung, Gilt, Begründung, Status, Einheiten]
+    evidence: [ID, Titel, Art, Pfad, SHA-256, Herkunft, Datum, Maßnahmen, Anforderungen]
+    "yes": "ja"
+    "no": "nein"

@@ -1,0 +1,323 @@
+# Berichtstext für ein KI-Audit (AI Audit) nach ISO/IEC 27001:2022.
+#
+# Der Aufbau folgt den Inhalten, die der Auditbericht einer Zertifizierungsstelle
+# enthalten muss (ISO/IEC 17021-1:2015, 9.4.8). Das Dokument ist ein KI-Audit. Es ist
+# kein Zertifizierungsaudit nach ISO/IEC 27001, es wird nicht von einer akkreditierten
+# Zertifizierungsstelle herausgegeben, und es ist kein Normtext.
+#
+# Platzhalter: {org} {scope} {model} {type_label} {period} {period_dates}
+# {standard} {soa_version} {applicable} {excluded} {majors} {minors} {ofis}
+# {representative}
+
+standards:
+  full: "ISO/IEC 27001:2022 Informationssicherheit, Cybersicherheit und Datenschutz – Informationssicherheitsmanagementsysteme – Anforderungen, geändert durch ISO/IEC 27001:2022/Amd 1:2024"
+  short: "ISO/IEC 27001:2022"
+  certification: "ISO/IEC 17021-1:2015 und ISO/IEC 27006-1:2024"
+  auditing: "ISO 19011:2018"
+
+audit_types:
+  stage1:
+    label: "Stufe-1-Audit (Erstzertifizierung)"
+    period_heading: "Dokumentation geprüft mit Stand vom"
+    objectives:
+      - "Prüfung der dokumentierten Information des ISMS der Organisation, einschließlich des Anwendungsbereichs, der Methodik und der Ergebnisse der Risikobeurteilung und -behandlung sowie der Erklärung zur Anwendbarkeit;"
+      - "Bewertung des Verständnisses der Organisation für die Anforderungen der Norm und ihrer Vorbereitung auf das Stufe-2-Audit;"
+      - "Einholung von Informationen zum Anwendungsbereich, zu den einbezogenen Prozessen und Standorten sowie zu den zutreffenden gesetzlichen, behördlichen und vertraglichen Anforderungen;"
+      - "Bewertung, ob interne Audits und Managementbewertungen geplant und durchgeführt werden;"
+      - "Ermittlung von Problembereichen, die im Stufe-2-Audit als Abweichungen eingestuft werden könnten."
+  stage2:
+    label: "Stufe-2-Audit (Erstzertifizierung)"
+    period_heading: "Stichprobe aus Aufzeichnungen vom"
+    objectives:
+      - "Bewertung der Umsetzung des ISMS der Organisation, einschließlich seiner Wirksamkeit;"
+      - "Bestätigung, dass das ISMS alle Anforderungen der Norm sowie die eigenen Richtlinien, Ziele und Verfahren der Organisation erfüllt;"
+      - "Bewertung der Überwachung und Messung der Leistung im Hinblick auf die Informationssicherheitsziele, des internen Audits und der Managementbewertung;"
+      - "Bewertung der betrieblichen Steuerung der Prozesse und der in der Erklärung zur Anwendbarkeit angegebenen Maßnahmen;"
+      - "Schlussfolgerung, ob eine Zertifizierung des ISMS empfohlen werden könnte."
+  surveillance:
+    label: "Überwachungsaudit"
+    period_heading: "Stichprobe aus Aufzeichnungen vom"
+    objectives:
+      - "Bestätigung, dass das ISMS weiterhin die Anforderungen der Norm erfüllt und wirksam bleibt;"
+      - "Prüfung der internen Audits, der Managementbewertung sowie der Korrekturen und Korrekturmaßnahmen zu zuvor festgestellten Abweichungen;"
+      - "Prüfung von Änderungen am ISMS, an der Risikobeurteilung und an der Erklärung zur Anwendbarkeit sowie des Fortschritts bei der geplanten fortlaufenden Verbesserung;"
+      - "Bewertung der fortbestehenden betrieblichen Steuerung anhand einer Stichprobe der als anwendbar erklärten Maßnahmen aus Anhang A;"
+      - "Schlussfolgerung, ob die Aufrechterhaltung der Zertifizierung empfohlen werden könnte."
+  recertification:
+    label: "Rezertifizierungsaudit"
+    period_heading: "Stichprobe aus Aufzeichnungen vom"
+    objectives:
+      - "Bestätigung der fortbestehenden Konformität und Wirksamkeit des ISMS als Ganzes sowie seiner fortbestehenden Relevanz und Anwendbarkeit für den Anwendungsbereich;"
+      - "Bewertung der nachgewiesenen Verpflichtung der Organisation, die Wirksamkeit und Verbesserung des ISMS aufrechtzuerhalten;"
+      - "Bewertung der Wirksamkeit des ISMS im Hinblick auf das Erreichen der Informationssicherheitsziele und der beabsichtigten Ergebnisse der Organisation;"
+      - "Schlussfolgerung, ob die Erneuerung der Zertifizierung empfohlen werden könnte."
+
+cover:
+  kicker: "KI-Audit"
+  disclaimer: "Kein Zertifizierungsaudit nach ISO/IEC 27001. Nicht von einer akkreditierten Zertifizierungsstelle durchgeführt. Auf Grundlage dieses Berichts wird kein Zertifikat ausgestellt, und es kann auch keines ausgestellt werden."
+  title: "KI-Audit des Informationssicherheitsmanagementsystems von {org} nach {standard}"
+  restricted: "Dieses KI-Audit ist weder ein Zertifikat nach ISO/IEC 27001 noch ein Bericht über ein Zertifizierungsaudit und darf nicht als eines von beiden dargestellt werden."
+
+section1:
+  title: "KI-Auditbericht"
+  notice: >-
+    Dies ist ein KI-Audit (AI Audit), erstellt und unterzeichnet von {model}. Es legt ISO/IEC 27001:2022 als
+    Auditkriterien zugrunde und folgt dem Aufbau eines Zertifizierungsaudits. Es ist kein Zertifizierungsaudit nach
+    ISO/IEC 27001, es wurde nicht von einer nach {certification} akkreditierten Zertifizierungsstelle durchgeführt,
+    und auf seiner Grundlage kann kein Zertifikat ausgestellt werden.
+  notice_unsigned: >-
+    Dies ist ein KI-Audit (AI Audit). Es ist noch nicht unterzeichnet. Es legt ISO/IEC 27001:2022 als Auditkriterien
+    zugrunde und folgt dem Aufbau eines Zertifizierungsaudits. Es ist kein Zertifizierungsaudit nach ISO/IEC 27001,
+    es wurde nicht von einer nach {certification} akkreditierten Zertifizierungsstelle durchgeführt, und auf seiner
+    Grundlage kann kein Zertifikat ausgestellt werden.
+  addressee: "An die Leitung von {org}"
+  facts_heading: "Angaben zum Audit"
+  facts:
+    organization: "Organisation"
+    representative: "Vertretung der Organisation"
+    audit_type: "Auditart"
+    criteria: "Auditkriterien"
+    records: "Zeitraum"
+    auditor: "Durchgeführt und unterzeichnet von"
+    method: "Auditmethode"
+    method_value: "Remote-Prüfung eines gehashten Nachweispakets; keine Begehung vor Ort und keine Interviews"
+  criteria: >-
+    {standard_full}; die dokumentierte Information des ISMS der Organisation, einschließlich der Erklärung zur
+    Anwendbarkeit{soa_version}; sowie die gesetzlichen, behördlichen und vertraglichen Anforderungen, die die
+    Organisation als zutreffend ermittelt hat.
+  objectives_heading: "Auditziele"
+  objectives_intro: "Ziele dieses Audits waren:"
+  scope_heading: "Auditumfang"
+  scope: >-
+    Das ISMS von {org} mit dem Anwendungsbereich: {scope}
+  coverage:
+    full: >-
+      Das Audit umfasste sämtliche Anforderungen der Abschnitte 4 bis 10 der Norm sowie die {applicable} Maßnahmen
+      aus Anhang A, die in der Erklärung zur Anwendbarkeit als anwendbar erklärt sind. Die {excluded} Maßnahmen aus
+      Anhang A, die die Erklärung zur Anwendbarkeit ausschließt, wurden nicht auditiert; geprüft wurde lediglich die
+      Begründung ihres Ausschlusses.
+    surveillance: >-
+      Als Überwachungsaudit umfasste dieses Audit die Abschnitte, die bei jedem Überwachungsaudit geprüft werden
+      (internes Audit, Managementbewertung, Abweichungen und Korrekturmaßnahmen, Änderungen, Ziele, betriebliche
+      Steuerung, Risikobeurteilung und -behandlung), sowie eine Stichprobe von {sampled} der {applicable} Maßnahmen
+      aus Anhang A, die in der Erklärung zur Anwendbarkeit als anwendbar erklärt sind. Welche dies sind, zeigt Teil V.
+  method_heading: "Auditmethode"
+  method: >-
+    Der im Auftrag benannte Konnektor hat die Nachweise der Organisation in einem Paket zusammengeführt; jede Datei
+    wurde bei Eingang gehasht. Jede Maßnahme, die die Organisation betreibt, und jede Anforderung, der keine Maßnahme
+    zugeordnet ist, wurde anhand der dokumentierten Information und der Aufzeichnungen in diesem Paket durch
+    Einsichtnahme und, soweit möglich, durch erneute Durchführung auditiert. Wo eine Tätigkeit häufig stattfand,
+    wurden Elemente mithilfe eines aufgezeichneten Startwerts („Seed“) zufällig ausgewählt. Feststellungen werden mit
+    dem objektiven Nachweis, auf dem sie beruhen, zu einer bestimmten Anforderung erfasst und als Hauptabweichungen,
+    Nebenabweichungen oder Verbesserungspotenziale eingestuft.
+  sampling: >-
+    Das Audit beruht auf Stichproben aus den verfügbaren Informationen. Es können Abweichungen bestehen, die dieses
+    Audit nicht festgestellt hat; das Fehlen einer Feststellung bedeutet nicht, dass keine Abweichungen bestehen.
+  summary_heading: "Zusammenfassung der Feststellungen"
+  summary_counts: "Dieses Audit hat folgende Feststellungen ergeben: Hauptabweichungen: {majors}, Nebenabweichungen: {minors}, Verbesserungspotenziale: {ofis}. Jede Feststellung ist in Teil III dargestellt."
+  grades:
+    major: "Hauptabweichung: eine Abweichung, die die Fähigkeit des ISMS beeinträchtigt, seine beabsichtigten Ergebnisse zu erreichen."
+    minor: "Nebenabweichung: eine Abweichung, die die Fähigkeit des ISMS, seine beabsichtigten Ergebnisse zu erreichen, nicht beeinträchtigt."
+    ofi: "Verbesserungspotenzial: Eine Anforderung ist erfüllt, das Audit hat jedoch eine Möglichkeit zur Verbesserung des ISMS festgestellt."
+  stage1_grades: "Im Stufe-1-Audit sind Feststellungen Problembereiche. Ihre Einstufung gibt an, wie sie zu bewerten wären, falls sie im Stufe-2-Audit noch vorliegen."
+  conformity_heading: "Konformität und Wirksamkeit des ISMS"
+  highlights_heading: "Internes Audit und Managementbewertung"
+  highlights:
+    internal_audit: "Internes Audit (Abschnitt 9.2): {result}"
+    management_review: "Managementbewertung (Abschnitt 9.3): {result}"
+  scope_appropriate_heading: "Angemessenheit des Anwendungsbereichs"
+  scope_appropriate:
+    "yes": "Der Anwendungsbereich des ISMS ist für die Organisation, ihren Kontext und die Anforderungen ihrer interessierten Parteien angemessen."
+    "no": "Der Anwendungsbereich des ISMS ist in seiner derzeitigen Form nicht angemessen."
+  objectives_met_heading: "Erfüllung der Auditziele"
+  objectives_met:
+    "yes": "Die Auditziele wurden erfüllt."
+    "no": "Die Auditziele wurden aufgrund der nachstehend beschriebenen Einschränkungen des Auditumfangs nicht vollständig erfüllt."
+  limitations_heading: "Einschränkungen des Auditumfangs"
+  recommendation_heading: "Schlussfolgerung"
+  recommendation:
+    stage1:
+      recommended: "Das ISMS ist für das Stufe-2-Audit bereit. Es wurden keine Problembereiche festgestellt."
+      recommended-with-actions: "Das ISMS ist für das Stufe-2-Audit bereit, sofern die Problembereiche in Teil III vor dessen Beginn behandelt werden. Bestehen sie im Stufe-2-Audit noch, könnten sie als Abweichungen festgestellt werden."
+      not-recommended: "Das ISMS ist für das Stufe-2-Audit nicht bereit. Die schwerwiegenden Problembereiche in Teil III müssen behoben und das Stufe-1-Audit muss ganz oder teilweise wiederholt werden, bevor das Stufe-2-Audit stattfindet."
+      no-conclusion: "Aufgrund der oben beschriebenen Einschränkungen des Auditumfangs wird keine Schlussfolgerung zur Bereitschaft für das Stufe-2-Audit gezogen."
+    stage2:
+      recommended: "Das ISMS erfüllt die Anforderungen der ISO/IEC 27001:2022 und ist wirksam umgesetzt. Eine Zertifizierungsstelle, die dieses Audit durchführte, könnte die Zertifizierung empfehlen."
+      recommended-with-actions: "Das ISMS erfüllt die Anforderungen der ISO/IEC 27001:2022 und ist wirksam umgesetzt, mit Ausnahme der Nebenabweichungen in Teil III, die die Fähigkeit des ISMS, seine beabsichtigten Ergebnisse zu erreichen, nicht beeinträchtigen. Eine Zertifizierungsempfehlung würde voraussetzen, dass die Organisation zu jeder dieser Abweichungen einen akzeptablen Plan für Korrektur und Korrekturmaßnahme vorlegt."
+      not-recommended: "Die Hauptabweichungen in Teil III beeinträchtigen die Fähigkeit des ISMS, seine beabsichtigten Ergebnisse zu erreichen. Die Zertifizierung würde erst empfohlen, wenn Korrektur und Korrekturmaßnahme zu jeder Hauptabweichung umgesetzt und verifiziert sind."
+      no-conclusion: "Aufgrund der oben beschriebenen Einschränkungen des Auditumfangs wird keine Schlussfolgerung zur Zertifizierung gezogen."
+    surveillance:
+      recommended: "Das ISMS erfüllt weiterhin die Anforderungen der ISO/IEC 27001:2022 und ist weiterhin wirksam umgesetzt. Die Aufrechterhaltung der Zertifizierung könnte empfohlen werden."
+      recommended-with-actions: "Das ISMS erfüllt weiterhin die Anforderungen und ist weiterhin wirksam umgesetzt, mit Ausnahme der Nebenabweichungen in Teil III. Die Aufrechterhaltung der Zertifizierung könnte empfohlen werden, vorausgesetzt, zu jeder dieser Abweichungen wird ein akzeptabler Plan für Korrektur und Korrekturmaßnahme vorgelegt."
+      not-recommended: "Die Hauptabweichungen in Teil III beeinträchtigen die Fähigkeit des ISMS, seine beabsichtigten Ergebnisse zu erreichen. Die Aufrechterhaltung der Zertifizierung würde erst empfohlen, wenn Korrektur und Korrekturmaßnahme umgesetzt und verifiziert sind; eine Zertifizierungsstelle könnte die Zertifizierung bis dahin aussetzen."
+      no-conclusion: "Aufgrund der oben beschriebenen Einschränkungen des Auditumfangs wird keine Schlussfolgerung zur Aufrechterhaltung der Zertifizierung gezogen."
+    recertification:
+      recommended: "Das ISMS erfüllt weiterhin die Anforderungen der ISO/IEC 27001:2022 und ist als Ganzes wirksam. Die Erneuerung der Zertifizierung könnte empfohlen werden."
+      recommended-with-actions: "Das ISMS erfüllt weiterhin die Anforderungen und ist als Ganzes wirksam, mit Ausnahme der Nebenabweichungen in Teil III. Die Erneuerung der Zertifizierung könnte empfohlen werden, vorausgesetzt, zu jeder dieser Abweichungen wird ein akzeptabler Plan für Korrektur und Korrekturmaßnahme vorgelegt."
+      not-recommended: "Die Hauptabweichungen in Teil III beeinträchtigen die Fähigkeit des ISMS, seine beabsichtigten Ergebnisse zu erreichen. Die Erneuerung der Zertifizierung würde erst empfohlen, wenn Korrektur und Korrekturmaßnahme vor Ablauf des aktuellen Zertifikats umgesetzt und verifiziert sind."
+      no-conclusion: "Aufgrund der oben beschriebenen Einschränkungen des Auditumfangs wird keine Schlussfolgerung zur Erneuerung der Zertifizierung gezogen."
+  ai_disclaimer: >-
+    Diese Schlussfolgerungen sind die des Modells und beruhen ausschließlich auf den Nachweisen im Paket. Eine
+    Zertifizierungsentscheidung kann nur eine akkreditierte Zertifizierungsstelle treffen, und zwar nach ihrem eigenen
+    Audit.
+  independence_heading: "Unabhängigkeit und Einschränkungen"
+  independence: >-
+    Das Modell, das dieses KI-Audit unterzeichnet, ist keine akkreditierte Zertifizierungsstelle, kein zertifizierter
+    ISMS-Auditor und nicht unabhängig in dem Sinne, wie {certification} es von einer Zertifizierungsstelle verlangt.
+    Es hat keine Standorte besucht und kein Personal befragt; es stützte sich auf die dokumentierte Information und die
+    Aufzeichnungen, die die Systeme der Organisation bereitgestellt haben.
+  restricted_use_heading: "Verwendung dieses Berichts"
+  restricted_use: >-
+    Dieser Bericht ist für die Leitung von {org} bestimmt sowie für Parteien, denen {org} ihn zur Beschreibung des
+    Zustands des eigenen ISMS zugänglich macht. Er ist ein KI-Audit. Er ist weder ein Zertifikat nach ISO/IEC 27001
+    noch ein Bericht über ein Zertifizierungsaudit, er berechtigt {org} weder, eine Zertifizierung für sich in Anspruch
+    zu nehmen, noch, ein Zertifizierungszeichen zu verwenden, und er darf nicht als eines von beiden dargestellt
+    werden.
+  signature_footer: "Keine Zertifizierung nach ISO/IEC 27001."
+
+section2:
+  title: "Anwendungsbereich und Kontext des ISMS"
+  intro: >-
+    Dieser Teil enthält die Beschreibung des ISMS durch die Organisation. Es handelt sich um dokumentierte Information
+    der Organisation, nicht um eine Schlussfolgerung dieses KI-Audits.
+  unapproved: "Diese Beschreibung ist nicht als von der Leitung freigegeben gekennzeichnet."
+  omitted: >-
+    Eine Beschreibung des Anwendungsbereichs und des Kontexts des ISMS für die Leser dieses Berichts wurde nicht
+    bereitgestellt. Aus dem Compliance-System übernommener Text ist Nachweismaterial und wird hier nicht abgedruckt.
+  headings:
+    scope_statement: "Anwendungsbereich des ISMS"
+    boundaries: "Grenzen"
+    sites: "Standorte"
+    context: "Interne und externe Themen"
+    interested_parties: "Interessierte Parteien und ihre Anforderungen"
+    interfaces: "Schnittstellen und Abhängigkeiten"
+    outsourced: "Ausgegliederte Prozesse und wesentliche Lieferanten"
+    soa_version: "Erklärung zur Anwendbarkeit"
+    changes: "Wesentliche Änderungen seit dem letzten Audit"
+
+section3:
+  title: "Auditfeststellungen"
+  intro: >-
+    Jede Feststellung ist zu genau einer Anforderung der Norm erfasst, mit einer Beschreibung der Abweichung und dem
+    objektiven Nachweis, auf dem sie beruht. Dieses KI-Audit nennt weder die Ursache einer Abweichung noch deren
+    Lösung; von der Organisation wird erwartet, die Ursache zu analysieren sowie Korrektur und Korrekturmaßnahme zu
+    planen.
+  intro_stage1: >-
+    Im Stufe-1-Audit sind Feststellungen Problembereiche. Jede ist zu genau einer Anforderung der Norm erfasst, mit dem
+    objektiven Nachweis, auf dem sie beruht, und so eingestuft, wie sie einzustufen wäre, falls sie im Stufe-2-Audit
+    noch vorliegt.
+  none: "Es wurden keine Abweichungen und keine Verbesserungspotenziale festgestellt."
+  labels:
+    requirement: "Anforderung"
+    statement: "Beschreibung"
+    statement_ofi: "Verbesserungspotenzial"
+    evidence: "Objektiver Nachweis"
+    units: "Zugehörige Auditeinheiten"
+  grade_names:
+    major: "Hauptabweichung"
+    minor: "Nebenabweichung"
+    ofi: "Verbesserungspotenzial"
+
+section4:
+  title: "Anforderungen, Maßnahmen und Auditergebnisse"
+  intro: >-
+    Dieser Teil führt für jede Anforderung im Auditumfang die Maßnahmen auf, die {org} zu ihrer Erfüllung betreibt,
+    die Prüfhandlungen, die dieses KI-Audit durchgeführt hat, und die Ergebnisse. Für die Maßnahmen ist {org}
+    verantwortlich; für die Prüfhandlungen und Ergebnisse ist dieses KI-Audit verantwortlich. Ist einer Anforderung
+    keine Maßnahme zugeordnet, wurde die Anforderung unmittelbar anhand der dokumentierten Information und der
+    Aufzeichnungen der Organisation auditiert.
+  methods: >-
+    Die Prüfhandlungen nutzten eine oder mehrere der folgenden Methoden. Einsichtnahme: Untersuchung von Dokumenten,
+    Aufzeichnungen und Systemkonfigurationen. Erneute Durchführung: unabhängige Ausführung einer Maßnahme und
+    Vergleich des Ergebnisses. Beobachtung: Untersuchung des laufenden Verhaltens eines Systems, wie es in einem Export
+    aufgezeichnet ist. Befragung: Berücksichtigung schriftlicher Aussagen der Organisation; eine Befragung allein galt
+    nie als ausreichender Nachweis. Wo eine Tätigkeit häufig stattfand, wurde mithilfe eines aufgezeichneten
+    Startwerts („Seed“) eine Zufallsstichprobe gezogen; der Stichprobenumfang richtete sich nach der Häufigkeit der
+    Tätigkeit und der Größe der Grundgesamtheit.
+  columns: ["Anforderung", "Einheit", "Maßnahmenbeschreibung", "Durchgeführte Prüfhandlungen", "Ergebnis"]
+  conforming: "Keine Auffälligkeiten festgestellt."
+  not_audited: "Nicht auditiert. {reason}"
+  design_gap: "Nicht angemessen gestaltet. {reason}"
+  not_sampled: "Nicht Gegenstand dieses Überwachungsaudits."
+
+section5:
+  title: "Erklärung zur Anwendbarkeit"
+  intro: >-
+    Die Erklärung zur Anwendbarkeit{soa_version} der Organisation erklärt {applicable} der 93 Maßnahmen aus Anhang A
+    für anwendbar und schließt {excluded} aus. Die Tabelle zeigt für jede Maßnahme die Entscheidung der Organisation,
+    ihre Begründung für einen Ausschluss und das Ergebnis dieses Audits. Die Begründungen stammen von der Organisation.
+  missing: >-
+    Die Organisation hat in den Nachweisen keine Erklärung zur Anwendbarkeit bereitgestellt. Für dieses Audit wurde
+    jede Maßnahme aus Anhang A als anwendbar behandelt.
+  columns: ["Maßnahme", "Titel", "Anwendbar", "Begründung für den Ausschluss", "Auditergebnis"]
+  results:
+    conforming: "Konform"
+    excluded: "Ausgeschlossen"
+    not_audited: "Nicht auditiert"
+    not_sampled: "Nicht in der Stichprobe dieses Audits"
+
+section6:
+  title: "Stellungnahme der Organisation zu den Feststellungen"
+  intro: >-
+    Die Informationen in diesem Teil sind die eigene Stellungnahme der Organisation zu den Feststellungen,
+    einschließlich ergriffener oder geplanter Korrekturen und Korrekturmaßnahmen. Sie wurden von diesem KI-Audit nicht
+    verifiziert, sofern nicht ein späteres Audit dies ausweist.
+  none: "Die Organisation hat keine Stellungnahme zu den Feststellungen abgegeben."
+
+# Kurze Bezeichnungen und Sätze, die der Renderer und das PDF-Layout verwenden.
+labels:
+  lang: de                     # Typst-Textsprache (Silbentrennung, Anführungszeichen)
+  paper: a4
+  auditor: "KI-Audit"
+  signer_title: "KI-Auditor"
+  auditor_line: "{model}, KI-Auditor"
+  period:
+    stage1: "Stand: {date}"
+    other: "für Aufzeichnungen vom {start} bis {end}"
+  period_dates:
+    stage1: "{date}"
+    other: "{start} bis {end}"
+  clause_group: "Abschnitt {code}: {title}"
+  "yes": "Ja"
+  "no": "Nein"
+  no_justification: "Keine angegeben."
+  req_unit_title: "{title} (keine zugeordnete Maßnahme; direkt gegen die Anforderung auditiert)"
+  excluded:
+    scope: "Nicht im Umfang: gilt für andere Rollen als {scope_values}."
+    optional: "Optional; von der Organisation nicht in Anspruch genommen."
+  grade_short: {major: Hauptabweichung, minor: Nebenabweichung}
+  see: "; siehe {ids}"
+  see_sentence: " Siehe {ids}."
+  sample: "Stichprobe von {sample} aus einer Grundgesamtheit von {population}."
+  lowercase_states: false      # Substantive werden großgeschrieben: „9.2.1 Nicht auditiert“
+  clause_result:
+    nonconforming: "nicht konform. Siehe {ids}."
+    conforming: "konform. Zu diesem Abschnitt wurde keine Abweichung festgestellt."
+    related: " Eine zugehörige Feststellung ist zu einer anderen Anforderung erfasst: {ids}."
+  # PDF-Layout
+  header: "KI-Audit – keine Zertifizierung nach ISO/IEC 27001"
+  footer_final: "KI-Audit. Keine Zertifizierung nach ISO/IEC 27001."
+  footer_draft: "Entwurf eines KI-Audits. Nicht unterzeichnet. Keine Zertifizierung nach ISO/IEC 27001."
+  page_of: "1 von 1"           # Typst-Zählermuster
+  kicker: "KI-AUDIT · ISO/IEC 27001:2022"
+  not_official: "Keine Zertifizierung nach ISO/IEC 27001"
+  scope_label: "Anwendungsbereich des ISMS:"
+  signed_by: "Unterzeichnet von:"
+  watermark: "ENTWURF"
+  draft_note: "ENTWURF. Erstellt am {generated}. Noch nicht von dem Modell unterzeichnet, das das Audit durchgeführt hat."
+  contents: "Inhalt"
+  section: "Teil"
+  finding: "Feststellung:"
+  response: "Stellungnahme der Organisation:"
+  # workpapers.xlsx
+  xlsx:
+    sheets: {units: Einheiten, samples: Stichproben, deviations: Auffälligkeiten, findings: Feststellungen, soa: Erklärung zur Anwendbarkeit, evidence: Nachweise}
+    units: [Einheit, Anforderungen, Häufigkeit, Art, Grundgesamtheit, Stichprobe, Angemessen gestaltet, Schlussfolgerung,
+            Auffälligkeiten, Konfidenz, Erstellt von, Maßnahmenbeschreibung]
+    samples: [Einheit, Element, Ergebnisse, Nachweise, Anmerkung]
+    deviations: [Einheit, Element, Beschreibung, Nachweise]
+    findings: [ID, Einstufung, Anforderung, Beschreibung, Objektiver Nachweis, Auffälligkeiten, Nachweise, Stellungnahme der Organisation]
+    soa: [Maßnahme, Anwendbar, Begründung, Status, Einheiten]
+    evidence: [ID, Titel, Art, Pfad, SHA-256, Erhalten am, Datum, Maßnahmen, Anforderungen]
+    "yes": "ja"
+    "no": "nein"
