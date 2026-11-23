@@ -133,6 +133,38 @@ class RecordsConnector(unittest.TestCase):
         r = run(sys.executable, SOC2, "validate", eng)
         self.assertIn("description or criteria changed", r.stdout + r.stderr)
 
+    def test_removed_control_cannot_keep_its_workpaper(self):
+        eng = self.tmp / "removed"
+        run(sys.executable, SOC2, "init", eng, "--org", "Example Inc.", "--system", "Example", "--type", "1",
+            "--as-of", "2026-06-30", "--connector", "records", "--option", f"path={self.records}")
+        run(sys.executable, SOC2, "ingest", eng)
+        run(sys.executable, SOC2, "plan", eng)
+        plan = eng / "testplan.csv"
+        with plan.open() as f:
+            rows = list(csv.DictReader(f))
+        for row in rows:
+            row.update(frequency="annual", nature="manual")
+        with plan.open("w", newline="") as f:
+            w = csv.DictWriter(f, fieldnames=list(rows[0]))
+            w.writeheader()
+            w.writerows(rows)
+        self.assertEqual(run(sys.executable, SOC2, "sample", eng).returncode, 0)
+        wp_path = eng / "workpapers" / "scanning.json"
+        wp = json.loads(wp_path.read_text())
+        wp["conclusion"] = "no-exceptions"
+        wp_path.write_text(json.dumps(wp))
+        measures = yaml.safe_load((self.records / "measures.yaml").read_text())
+        (self.records / "measures.yaml").write_text(yaml.safe_dump([m for m in measures if m["id"] != "scanning"], sort_keys=False))
+        self.assertEqual(run(sys.executable, SOC2, "ingest", eng, "--replace").returncode, 0)
+        out = run(sys.executable, SOC2, "validate", eng)
+        self.assertIn("scanning is no longer in the bundle's control matrix", out.stdout + out.stderr)
+        run(sys.executable, SOC2, "plan", eng)
+        r = run(sys.executable, SOC2, "sample", eng)
+        self.assertNotEqual(r.returncode, 0, "results of a removed control are not discarded silently")
+        r = run(sys.executable, SOC2, "sample", eng, "--force")
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertFalse(wp_path.exists())
+
     def test_iso_engagement_prefers_ai_audited_framework_and_builds_soa(self):
         eng = self.tmp / "iso"
         r = run(sys.executable, ISO, "init", eng, "--org", "Example Inc.", "--scope", "The Example platform.", "--type", "stage2",

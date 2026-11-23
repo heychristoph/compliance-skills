@@ -46,6 +46,15 @@ def sample(eng: Engagement, force: bool = False) -> list[str]:
     rows, notes = _validated_plan(eng)
     controls = {c["id"]: c for c in eng.controls}
     log = [f"warning: {n}" for n in notes]
+    for path in eng.workpaper_files():
+        cid = load_json(path).get("control_id", path.stem)
+        if cid in controls:
+            continue
+        if load_json(path).get("conclusion") not in (None, "pending") and not force:
+            raise AuditError(f"{cid}: no longer in the control matrix but its workpaper has results. "
+                             "Re-run with --force to discard them.")
+        path.unlink()
+        log.append(f"{cid}: no longer in the control matrix; workpaper removed")
     for row in rows:
         c = controls[row["control_id"]]
         path = eng.workpaper_path(c["id"])

@@ -25,6 +25,11 @@ def validate(eng: Engagement, final: bool = False) -> tuple[list[str], list[str]
     if not plan_rows:
         return ["No testplan.csv. Run `soc2.py plan` and `soc2.py sample` first."], []
     workpapers = eng.load_workpapers()
+    current = {c["id"] for c in eng.controls}
+    for cid in sorted(set(plan_rows) - current):
+        errors.append(f"testplan.csv: {cid} is no longer in the bundle's control matrix; re-run `soc2.py plan` and `soc2.py sample`")
+    for cid in sorted(current - set(plan_rows)):
+        errors.append(f"testplan.csv: {cid} is in the control matrix but not planned; re-run `soc2.py plan`")
 
     for cid in plan_rows:
         if cid not in workpapers:
@@ -80,7 +85,10 @@ def _check_workpaper(eng: Engagement, cid: str, wp: dict, plan_row: dict | None)
     if wp["plan"] != expected_plan(eng, plan_row):
         errors.append(f"{where}: plan does not match testplan.csv and the sampling seed; do not edit `plan`, re-run `soc2.py sample`")
     control = next((c for c in eng.controls if c["id"] == cid), None)
-    if control and (wp.get("control") != control["description"] or wp.get("criteria") != control["criteria"]):
+    if control is None:
+        errors.append(f"{where}: {cid} is no longer in the bundle's control matrix; re-run `soc2.py plan` and `soc2.py sample`, "
+                      "which drop it")
+    elif (wp.get("control") != control["description"] or wp.get("criteria") != control["criteria"]):
         errors.append(f"{where}: the control's description or criteria changed since this workpaper was written; "
                       f"re-run `soc2.py sample --force` and test it again")
 
