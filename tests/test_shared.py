@@ -163,6 +163,14 @@ class Privacy(unittest.TestCase):
                        {"id": "cloud", "name": "Example Cloud", "category": "CLOUD_PROVIDER"}], found)
         self.assertEqual(found, {"Dana Leaver"})
 
+    def test_structured_names_count_in_any_spelling(self):
+        from lib import privacy
+
+        found = set()
+        privacy._walk([{"full_name": "José García"}, {"full_name": "Dana van Dijk"}, {"full_name": "Li Wu"}, {"employee": "E-1042"}], found)
+        self.assertEqual(found, {"José García", "Dana van Dijk", "Li Wu"})
+        self.assertTrue(privacy.leaks("Approved by José García.", found))
+
     def test_sharing_a_first_name_with_the_representative_exempts_nobody(self):
         import json, tempfile
         from lib import privacy

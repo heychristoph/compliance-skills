@@ -188,9 +188,15 @@ def _check_opinion(eng: Engagement, workpapers: dict) -> list[str]:
     if untested and not op["scope_limitations"]:
         errors.append(f"opinion.json: controls {untested} were not tested; state why in scope_limitations, which also rules out "
                       "an unmodified opinion")
-    tested = {x for wp in workpapers.values() if wp.get("conclusion") != "not-tested" for x in wp["criteria"]}
-    untested_only = {x for cid in untested for x in workpapers[cid]["criteria"]} - tested
-    uncovered = sorted(in_scope - tested - untested_only - {c["criterion"] for c in op["criteria_not_met"]})
+    not_met = {c["criterion"] for c in op["criteria_not_met"]}
+    tested = {x for wp in workpapers.values() if wp.get("conclusion") not in ("not-tested", "design-deficiency") for x in wp["criteria"]}
+    deficient_only = {x for wp in workpapers.values() if wp.get("conclusion") == "design-deficiency" for x in wp["criteria"]} - tested
+    missing = sorted(deficient_only - not_met)
+    if missing:
+        errors.append(f"opinion.json: criteria {missing} are addressed only by controls with a design deficiency; "
+                      "list them in criteria_not_met (references/evaluating.md)")
+    untested_only = {x for cid in untested for x in workpapers[cid]["criteria"]} - tested - deficient_only
+    uncovered = sorted(in_scope - tested - deficient_only - untested_only - not_met)
     if uncovered:
         errors.append(f"opinion.json: criteria {uncovered} have no tested control; list them in criteria_not_met or add controls")
     return errors

@@ -97,7 +97,7 @@ def forbidden(bundle: Path, description_file: str, allowed: set[str]) -> set[str
                 pass
         if path.parent.name == "populations" and path.stem in ("hires", "terminations"):
             for row in csv.DictReader(text.splitlines()):
-                _add_person(row.get("name") or "", found)
+                _add_named(row.get("name") or "", found)
     allowed = {n for n in allowed if n}
     exact = {a.casefold() for a in allowed}
     squashed = {re.sub(r"[^a-z]", "", a.casefold()) for a in allowed}  # "maralindqvist" for an email local part
@@ -176,10 +176,10 @@ def _walk(obj, found: set[str]) -> None:
         # A people register (records connector, HR export): a `name` next to an email address is a person,
         # whether or not they joined or left in the period.
         if isinstance(obj.get("name"), str) and any(isinstance(obj.get(k), str) and "@" in obj[k] for k in ("email", "email_address", "mail")):
-            _add_person(obj["name"], found)
+            _add_named(obj["name"], found)
         for key, value in obj.items():
             if key in PERSON_KEYS and isinstance(value, str):
-                _add_person(value, found)
+                _add_named(value, found)
             else:
                 _walk(value, found)
     elif isinstance(obj, list):
@@ -188,6 +188,15 @@ def _walk(obj, found: set[str]) -> None:
 
 
 def _add_person(value: str, found: set[str]) -> None:
+    """A name from free text: only the clear "Given Family" shape, to avoid flagging ordinary words."""
     value = value.strip()
     if PERSON.match(value):
+        found.add(value)
+
+
+def _add_named(value: str, found: set[str]) -> None:
+    """A name from a field that holds a person (full_name, a people register): any spelling counts,
+    accents, particles and short names included (José García, Dana van Dijk, Li Wu)."""
+    value = " ".join(str(value).split())
+    if 2 <= len(value) <= 80 and "@" not in value and any(ch.isalpha() for ch in value) and not any(ch.isdigit() for ch in value):
         found.add(value)

@@ -109,7 +109,9 @@ def entries(root: Path) -> list[tuple[Path, dict]]:
 # else is refused (fail closed): interpreters, scripts and unknown tools can write whatever their
 # arguments look like. To add a tool, add its read-only forms here, never a whole program.
 READ_ONLY = {
-    "git": [["log"], ["show"], ["ls-files"], ["status"], ["diff"], ["rev-parse"], ["describe"], ["blame"], ["shortlog"]],
+    # Only commands that read committed history: anything that compares against the working tree (status,
+    # diff, blame) can run the repository's own clean/textconv filter programs.
+    "git": [["log"], ["show"], ["ls-files"], ["rev-parse"], ["describe"], ["shortlog"]],
     "gh": [["api"], ["repo", "view"], ["pr", "list"], ["pr", "view"], ["run", "list"], ["run", "view"], ["secret", "list"],
            ["ruleset", "list"], ["ruleset", "view"], ["api", "--paginate"]],
     "supabase": [["projects", "list"], ["db", "dump"], ["inspect"], ["functions", "list"], ["secrets", "list"], ["branches", "list"]],
@@ -132,7 +134,7 @@ UNSAFE_OPTIONS = {
 # Git runs with helpers switched off, whatever the repository's own config says.
 GIT_SAFE = ["-c", "diff.external=", "-c", "core.pager=cat", "-c", "core.fsmonitor=false", "-c", "core.hooksPath=/dev/null",
             "-c", "pager.log=false", "-c", "pager.diff=false", "-c", "pager.show=false", "--no-pager"]
-GIT_NO_HELPERS = {"diff": ["--no-ext-diff", "--no-textconv"], "log": ["--no-ext-diff", "--no-textconv"], "show": ["--no-ext-diff", "--no-textconv"]}
+GIT_NO_HELPERS = {"log": ["--no-ext-diff", "--no-textconv"], "show": ["--no-ext-diff", "--no-textconv"]}
 
 
 def harden(command: list[str]) -> list[str]:
@@ -159,7 +161,10 @@ def check_read_only(command: list[str]) -> None:
     if program == "gh" and args[:1] == ["api"]:
         rest = command[2:]
         methods = [rest[i + 1] for i, a in enumerate(rest[:-1]) if a in ("-X", "--method")] + \
-                  [a.split("=", 1)[1] for a in rest if a.startswith(("-X=", "--method="))]
+                  [a.split("=", 1)[1] for a in rest if a.startswith(("-X=", "--method="))] + \
+                  [a[2:] for a in rest if a.startswith("-X") and len(a) > 2 and not a.startswith("-X=")]
+        if any(a in ("-X", "--method") for a in rest[-1:]):
+            raise AuditError("gh api: -X/--method without a value")
         body = [a for a in rest if a.startswith(("-f", "-F", "--field", "--raw-field", "--input"))]
         if body or any(m.upper() != "GET" for m in methods):
             raise AuditError("gh api may only send GET requests without a body in a capture")
