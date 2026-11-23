@@ -18,6 +18,7 @@ then inquiry (answer).
 from __future__ import annotations
 
 import json
+import os
 import re
 import shlex
 import subprocess
@@ -121,6 +122,27 @@ READ_ONLY = {
 }
 
 
+# Options that make an allowed command run a helper program or write a file. Refused anywhere in the command.
+UNSAFE_OPTIONS = {
+    "git": ("--ext-diff", "--textconv", "--output", "--exec", "--upload-pack", "--receive-pack", "-c", "--config-env",
+            "--exec-path", "--git-dir", "--work-tree", "--open-files-in-pager", "-O"),
+    "supabase": ("-f", "--file", "-o", "--output"),
+    "npm": ("fix", "--fix"), "pnpm": ("fix", "--fix"), "yarn": ("fix", "--fix"),
+}
+# Git runs with helpers switched off, whatever the repository's own config says.
+GIT_SAFE = ["-c", "diff.external=", "-c", "core.pager=cat", "-c", "core.fsmonitor=false", "-c", "core.hooksPath=/dev/null",
+            "-c", "pager.log=false", "-c", "pager.diff=false", "-c", "pager.show=false", "--no-pager"]
+GIT_NO_HELPERS = {"diff": ["--no-ext-diff", "--no-textconv"], "log": ["--no-ext-diff", "--no-textconv"], "show": ["--no-ext-diff", "--no-textconv"]}
+
+
+def harden(command: list[str]) -> list[str]:
+    """The command as capture runs it: git with external helpers, pagers and hooks disabled."""
+    if Path(command[0]).name != "git" or len(command) < 2:
+        return command
+    sub = command[1]
+    return [command[0], *GIT_SAFE, sub, *GIT_NO_HELPERS.get(sub, []), *command[2:]]
+
+
 def check_read_only(command: list[str]) -> None:
     if not command:
         raise AuditError("no command given")
@@ -141,6 +163,10 @@ def check_read_only(command: list[str]) -> None:
         body = [a for a in rest if a.startswith(("-f", "-F", "--field", "--raw-field", "--input"))]
         if body or any(m.upper() != "GET" for m in methods):
             raise AuditError("gh api may only send GET requests without a body in a capture")
+    unsafe = [a for a in command[1:] for o in UNSAFE_OPTIONS.get(program, ()) if a == o or a.startswith(o + "=")
+              or (o.startswith("--") and a.startswith(o))]
+    if unsafe:
+        raise AuditError(f"{', '.join(sorted(set(unsafe)))} would run a helper program or write a file; not allowed in a capture")
     hit = MUTATING.search(" ".join(command[1:]))
     if hit and not (program == "gh" and args[:1] == ["api"]):
         raise AuditError(f"'{hit.group(0)}' could change the system; capture only runs read-only commands. "
@@ -150,7 +176,9 @@ def check_read_only(command: list[str]) -> None:
 def _run(command: list[str], cwd: Path | None = None) -> tuple[bytes, str, int]:
     check_read_only(command)
     try:
-        out = subprocess.run(command, capture_output=True, timeout=CLI_TIMEOUT, cwd=str(cwd) if cwd else None)
+        env = {k: v for k, v in os.environ.items() if k not in ("GIT_EXTERNAL_DIFF", "GIT_PAGER", "PAGER", "GIT_CONFIG_PARAMETERS")}
+        out = subprocess.run(harden(command), capture_output=True, timeout=CLI_TIMEOUT, cwd=str(cwd) if cwd else None,
+                             env={**env, "GIT_PAGER": "cat", "PAGER": "cat", "GIT_TERMINAL_PROMPT": "0"})
     except FileNotFoundError as e:
         raise AuditError(f"{command[0]} is not installed or not on PATH") from e
     except subprocess.TimeoutExpired as e:

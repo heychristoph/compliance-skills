@@ -107,6 +107,13 @@ def _check_workpaper(eng: Engagement, cid: str, wp: dict, plan_row: dict | None)
 
     if not wp["procedures"]:
         errors.append(f"{where}: procedures is empty; list what was done (inquiry, inspection, observation, reperformance)")
+    elif all(p["method"] == "inquiry" for p in wp["procedures"]):
+        errors.append(f"{where}: inquiry alone does not support a conclusion; add inspection, observation or reperformance")
+    cited = set(design["evidence"]) | {e for i in wp["items"] for e in i["evidence"]}
+    tiers = {eng.artifacts[i].get("obtained") for i in cited if i in eng.artifacts}
+    if concl == "no-exceptions" and tiers and tiers <= {"inquiry"}:
+        errors.append(f"{where}: the organization's answers alone cannot support 'no-exceptions'; cite corroborating evidence, "
+                      "or conclude 'not-tested' with the reason")
     if concl != "design-deficiency":
         if not wp["attributes"]:
             errors.append(f"{where}: attributes is empty; define what must be true for each sampled item")
@@ -177,7 +184,13 @@ def _check_opinion(eng: Engagement, workpapers: dict) -> list[str]:
         errors.append("opinion.json: a disclaimer needs scope_limitations")
     if kind != "unmodified" and not op["basis"].strip():
         errors.append("opinion.json: basis is required for a modified opinion")
-    uncovered = sorted(in_scope - {x for wp in workpapers.values() for x in wp["criteria"]} - {c["criterion"] for c in op["criteria_not_met"]})
+    untested = sorted(cid for cid, wp in workpapers.items() if wp.get("conclusion") == "not-tested")
+    if untested and not op["scope_limitations"]:
+        errors.append(f"opinion.json: controls {untested} were not tested; state why in scope_limitations, which also rules out "
+                      "an unmodified opinion")
+    tested = {x for wp in workpapers.values() if wp.get("conclusion") != "not-tested" for x in wp["criteria"]}
+    untested_only = {x for cid in untested for x in workpapers[cid]["criteria"]} - tested
+    uncovered = sorted(in_scope - tested - untested_only - {c["criterion"] for c in op["criteria_not_met"]})
     if uncovered:
         errors.append(f"opinion.json: criteria {uncovered} have no tested control; list them in criteria_not_met or add controls")
     return errors

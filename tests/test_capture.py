@@ -62,7 +62,8 @@ class Capture(unittest.TestCase):
     def test_mutating_commands_are_refused(self):
         for cmd in (["git", "push"], ["supabase", "db", "reset"], ["rm", "-rf", "x"], ["echo", "hi;", "ls"],
                     [sys.executable, "-c", "open('proof.txt', 'a').close()"], ["node", "-e", "1"], ["gh", "api", "-X", "DELETE", "repos/a/b"],
-                    ["gh", "api", "repos/a/b/issues", "-f", "title=x"]):
+                    ["gh", "api", "repos/a/b/issues", "-f", "title=x"], ["git", "diff", "--ext-diff"], ["git", "log", "--output=x"],
+                    ["git", "-c", "diff.external=x", "log"], ["supabase", "db", "dump", "-f", "out.sql"], ["npm", "audit", "fix"]):
             r = self.capture("--via", "cli", "--title", "x", "--", *cmd)
             self.assertNotEqual(r.returncode, 0, cmd)
         self.assertFalse((self.eng / "intake").exists() and list((self.eng / "intake").glob("*.meta.json")))

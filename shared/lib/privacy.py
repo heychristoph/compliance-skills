@@ -98,13 +98,17 @@ def forbidden(bundle: Path, description_file: str, allowed: set[str]) -> set[str
             for row in csv.DictReader(text.splitlines()):
                 _add_person(row.get("name") or "", found)
     allowed = {n for n in allowed if n}
-    tokens = {word.casefold() for name in allowed for word in re.split(r"[^A-Za-z]+", name) if len(word) > 2}
+    exact = {a.casefold() for a in allowed}
+    squashed = {re.sub(r"[^a-z]", "", a.casefold()) for a in allowed}  # "maralindqvist" for an email local part
     kept = set()
     for name in found:
-        if any(name.casefold() == a.casefold() or name.casefold() in a.casefold() for a in allowed):
+        key = name.casefold()
+        # Only the allowed identities themselves are exempt (the named representative, the organizations and
+        # vendors). Sharing a first name or a word with one of them exempts nobody.
+        if key in exact or (" " not in key and key in squashed):
             continue
-        first = name.split()[0].casefold() if name.split() else ""
-        if first and first in tokens:
+        # Part of an allowed organization's name ("Web Services" in "Amazon Web Services"), as whole words.
+        if " " in key and any(re.search(rf"\b{re.escape(key)}\b", a) for a in exact):
             continue
         kept.add(name)
     return kept

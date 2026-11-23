@@ -163,6 +163,16 @@ class Privacy(unittest.TestCase):
                        {"id": "cloud", "name": "Example Cloud", "category": "CLOUD_PROVIDER"}], found)
         self.assertEqual(found, {"Dana Leaver"})
 
+    def test_sharing_a_first_name_with_the_representative_exempts_nobody(self):
+        import json, tempfile
+        from lib import privacy
+
+        with tempfile.TemporaryDirectory() as tmp:
+            bundle = Path(tmp)
+            (bundle / "people.json").write_text(json.dumps([{"full_name": "Dana Leaver"}]))
+            names = privacy.forbidden(bundle, "system.yaml", {"Dana Manager", "Dana Systems GmbH"})
+        self.assertEqual(names, {"Dana Leaver"})
+
     def test_scan_finds_contact_details_anywhere(self):
         from lib import privacy
 
