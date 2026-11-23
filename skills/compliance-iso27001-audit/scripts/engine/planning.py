@@ -89,8 +89,11 @@ def expected_plan(eng: Engagement, row: dict) -> dict:
     if row["population"]:
         population = (row["population"], [r["id"] for r in eng.population(row["population"])
                                           if sampling.in_period(r.get("date"), start, end, eng.point_in_time)])
-    return sampling.plan(seed=f"{eng.config['sampling_seed']}:{row['control_id']}", freq=row["frequency"], nature=row["nature"],
+    planned = sampling.plan(seed=f"{eng.config['sampling_seed']}:{row['control_id']}", freq=row["frequency"], nature=row["nature"],
                          start=start, end=end, point_in_time=eng.point_in_time, population=population, sample_size=row["sample_size"])
+    if planned["population"] and planned["population"]["source"] in eng.artifacts:
+        planned["population"]["sha256"] = eng.artifacts[planned["population"]["source"]]["sha256"]
+    return planned
 
 def skeleton(control: dict, planned: dict) -> dict:
     return {

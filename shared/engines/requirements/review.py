@@ -320,8 +320,8 @@ def _check_qa(eng: Engagement, workpapers: dict) -> list[str]:
         r = latest.get(cid)
         if not r:
             errors.append(f"{cid}: no QA review")
-        elif r["workpaper_sha256"] != sha256_file(eng.workpaper_path(cid)):
-            errors.append(f"{cid}: workpaper changed after QA review; QA must review it again")
+        elif r["workpaper_sha256"] != eng.qa_binding(cid):
+            errors.append(f"{cid}: workpaper or the evidence it cites changed after QA review; QA must review it again")
         elif r["verdict"] != "agree":
             errors.append(f"{cid}: QA disagrees ({'; '.join(r['issues'])[:200]}); resolve, then re-review")
     return errors
@@ -339,7 +339,7 @@ def record_qa(eng: Engagement, control_id: str, verdict: str, issues: list[str],
         raise AuditError(f"--checked cites artifacts not in the bundle: {unknown}")
     qa = load_json(eng.qa_path) if eng.qa_path.exists() else {"schema_version": 1, "reviews": []}
     qa["reviews"] = [r for r in qa["reviews"] if r["control_id"] != control_id]
-    qa["reviews"].append({"control_id": control_id, "workpaper_sha256": sha256_file(path), "verdict": verdict,
+    qa["reviews"].append({"control_id": control_id, "workpaper_sha256": eng.qa_binding(control_id), "verdict": verdict,
                           "issues": issues, "evidence_checked": checked, "reviewed_by": reviewer})
     qa["reviews"].sort(key=lambda r: r["control_id"])
     dump_json(qa, eng.qa_path)

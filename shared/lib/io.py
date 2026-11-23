@@ -64,6 +64,35 @@ def write_csv(path: Path, rows: list[dict], fieldnames: list[str]) -> None:
         writer.writerows(rows)
 
 
+def qa_binding(workpaper: Path, artifacts: dict) -> str:
+    """What a QA review is bound to: the workpaper's bytes and the content hash of every artifact it cites
+    (evidence lists anywhere in it, and the population it was sampled from). If a cited artifact keeps its ID
+    but its content changes on a new ingest, the review no longer holds."""
+    raw = workpaper.read_bytes()
+    cited: set[str] = set()
+
+    def walk(x):
+        if isinstance(x, dict):
+            for k, v in x.items():
+                if k == "evidence" and isinstance(v, list):
+                    cited.update(i for i in v if isinstance(i, str))
+                else:
+                    walk(v)
+        elif isinstance(x, list):
+            for v in x:
+                walk(v)
+
+    wp = json.loads(raw)
+    walk(wp)
+    pop = (wp.get("plan") or {}).get("population") or {}
+    if pop.get("source"):
+        cited.add(pop["source"])
+    h = hashlib.sha256(raw)
+    for i in sorted(cited):
+        h.update(f"\0{i}\0{(artifacts.get(i) or {}).get('sha256', '')}".encode())
+    return h.hexdigest()
+
+
 def sha256_file(path: Path) -> str:
     h = hashlib.sha256()
     with open(path, "rb") as f:

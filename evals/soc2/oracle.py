@@ -15,7 +15,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent / "skills" / "compliance-soc2-audit" / "scripts"))
 
-from core import Engagement, dump_json, sha256_file  # noqa: E402
+from core import Engagement, dump_json  # noqa: E402
 
 
 def main(root: str, truth_path: str) -> None:
@@ -69,7 +69,7 @@ def main(root: str, truth_path: str) -> None:
         wp["prepared_by"] = "oracle (evals/oracle.py)"
         dump_json(wp, eng.workpaper_path(cid))
 
-    reviews = [{"control_id": cid, "workpaper_sha256": sha256_file(eng.workpaper_path(cid)), "verdict": "agree", "issues": [],
+    reviews = [{"control_id": cid, "workpaper_sha256": eng.qa_binding(cid), "verdict": "agree", "issues": [],
                 "evidence_checked": [], "reviewed_by": "oracle"} for cid in eng.load_workpapers()]
     dump_json({"schema_version": 1, "reviews": reviews}, eng.qa_path)
 

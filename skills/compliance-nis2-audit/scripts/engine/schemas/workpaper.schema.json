@@ -76,6 +76,10 @@
             },
             "size": {
               "type": "integer"
+            },
+            "sha256": {
+              "type": "string",
+              "description": "Content hash of the population artifact the sample was drawn from"
             }
           }
         },

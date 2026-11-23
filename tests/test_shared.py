@@ -3,9 +3,11 @@
 from __future__ import annotations
 
 import datetime as dt
+import json
 import re
 import subprocess
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -272,3 +274,18 @@ class CaptureCommandTail(unittest.TestCase):
         argv = ["capture", "/tmp/e", "--via", "cli", "--title", "t", "--", "git", "log", "--oneline"]
         self.assertEqual(split_command(argv), (argv[:6], ["git", "log", "--oneline"]))
         self.assertEqual(split_command(["validate", "/tmp/e", "--", "x"]), (["validate", "/tmp/e", "--", "x"], []))
+
+
+class QaBinding(unittest.TestCase):
+    def test_changed_cited_artifact_breaks_the_binding(self):
+        from lib.io import qa_binding
+
+        with tempfile.TemporaryDirectory() as tmp:
+            wp = Path(tmp) / "wp.json"
+            wp.write_text(json.dumps({"plan": {"population": {"source": "PO-hires", "size": 1}},
+                                      "design": {"evidence": ["EV-0001"]}, "items": [{"evidence": ["EV-0002"]}]}))
+            arts = {"PO-hires": {"sha256": "a"}, "EV-0001": {"sha256": "b"}, "EV-0002": {"sha256": "c"}, "EV-0009": {"sha256": "d"}}
+            before = qa_binding(wp, arts)
+            self.assertEqual(before, qa_binding(wp, {**arts, "EV-0009": {"sha256": "changed"}}), "uncited artifacts do not matter")
+            for changed in ("PO-hires", "EV-0001", "EV-0002"):
+                self.assertNotEqual(before, qa_binding(wp, {**arts, changed: {"sha256": "changed"}}), changed)

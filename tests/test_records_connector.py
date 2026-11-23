@@ -165,6 +165,34 @@ class RecordsConnector(unittest.TestCase):
         self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
         self.assertFalse(wp_path.exists())
 
+    def test_changed_population_records_need_a_new_test(self):
+        eng = self.tmp / "population"
+        run(sys.executable, SOC2, "init", eng, "--org", "Example Inc.", "--system", "Example", "--type", "2",
+            "--start", "2026-01-01", "--end", "2026-06-30", "--connector", "records", "--option", f"path={self.records}")
+        run(sys.executable, SOC2, "ingest", eng)
+        run(sys.executable, SOC2, "plan", eng)
+        plan = eng / "testplan.csv"
+        with plan.open() as f:
+            rows = list(csv.DictReader(f))
+        for row in rows:
+            row.update(frequency="annual", nature="manual")
+        rows[0].update(frequency="event", population="PO-hires")
+        with plan.open("w", newline="") as f:
+            w = csv.DictWriter(f, fieldnames=list(rows[0]))
+            w.writeheader()
+            w.writerows(rows)
+        self.assertEqual(run(sys.executable, SOC2, "sample", eng).returncode, 0)
+        wp_path = eng / "workpapers" / f"{rows[0]['control_id']}.json"
+        wp = json.loads(wp_path.read_text())
+        wp["conclusion"] = "no-exceptions"
+        wp_path.write_text(json.dumps(wp))
+        people = (self.records / "people.yaml").read_text().replace("Sam Joiner", "Someone Else")
+        (self.records / "people.yaml").write_text(people)
+        self.assertEqual(run(sys.executable, SOC2, "ingest", eng, "--replace").returncode, 0)
+        out = run(sys.executable, SOC2, "validate", eng)
+        self.assertIn("plan does not match", out.stdout + out.stderr)
+        self.assertNotEqual(run(sys.executable, SOC2, "sample", eng).returncode, 0, "same IDs, different records: retest")
+
     def test_iso_engagement_prefers_ai_audited_framework_and_builds_soa(self):
         eng = self.tmp / "iso"
         r = run(sys.executable, ISO, "init", eng, "--org", "Example Inc.", "--scope", "The Example platform.", "--type", "stage2",

@@ -294,6 +294,12 @@ class Engagement:
 
     # workpapers
 
+    def qa_binding(self, control_id: str) -> str:
+        """The hash a QA review of this workpaper is bound to (the workpaper and every artifact it cites)."""
+        from common.io import qa_binding
+
+        return qa_binding(self.workpaper_path(control_id), self.artifacts)
+
     def workpaper_path(self, control_id: str) -> Path:
         return self.workpapers / f"{safe_name(control_id)}.json"
 

@@ -14,7 +14,7 @@
         "additionalProperties": false,
         "properties": {
           "control_id": {"type": "string"},
-          "workpaper_sha256": {"type": "string", "description": "Hash of the workpaper file as reviewed; a later edit makes the review stale"},
+          "workpaper_sha256": {"type": "string", "description": "Hash of the workpaper as reviewed and of every artifact it cites (`qa` writes it); a later edit, or changed cited evidence, makes the review stale"},
           "verdict": {"enum": ["agree", "disagree"]},
           "issues": {"type": "array", "items": {"type": "string"}},
           "evidence_checked": {"type": "array", "items": {"type": "string"}},
