@@ -46,11 +46,13 @@ def sample(eng: Engagement, force: bool = False) -> list[str]:
         path = eng.workpaper_path(c["id"])
         if path.exists():
             wp = load_json(path)
-            if wp.get("plan") == planned:
+            same_control = wp.get("control") == c["description"] and wp.get("criteria") == c["criteria"]
+            if wp.get("plan") == planned and same_control:
                 continue
+            what = "the test plan" if same_control else "the control's description or criteria"
             if wp.get("conclusion") not in (None, "pending") and not force:
-                raise AuditError(f"{c['id']}: the test plan changed but the workpaper already has results. "
-                                 "Re-run with --force to discard them, or restore the previous testplan.csv row.")
+                raise AuditError(f"{c['id']}: {what} changed but the workpaper already has results. "
+                                 "Re-run with --force to discard them and test again, or restore the previous version.")
         dump_json(skeleton(c, planned), path)
         log.append(f"{c['id']}: {planned['sample_size']} of {planned['population']['size'] if planned['population'] else 1} ({row['frequency']}, {row['nature']})")
     return log

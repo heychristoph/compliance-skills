@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import csv
 import json
 import shutil
 import subprocess
@@ -77,6 +78,47 @@ class RecordsConnector(unittest.TestCase):
         self.assertTrue((eng / "bundle" / "system.yaml").exists())
         r = run(sys.executable, SOC2, "check", eng)
         self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+
+    def test_type1_keeps_events_up_to_the_as_of_date(self):
+        eng = self.tmp / "type1"
+        r = run(sys.executable, SOC2, "init", eng, "--org", "Example Inc.", "--system", "Example", "--type", "1",
+                "--as-of", "2026-06-30", "--connector", "records", "--option", f"path={self.records}")
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        r = run(sys.executable, SOC2, "ingest", eng)
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertIn("H-joiner", (eng / "bundle" / "populations" / "hires.csv").read_text())
+        self.assertIn("T-leaver", (eng / "bundle" / "populations" / "terminations.csv").read_text())
+
+    def test_changed_control_invalidates_its_tested_workpaper(self):
+        eng = self.tmp / "changed"
+        run(sys.executable, SOC2, "init", eng, "--org", "Example Inc.", "--system", "Example", "--type", "1",
+            "--as-of", "2026-06-30", "--connector", "records", "--option", f"path={self.records}")
+        run(sys.executable, SOC2, "ingest", eng)
+        run(sys.executable, SOC2, "plan", eng)
+        plan = eng / "testplan.csv"
+        with plan.open() as f:
+            rows = list(csv.DictReader(f))
+        for row in rows:
+            row.update(frequency="annual", nature="manual")
+        with plan.open("w", newline="") as f:
+            w = csv.DictWriter(f, fieldnames=list(rows[0]))
+            w.writeheader()
+            w.writerows(rows)
+        r = run(sys.executable, SOC2, "sample", eng)
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        wp_path = eng / "workpapers" / "mfa.json"
+        wp = json.loads(wp_path.read_text())
+        wp["conclusion"] = "no-exceptions"
+        wp_path.write_text(json.dumps(wp))
+        measures = (self.records / "measures.yaml").read_text().replace("Every account with admin rights", "Every employee account", 1)
+        (self.records / "measures.yaml").write_text(measures)
+        r = run(sys.executable, SOC2, "ingest", eng, "--replace")
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        r = run(sys.executable, SOC2, "sample", eng)
+        self.assertNotEqual(r.returncode, 0, "a tested workpaper must not survive a changed control silently")
+        self.assertIn("description or criteria changed", r.stdout + r.stderr)
+        r = run(sys.executable, SOC2, "validate", eng)
+        self.assertIn("description or criteria changed", r.stdout + r.stderr)
 
     def test_iso_engagement_prefers_ai_audited_framework_and_builds_soa(self):
         eng = self.tmp / "iso"

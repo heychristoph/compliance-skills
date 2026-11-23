@@ -33,12 +33,12 @@ Options (engagement.yaml source.options):
 from __future__ import annotations
 
 import json
-import subprocess
 from pathlib import Path
 
 import yaml
 
 from ..bundle import BundleWriter, slug
+from ..capture import git_read
 from ..io import AuditError, parse_date
 
 REGISTERS = (  # file, title, hint topic
@@ -62,6 +62,10 @@ def pull(writer: BundleWriter, options: dict, engagement) -> None:
     fw = writer.framework
     hint = fw.hint
     start, end = engagement.period
+    # Point in time (SOC 2 Type 1, ISO Stage 1, assessments): every event up to the as-of date counts.
+    as_of = getattr(engagement, "point_in_time", None)
+    as_of = bool(as_of) if as_of is not None else getattr(engagement, "report_type", None) == 1
+    in_scope = (lambda d: d <= end) if as_of else (lambda d: start <= d <= end)
     git = _Git(root)
 
     def read(name: str, default=None):
@@ -132,9 +136,9 @@ def pull(writer: BundleWriter, options: dict, engagement) -> None:
     for p in people:
         s, e = parse_date(p.get("contract_start")), parse_date(p.get("contract_end"))
         base_row = {"name": p.get("name") or "", "email": p.get("email") or "", "state": p.get("state") or ""}
-        if s and start <= s <= end:
+        if s and in_scope(s):
             hires.append({"id": f"H-{slug(str(p['id']))}", "date": s.isoformat(), **base_row})
-        if e and start <= e <= end:
+        if e and in_scope(e):
             terms.append({"id": f"T-{slug(str(p['id']))}", "date": e.isoformat(), **base_row})
     if people and not any(p.get("contract_start") for p in people):
         writer.warn("people.yaml has no contract_start dates; the hires population is empty")
@@ -263,11 +267,7 @@ class _Git:
         self.ok = self._run("rev-parse", "--is-inside-work-tree") == "true"
 
     def _run(self, *args: str) -> str:
-        try:
-            out = subprocess.run(["git", "-C", str(self.root), *args], capture_output=True, text=True, timeout=30)
-        except (OSError, subprocess.SubprocessError):
-            return ""
-        return out.stdout.strip() if out.returncode == 0 else ""
+        return (git_read(self.root, *args) or "").strip()
 
     def first(self, rel: str | None) -> str | None:
         """Date the file was added (first commit), or None."""

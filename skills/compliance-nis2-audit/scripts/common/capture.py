@@ -183,6 +183,18 @@ def harden(command: list[str]) -> list[str]:
     return [command[0], *GIT_SAFE, sub, *GIT_NO_HELPERS.get(sub, []), *command[2:]]
 
 
+def git_read(repo: Path, *args: str, timeout: int = 30) -> str | None:
+    """Run a read-only git command in `repo` the way capture does: git from PATH outside the repository,
+    helpers, pagers, hooks and signature verifiers disabled. stdout, or None when git fails."""
+    try:
+        git = resolve_program("git", repo)
+        env = {k: v for k, v in os.environ.items() if k not in ("GIT_EXTERNAL_DIFF", "GIT_PAGER", "PAGER", "GIT_CONFIG_PARAMETERS")}
+        out = subprocess.run(harden([git, *args]), cwd=str(repo), capture_output=True, text=True, timeout=timeout, env={**env, "GIT_PAGER": "cat", "PAGER": "cat", "GIT_TERMINAL_PROMPT": "0"})
+    except (AuditError, OSError, subprocess.SubprocessError):
+        return None
+    return out.stdout if out.returncode == 0 else None
+
+
 # gh api: only these options, so no combination can change the method or add a body (-X, -f, -F,
 # --input, headers such as X-HTTP-Method-Override, or short-option clusters like -iXDELETE).
 GH_API_FLAGS = {"--paginate", "--slurp", "-i", "--include", "--silent", "--verbose"}

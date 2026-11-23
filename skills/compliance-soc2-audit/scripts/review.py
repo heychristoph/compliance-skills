@@ -79,6 +79,10 @@ def _check_workpaper(eng: Engagement, cid: str, wp: dict, plan_row: dict | None)
         return [f"{where}: control {cid} is not in testplan.csv"], warnings
     if wp["plan"] != expected_plan(eng, plan_row):
         errors.append(f"{where}: plan does not match testplan.csv and the sampling seed; do not edit `plan`, re-run `soc2.py sample`")
+    control = next((c for c in eng.controls if c["id"] == cid), None)
+    if control and (wp.get("control") != control["description"] or wp.get("criteria") != control["criteria"]):
+        errors.append(f"{where}: the control's description or criteria changed since this workpaper was written; "
+                      f"re-run `soc2.py sample --force` and test it again")
 
     concl = wp["conclusion"]
     if concl == "pending":
@@ -118,7 +122,7 @@ def _check_workpaper(eng: Engagement, cid: str, wp: dict, plan_row: dict | None)
         if not wp["attributes"]:
             errors.append(f"{where}: attributes is empty; define what must be true for each sampled item")
         planned = wp["plan"]["sample"]
-        if not planned and not eng.point_in_time and concl == "no-exceptions":
+        if not planned and eng.report_type != 1 and concl == "no-exceptions":
             errors.append(f"{where}: the sample is empty (no events in the period), so operating effectiveness was not tested; "
                           "conclude 'not-tested' with a scope_limitation saying why")
         tested = [i["id"] for i in wp["items"]]

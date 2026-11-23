@@ -219,3 +219,34 @@ class SeveralSources(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class HostileGitConfig(unittest.TestCase):
+    def test_git_reads_never_run_the_repository_verifier(self):
+        sys.path.insert(0, str(ROOT / "shared"))
+        from lib.capture import git_read  # noqa: E402
+        from lib.connectors.records import _Git  # noqa: E402
+
+        with tempfile.TemporaryDirectory() as tmp:
+            repo, marker = Path(tmp) / "repo", Path(tmp) / "ran"
+            repo.mkdir()
+            verifier = repo / "verify.sh"
+            verifier.write_text(f"#!/bin/sh\ntouch {marker}\n")
+            verifier.chmod(0o755)
+            git = lambda *a, **k: subprocess.run(["git", "-C", str(repo), *a], check=True, capture_output=True, text=True, **k)
+            git("init", "-q")
+            for k, v in (("log.showSignature", "true"), ("gpg.program", str(verifier)), ("core.pager", f"touch {marker}"),
+                         ("user.name", "T"), ("user.email", "t@example.invalid")):
+                git("config", k, v)
+            (repo / "a.txt").write_text("a")
+            git("add", "a.txt")
+            git("commit", "-qm", "first")
+            # Re-write HEAD as a commit carrying a (fake) signature, so showing it would invoke the verifier.
+            raw = git("cat-file", "commit", "HEAD").stdout
+            head, _, msg = raw.partition("\n\n")
+            sig = "gpgsig -----BEGIN PGP SIGNATURE-----\n \n -----END PGP SIGNATURE-----"
+            sha = git("hash-object", "-t", "commit", "-w", "--stdin", input=f"{head}\n{sig}\n\n{msg}").stdout.strip()
+            git("update-ref", "HEAD", sha)
+            self.assertIn("first", git_read(repo, "log", "--format=%s"))
+            self.assertTrue(_Git(repo).log())
+            self.assertFalse(marker.exists(), "a repository-configured helper ran")

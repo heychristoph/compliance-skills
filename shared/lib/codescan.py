@@ -19,8 +19,9 @@ from __future__ import annotations
 import base64
 import json
 import re
-import subprocess
 from pathlib import Path
+
+from .capture import git_read
 
 SKIP_DIRS = {"node_modules", ".git", "dist", "build", ".next", ".vercel", ".output", "coverage", ".venv", "venv", "__pycache__", ".turbo"}
 TEXT_EXT = {".js", ".jsx", ".ts", ".tsx", ".mjs", ".cjs", ".vue", ".svelte", ".html", ".json", ".toml", ".yaml", ".yml",
@@ -151,11 +152,8 @@ def _files(repo: Path):
 
 def _git_tracked(repo: Path) -> set[str] | None:
     """Files git tracks, so build output and local-only files are not scanned. None outside git."""
-    try:
-        out = subprocess.run(["git", "-C", str(repo), "ls-files"], capture_output=True, text=True, timeout=30)
-    except (OSError, subprocess.SubprocessError):
-        return None
-    return set(out.stdout.splitlines()) if out.returncode == 0 else None
+    out = git_read(repo, "ls-files")
+    return set(out.splitlines()) if out is not None else None
 
 
 def _is_env_file(path: Path) -> bool:
