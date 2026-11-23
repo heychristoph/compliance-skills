@@ -162,7 +162,8 @@
 #for g in s4.groups {
   heading(level: 2, outlined: false, g.title)
   let cells = g.rows.map(r => {
-    let first = table.cell(rowspan: r.units.len(), [*#r.id* \ #text(size: 8pt, fill: muted, r.title)])
+    let maps = r.at("maps", default: "")
+    let first = table.cell(rowspan: r.units.len(), [*#r.id* \ #text(size: 8pt, fill: muted, r.title)#if maps != "" [ \ #text(size: 7pt, fill: accent, maps)]])
     r.units.enumerate().map(((i, u)) => {
       let row = (
         text(weight: "bold", u.control),
@@ -221,5 +222,27 @@
     heading(level: 2, outlined: false, [#r.finding: #r.grade_name])
     par[*#d.labels.finding* #r.statement]
     par[*#d.labels.response* #r.response]
+  }
+}
+
+// Annexes (profiles with report.annexes): verified measures and sub-processors
+#for (i, a) in d.at("annexes", default: ()).enumerate() {
+  heading(level: 1, supplement: [#d.labels.annex #("A", "B", "C").at(i)], a.title)
+  par(a.intro)
+  if a.rows.len() == 0 {
+    par(text(style: "italic", a.none))
+  } else {
+    block(above: 0.6em, {
+      set text(size: 8.5pt, hyphenate: true)
+      set par(justify: false)
+      table(
+        columns: a.widths.map(w => w * 1cm),
+        stroke: 0.5pt + hairline,
+        inset: 4.5pt,
+        align: left + top,
+        table.header(..a.columns.map(x => table.cell(fill: accent, text(fill: white, size: 8.5pt, weight: "bold", x)))),
+        ..a.rows.map(r => r.cells.enumerate().map(((j, c)) => if j == 0 { text(weight: "bold", c) } else if r.flag and j == 2 { text(fill: alert, c) } else { c })).flatten(),
+      )
+    })
   }
 }

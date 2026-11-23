@@ -8,6 +8,7 @@ which description file the engine reads) come from the engagement's `Framework`.
 
 from __future__ import annotations
 
+import hashlib
 import json
 import mimetypes
 import re
@@ -36,7 +37,19 @@ class BundleWriter:
         self.artifacts: list[dict] = []
         self.warnings: list[str] = []
         self._next_ev = 1
+        # Re-ingest: an artifact whose source and content are unchanged keeps its ID, so workpapers
+        # keep citing it. Changed or new artifacts get IDs never used before in this engagement.
+        self._previous: dict[tuple[str, str, str], str] = {}
+        self._reserved: set[str] = set()
+        self._used: set[str] = set()
         self.dir.mkdir(parents=True, exist_ok=True)
+
+    def keep_ids_from(self, manifest: dict) -> None:
+        """Reuse the artifact IDs of a previous ingest for unchanged artifacts."""
+        for a in manifest.get("artifacts") or []:
+            if a["id"].startswith("EV-"):
+                self._previous[(a.get("source_ref") or "", a["title"], a["sha256"])] = a["id"]
+                self._reserved.add(a["id"])
 
     # --- helpers for connectors ---
 
@@ -75,6 +88,9 @@ class BundleWriter:
 
     def set_controls(self, rows: list[dict]) -> None:
         """Write the control matrix. `criteria` may be a list or a space-separated string of requirement IDs."""
+        if any(x["id"] == "SY-controls" for x in self.artifacts):
+            raise AuditError(f"Two sources both provide the control matrix ({self.connector}); keep one control source and "
+                             "add the others as evidence-only sources (intake, folder without controls.csv).")
         clean = []
         for row in rows:
             row = dict(row)
@@ -142,28 +158,41 @@ class BundleWriter:
         return artifact_id
 
     def add_file(self, src: Path, *, title: str, kind: str = "evidence", controls=(), requirements=(), date: str | None = None,
-                 obtained: str = "direct", source_ref: str = "", filename: str | None = None) -> str:
+                 obtained: str = "direct", source_ref: str = "", filename: str | None = None, capture: dict | None = None) -> str:
         """Copy a file into bundle/evidence/ and register it. Returns the artifact ID."""
-        artifact_id = self._new_id()
+        artifact_id = self._new_id(source_ref, title, sha256_file(Path(src)) if self._previous else None)
         dest = self.dir / "evidence" / f"{artifact_id}_{filename or Path(src).name}"
         dest.parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(src, dest)
         self._register(dest, artifact_id, kind=kind, title=title, controls=controls, requirements=requirements, date=date,
-                       obtained=obtained, source_ref=source_ref)
+                       obtained=obtained, source_ref=source_ref, capture=capture)
         return artifact_id
 
     def add_bytes(self, content: bytes | str, filename: str, *, title: str, kind: str = "evidence", controls=(), requirements=(),
                   date: str | None = None, obtained: str = "direct", source_ref: str = "") -> str:
-        artifact_id = self._new_id()
+        data = content.encode() if isinstance(content, str) else content
+        artifact_id = self._new_id(source_ref, title, hashlib.sha256(data).hexdigest() if self._previous else None)
         dest = self.dir / "evidence" / f"{artifact_id}_{filename}"
         dest.parent.mkdir(parents=True, exist_ok=True)
-        dest.write_bytes(content.encode() if isinstance(content, str) else content)
+        dest.write_bytes(data)
         self._register(dest, artifact_id, kind=kind, title=title, controls=controls, requirements=requirements, date=date,
                        obtained=obtained, source_ref=source_ref)
         return artifact_id
 
     def add_download(self, url: str, filename: str, *, title: str, headers: dict | None = None, **meta) -> str | None:
         """Download a file into the bundle. On failure, records a warning and returns None."""
+        if self._previous:
+            tmp = self.dir / "evidence" / f".download-{len(self.artifacts)}"
+            try:
+                self.http_download(url, tmp, headers=headers)
+            except AuditError as e:
+                self.warn(f"could not download '{title}': {e}")
+                return None
+            artifact_id = self._new_id(meta.get("source_ref") or "", title, sha256_file(tmp))
+            dest = self.dir / "evidence" / f"{artifact_id}_{filename}"
+            tmp.rename(dest)
+            self._register(dest, artifact_id, title=title, **{"kind": "evidence", **meta})
+            return artifact_id
         artifact_id = self._new_id()
         dest = self.dir / "evidence" / f"{artifact_id}_{filename}"
         try:
@@ -191,13 +220,21 @@ class BundleWriter:
 
     # --- internals ---
 
-    def _new_id(self) -> str:
-        artifact_id = f"EV-{self._next_ev:04d}"
-        self._next_ev += 1
-        return artifact_id
+    def _new_id(self, source_ref: str = "", title: str = "", sha: str | None = None) -> str:
+        if sha is not None:
+            prev = self._previous.get((source_ref or "", title, sha))
+            if prev and prev not in self._used:
+                self._used.add(prev)
+                return prev
+        while True:
+            artifact_id = f"EV-{self._next_ev:04d}"
+            self._next_ev += 1
+            if artifact_id not in self._reserved and artifact_id not in self._used:
+                self._used.add(artifact_id)
+                return artifact_id
 
     def _register(self, path: Path, artifact_id: str, *, kind: str, title: str, controls=(), requirements=(), date=None,
-                  obtained: str = "direct", source_ref: str = "", media_type: str | None = None) -> None:
+                  obtained: str = "direct", source_ref: str = "", media_type: str | None = None, capture: dict | None = None) -> None:
         if any(a["id"] == artifact_id for a in self.artifacts):
             raise AuditError(f"Duplicate artifact ID {artifact_id}; population names must be unique.")
         entry = {
@@ -213,6 +250,8 @@ class BundleWriter:
         }
         if requirements:
             entry["requirements"] = list(dict.fromkeys(requirements))
+        if capture:
+            entry["capture"] = capture
         if date:
             entry["date"] = str(date)[:10]
         if source_ref:

@@ -28,7 +28,7 @@ LANGUAGES = ("en", "de")
 DEFAULT = "en"
 
 # Fields an overlay may set on an entry. Anything else in an overlay is ignored.
-TEXT_FIELDS = ("title", "summary", "evidence", "text")
+TEXT_FIELDS = ("title", "summary", "evidence", "text", "question")
 
 _MONTHS = {
     "en": ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October",

@@ -1,0 +1,30 @@
+# The application's own code. Always assessed: the repository scan needs no access.
+component: web
+title: Application code
+detect: {always: true}
+items:
+  - id: web-secrets
+    title: No privileged keys or secrets in the code
+    requirements: [SEC-CODE-01, SEC-CODE-02]
+    scan_rules: [supabase-service-role-key, service-role-in-client, openai-key, anthropic-key, stripe-live-key, aws-access-key, google-api-key, private-key, github-token, env-file-committed]
+  - id: web-client-authorization
+    title: Authorization is not left to the browser
+    requirements: [SEC-AC-03]
+    scan_rules: [client-side-authorization]
+  - id: web-third-parties
+    title: Third-party services the code sends data to
+    requirements: [DP-SUP-01, SEC-DATA-05]
+    scan_rules: [ai-sdk-in-client]
+  - id: web-dependencies
+    title: Known vulnerabilities in dependencies
+    requirements: [SEC-CODE-03]
+    cli: {command: [npm, audit, --json]}
+    export:
+      en: "Run `npm audit` in the project folder and send the output, or a screenshot of the repository's Dependabot alerts page."
+      de: "Führen Sie `npm audit` im Projektordner aus und senden Sie die Ausgabe, oder einen Screenshot der Dependabot-Alerts des Repositorys."
+  - id: web-data-inventory
+    title: Personal data the app stores
+    requirements: [DP-INV-01, DP-INV-02]
+    export:
+      en: "Send the database schema (Supabase: Database → Schema Visualizer, or `supabase db dump --schema-only`)."
+      de: "Senden Sie das Datenbankschema (Supabase: Database → Schema Visualizer, oder `supabase db dump --schema-only`)."

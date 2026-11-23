@@ -1,0 +1,205 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "engagement.yaml",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "organization",
+    "scope",
+    "auditor",
+    "audit_type",
+    "sampling_seed"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "organization": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Legal name of the audited organization, as printed"
+    },
+    "scope": {
+      "type": "string",
+      "minLength": 1,
+      "description": "The scope statement as the report prints it, in one sentence (ISMS scope, processing in scope, services in scope)"
+    },
+    "auditor": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Always \"AI Audit\". The signing model is signoff.model."
+    },
+    "audit_type": {
+      "type": "string",
+      "description": "One of the audit types in the skill's assets/profile.yaml (ISO: stage1, stage2, surveillance, recertification; GDPR and NIS2: assessment, audit)"
+    },
+    "period": {
+      "type": "object",
+      "description": "Records period sampled (audit types without as_of in the profile)",
+      "required": [
+        "start",
+        "end"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "start": {
+          "type": "string",
+          "format": "date"
+        },
+        "end": {
+          "type": "string",
+          "format": "date"
+        }
+      }
+    },
+    "as_of": {
+      "type": "string",
+      "format": "date",
+      "description": "Date of the documentation review (point-in-time audit types)"
+    },
+    "source": {
+      "type": "object",
+      "required": [
+        "connector"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "connector": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*$"
+        },
+        "options": {
+          "type": "object"
+        }
+      }
+    },
+    "management": {
+      "type": "object",
+      "description": "The organization's representative named in the report. Real values from the evidence, never a placeholder.",
+      "required": [
+        "name",
+        "title"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "language": {
+      "enum": [
+        "en",
+        "de"
+      ],
+      "default": "en",
+      "description": "Language of the report and of the requirement text in it. Workpapers, findings and the organization's responses must be written in this language too."
+    },
+    "sampling_seed": {
+      "type": "integer"
+    },
+    "signoff": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "description": "Written only by `signoff --model`. The model that ran the AI Audit.",
+      "required": [
+        "model",
+        "date",
+        "digest"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "model": {
+          "type": "string",
+          "minLength": 1
+        },
+        "date": {
+          "type": "string",
+          "format": "date"
+        },
+        "digest": {
+          "type": "string"
+        }
+      }
+    },
+    "roles": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "GDPR: the organization's roles in scope (controller, processor)"
+    },
+    "entity_types": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "NIS2: essential or important, plus digital-providers when the Implementing Regulation (EU) 2024/2690 applies"
+    },
+    "include_optional": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Optional requirements audited anyway (GDPR Art.40 to Art.43 when the organization relies on a code of conduct or certification)"
+    },
+    "sources": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "connector"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "connector": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_]*$"
+          },
+          "options": {
+            "type": "object"
+          }
+        }
+      },
+      "description": "Several evidence sources pulled into one bundle, e.g. records for documents plus intake for captured configuration. Use this or `source`."
+    },
+    "repo": {
+      "type": "string",
+      "description": "Path of the application's repository checkout (app assessments); set by `detect --repo`"
+    },
+    "tool_version": {
+      "type": "string",
+      "description": "Version of compliance-skills the engagement was last planned with (init and plan set it); status says when the skill is newer"
+    },
+    "prior": {
+      "type": "string",
+      "description": "Path of the previous engagement this one was rolled forward from (rollforward sets it)"
+    }
+  },
+  "description": "engagement.yaml for the requirements engine; audit_type and period/as_of are checked against the skill's profile by core.py",
+  "allOf": [
+    {
+      "anyOf": [
+        {
+          "required": [
+            "source"
+          ]
+        },
+        {
+          "required": [
+            "sources"
+          ]
+        }
+      ]
+    }
+  ]
+}

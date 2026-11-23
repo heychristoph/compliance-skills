@@ -99,6 +99,12 @@ def schema_errors(data, schema_name: str, schemas_dir: Path = SCHEMAS) -> list[s
     return errors
 
 
+def tool_version() -> str:
+    """Version of the shared code and catalogs (shared/lib/VERSION), stamped on engagements."""
+    path = LIB / "VERSION"
+    return path.read_text(encoding="utf-8").strip() if path.exists() else "unknown"
+
+
 def safe_name(control_id: str) -> str:
     return "".join(ch if ch.isalnum() or ch in "-_." else "_" for ch in control_id)
 

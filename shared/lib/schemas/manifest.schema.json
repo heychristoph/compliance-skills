@@ -105,9 +105,15 @@
           "obtained": {
             "enum": [
               "direct",
-              "client"
+              "captured",
+              "client",
+              "inquiry"
             ],
-            "description": "direct: pulled by the auditor from the system of record; client: provided by the organization"
+            "description": "How strong the evidence is. direct: pulled by a connector script from the system of record; captured: pulled by the agent through an MCP server or a read-only CLI command, with the call recorded; client: an export, screenshot or file the organization provided; inquiry: the organization's answer to a question"
+          },
+          "capture": {
+            "type": "object",
+            "description": "For captured evidence: how it was obtained (via, server, tool, args, command, at, by, recipe)"
           }
         }
       }

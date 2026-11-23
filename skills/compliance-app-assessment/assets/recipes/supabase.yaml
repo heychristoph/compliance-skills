@@ -1,0 +1,75 @@
+# Supabase (Postgres, Auth, Storage, Edge Functions). Connect the official Supabase MCP server
+# read-only and limited to the one project: https://mcp.supabase.com/mcp?read_only=true&project_ref=<ref>.
+# Read configuration and schema only. Never select rows from application tables.
+component: supabase
+title: Supabase
+detect:
+  dependencies: ["@supabase/supabase-js", "@supabase/ssr", "@supabase/auth-helpers-react"]
+  files: ["supabase/config.toml", "supabase/migrations/*.sql"]
+subprocessor: {name: Supabase, service: "database, authentication, file storage and server functions", dpa: "https://supabase.com/legal/dpa"}
+enables: [SEC-AC-06]
+items:
+  - id: supabase-anon-probe
+    title: What an anonymous visitor can read through the live API (proof, not inference)
+    requirements: [SEC-AC-01, SEC-AC-02, SEC-AC-06]
+    probe: supabase-anon
+  - id: supabase-advisors
+    title: Supabase security advisor findings (RLS disabled, exposed functions, auth settings)
+    requirements: [SEC-AC-01, SEC-AC-05, SEC-AUTH-03, SEC-AUTH-04]
+    mcp: {server: supabase, tool: get_advisors, args: {type: security}}
+    export:
+      en: "Supabase dashboard → Advisors → Security Advisor: screenshot or export of all findings."
+      de: "Supabase-Dashboard → Advisors → Security Advisor: Screenshot oder Export aller Hinweise."
+  - id: supabase-rls
+    title: Row-level security status and policies per table
+    requirements: [SEC-AC-01, SEC-AC-02]
+    mcp: {server: supabase, tool: execute_sql, args: {query: "select n.nspname as schema, c.relname as table, c.relrowsecurity as rls_enabled, c.relforcerowsecurity as rls_forced, (select json_agg(json_build_object('policy', p.policyname, 'cmd', p.cmd, 'roles', p.roles, 'using', p.qual, 'check', p.with_check)) from pg_policies p where p.schemaname = n.nspname and p.tablename = c.relname) as policies from pg_class c join pg_namespace n on n.oid = c.relnamespace where c.relkind = 'r' and n.nspname in ('public', 'storage') order by 1, 2"}, note: "read-only mode runs this as a read-only role"}
+    cli: {command: [supabase, db, dump, --schema-only, --linked]}
+    export:
+      en: "Supabase dashboard → Authentication → Policies: screenshot of every table with its RLS status and policies."
+      de: "Supabase-Dashboard → Authentication → Policies: Screenshot aller Tabellen mit RLS-Status und Richtlinien."
+  - id: supabase-security-definer
+    title: Database functions that run with elevated rights
+    requirements: [SEC-AC-05]
+    mcp: {server: supabase, tool: execute_sql, args: {query: "select p.proname as function, p.prosecdef as security_definer, pg_get_function_identity_arguments(p.oid) as args from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' order by 1"}}
+  - id: supabase-storage
+    title: Storage buckets and whether they are public
+    requirements: [SEC-AC-06]
+    mcp: {server: supabase, tool: execute_sql, args: {query: "select id, name, public, file_size_limit, allowed_mime_types from storage.buckets order by name"}}
+    export:
+      en: "Supabase dashboard → Storage: screenshot of the bucket list showing which buckets are public, and each bucket's policies."
+      de: "Supabase-Dashboard → Storage: Screenshot der Bucket-Liste mit der Angabe, welche Buckets öffentlich sind, und deren Richtlinien."
+  - id: supabase-project
+    title: Project region and plan
+    requirements: [SEC-DATA-01, SEC-OPS-07]
+    mcp: {server: supabase, tool: get_project, args: {}}
+    cli: {command: [supabase, projects, list]}
+    export:
+      en: "Supabase dashboard → Project Settings → General: screenshot showing the region; Organization → Billing: the plan."
+      de: "Supabase-Dashboard → Project Settings → General: Screenshot mit der Region; Organization → Billing: der Tarif."
+  - id: supabase-auth-settings
+    title: Authentication settings (email confirmation, password rules, MFA, providers, redirect URLs, sessions)
+    requirements: [SEC-AUTH-01, SEC-AUTH-02, SEC-AUTH-04, SEC-AUTH-06, SEC-AUTH-07]
+    export:
+      en: "Supabase dashboard → Authentication → Sign In / Providers, Email, Multi-Factor, URL Configuration and Sessions: one screenshot of each page."
+      de: "Supabase-Dashboard → Authentication → Sign In / Providers, Email, Multi-Factor, URL Configuration und Sessions: je ein Screenshot."
+  - id: supabase-backups
+    title: Backups and point-in-time recovery
+    requirements: [SEC-OPS-01, SEC-OPS-02]
+    export:
+      en: "Supabase dashboard → Database → Backups: screenshot showing scheduled backups and whether point-in-time recovery is enabled; plus the record of the last restore test, if any."
+      de: "Supabase-Dashboard → Database → Backups: Screenshot der geplanten Sicherungen und ob Point-in-Time-Recovery aktiv ist; dazu der Nachweis des letzten Wiederherstellungstests, falls vorhanden."
+  - id: supabase-team
+    title: Who has access to the Supabase organization, with MFA
+    requirements: [SEC-AC-07, SEC-AUTH-05]
+    export:
+      en: "Supabase dashboard → Organization → Team: screenshot of members and roles; Account → Security: whether MFA is enabled for each owner."
+      de: "Supabase-Dashboard → Organization → Team: Screenshot der Mitglieder und Rollen; Account → Security: ob MFA für jeden Owner aktiv ist."
+  - id: supabase-edge-functions
+    title: Edge functions and whether they verify the caller
+    requirements: [SEC-AC-04]
+    mcp: {server: supabase, tool: list_edge_functions, args: {}}
+  - id: supabase-logs
+    title: Auth and API logs are available
+    requirements: [SEC-OPS-03]
+    mcp: {server: supabase, tool: get_logs, args: {service: auth}, note: "check that logs exist; do not copy personal data from them"}

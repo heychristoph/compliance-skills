@@ -1,0 +1,370 @@
+# Berichtstext für eine KI-Bewertung der Sicherheit und Datenverarbeitung einer Anwendung.
+#
+# Kriterien sind die Anforderungen des App-Katalogs (assets/frameworks/app.yaml):
+# Sicherheit (SEC-*) und Datenverarbeitung (DP-*), jeweils mit den Vorschriften der
+# DSGVO und der NIS-2-Richtlinie, die sie unterstützen. Der Aufbau folgt den Inhalten
+# eines Auditberichts für Managementsysteme (ISO 19011:2018, 6.5.1). Das Dokument ist
+# eine KI-Bewertung. Es ist kein Penetrationstest, keine Zertifizierung (ISO/IEC 27001,
+# Art. 42 DSGVO) und keine SOC-2-Bescheinigung, keine Prüfung oder Entscheidung einer
+# Aufsichts- oder zuständigen Behörde und keine Rechtsberatung.
+#
+# Die Schlüssel sind dieselben wie in en.yaml (siehe dort). „KI-Bewertung“ ist der
+# durchgehend verwendete Name des Dokuments.
+#
+# Platzhalter: {org} {scope} {model} {type_label} {period} {period_dates}
+# {standard} {standard_full} {certification} {scope_values} {applicable} {excluded}
+# {sampled} {majors} {minors} {ofis} {representative}; in labels.strength zusätzlich
+# {direct} {captured} {client} {inquiry} {none}. fixes.* wird unverändert ausgegeben.
+
+standards:
+  full: "der App-Bewertungskatalog der Compliance-Skills, „Sicherheit und Datenverarbeitung einer Anwendung“: Anforderungen an Zugriffskontrolle, Authentifizierung, Datenschutz bei Speicherung und Übertragung, sicheren Code, Betrieb, Dateninventar, Unterauftragsverarbeiter, Aufbewahrung und Löschung, Sicherheitsvorfälle und KI-Verarbeitung, jeweils mit den Vorschriften der Verordnung (EU) 2016/679 (DSGVO) und der Richtlinie (EU) 2022/2555 (NIS-2-Richtlinie), die sie unterstützen"
+  short: "der App-Bewertungskatalog (Sicherheit und Datenverarbeitung)"
+  certification: "ISO/IEC 27001 oder Art. 42 DSGVO"
+  auditing: "ISO 19011:2018"
+
+audit_types:
+  assessment:
+    label: "Bewertung zum Stichtag (Code, Konfiguration und Dokumente)"
+    period_heading: "Bewertet mit Stand vom"
+    objectives:
+      - "Feststellung der bewerteten Anwendung, ihrer Architektur und der von ihr genutzten Dienste sowie der Frage, ob die Organisation das Produktivsystem für ihren Kunden betreibt oder die Anwendung nur entwickelt hat;"
+      - "Bewertung, ob der Zugriff auf die Daten der Anwendung dort kontrolliert wird, wo er durchgesetzt wird: Zeilenbasierte Zugriffskontrolle (RLS) und Zugriffsrichtlinien in der Datenbank, Serverfunktionen, Speicher-Buckets und Authentifizierungseinstellungen;"
+      - "Bewertung des Codes und seiner Konfiguration auf privilegierte Schlüssel und Geheimnisse, bekannte Schwachstellen und Berechtigungsprüfungen, die nur im Browser stattfinden;"
+      - "Bewertung der Verarbeitung personenbezogener Daten: was die Anwendung speichert, an welche Unterauftragsverarbeiter und KI-Dienste sie Daten übermittelt, welche Verträge und Übermittlungsgrundlagen diese abdecken, Aufbewahrung und Löschung sowie, wenn die Organisation das Produktivsystem betreibt, Datensicherung, Protokollierung und Meldung von Datenschutzverletzungen;"
+      - "Angabe, wie jede Anforderung nachgewiesen wurde, und Ermittlung der zu behebenden Schwachstellen."
+
+cover:
+  kicker: "KI-Bewertung"
+  disclaimer: "Kein Penetrationstest. Keine Zertifizierung oder Bescheinigung. Keine Prüfung oder Entscheidung einer Aufsichts- oder zuständigen Behörde. Keine Rechtsberatung. Auf Grundlage dieses Berichts wird kein Zertifikat, Siegel oder Prüfzeichen erteilt, und es kann auch keines erteilt werden."
+  title: "KI-Bewertung der Sicherheit und Datenverarbeitung der von {org} bereitgestellten Anwendung"
+  restricted: "Diese KI-Bewertung ist weder ein Penetrationstest noch eine Zertifizierung noch eine Feststellung einer Behörde noch eine Rechtsberatung und darf nicht als eines davon dargestellt werden."
+
+section1:
+  title: "Bericht zur KI-Bewertung"
+  notice: >-
+    Dies ist eine KI-Bewertung, erstellt und unterzeichnet von {model}. Sie bewertet eine Anwendung anhand von
+    {standard} und folgt der Methodik eines Managementsystem-Audits (ISO 19011:2018). Sie ist kein Penetrationstest,
+    keine Zertifizierung nach {certification}, keine SOC-2-Bescheinigung, keine Prüfung oder Entscheidung einer
+    Aufsichts- oder zuständigen Behörde und keine Rechtsberatung. Ob eine Verarbeitung mit der DSGVO vereinbar ist,
+    können nur eine Aufsichtsbehörde oder ein Gericht entscheiden, und ob eine Einrichtung ihre Pflichten nach der
+    NIS-2-Richtlinie erfüllt, nur die zuständigen Behörden.
+  notice_unsigned: >-
+    Dies ist eine KI-Bewertung. Sie ist noch nicht unterzeichnet. Sie bewertet eine Anwendung anhand von {standard} und
+    folgt der Methodik eines Managementsystem-Audits (ISO 19011:2018). Sie ist kein Penetrationstest, keine
+    Zertifizierung nach {certification}, keine SOC-2-Bescheinigung, keine Prüfung oder Entscheidung einer Aufsichts-
+    oder zuständigen Behörde und keine Rechtsberatung. Ob eine Verarbeitung mit der DSGVO vereinbar ist, können nur
+    eine Aufsichtsbehörde oder ein Gericht entscheiden, und ob eine Einrichtung ihre Pflichten nach der
+    NIS-2-Richtlinie erfüllt, nur die zuständigen Behörden.
+  addressee: "An die Leitung von {org}"
+  facts_heading: "Angaben zur Bewertung"
+  facts:
+    organization: "Organisation"
+    representative: "Vertretung der Organisation"
+    audit_type: "Art der Bewertung"
+    criteria: "Bewertungskriterien"
+    records: "Stichtag"
+    auditor: "Durchgeführt und unterzeichnet von"
+    method: "Methode"
+    method_value: "Automatisierte Prüfung des Codes der Anwendung, ausschließlich lesender Abruf ihrer aktuellen Konfiguration und Prüfung von Exporten, Dokumenten und Angaben in einem gehashten Nachweispaket; kein Penetrationstest, keine Änderung an einem System, kein Zugriff auf die personenbezogenen Daten in der Anwendung"
+  criteria: >-
+    Die Anforderungen von {standard_full}; sowie die eigenen dokumentierten Zusagen der Organisation zur Anwendung,
+    etwa in ihren Auftragsverarbeitungsverträgen und ihrer Beschreibung der technischen und organisatorischen
+    Maßnahmen (TOM).
+  objectives_heading: "Ziele der Bewertung"
+  objectives_intro: "Ziele dieser Bewertung waren:"
+  scope_heading: "Umfang der Bewertung"
+  scope: >-
+    Die von {org} bereitgestellte Anwendung (Rolle der Organisation: {scope_values}) mit dem Umfang: {scope}
+  coverage:
+    full: >-
+      Die Bewertung umfasste die {applicable} Anforderungen des Katalogs, die für die Rolle der Organisation und die von
+      der Anwendung genutzten Funktionen gelten. Nicht umfasst waren die {excluded} Anforderungen, die nur für die
+      andere Rolle gelten oder eine Funktion betreffen, die die Anwendung nicht nutzt (Dateispeicher, KI-Verarbeitung).
+      Teil V führt jede Anforderung auf und gibt an, warum sie gilt oder nicht.
+    surveillance: >-
+      Diese Bewertung umfasste eine Stichprobe von {sampled} der {applicable} Anforderungen des Katalogs, die für die
+      Rolle der Organisation gelten. Welche dies sind, zeigt Teil V.
+  method_heading: "Methode der Bewertung"
+  method: >-
+    Das Repository der Anwendung wurde von einem Skript auf Geheimnisse, privilegierte Schlüssel in Code, der im Browser
+    läuft, Berechtigungsprüfungen im Browser, aus dem Browser aufgerufene KI-Dienste und die Drittdienste untersucht,
+    an die der Code Daten sendet. Die eingesetzten Komponenten wurden aus dem Code ermittelt, und für jede Komponente
+    wurde die aktuelle Konfiguration (Zeilenbasierte Zugriffskontrolle (RLS) und Richtlinien, Speicher-Buckets,
+    Authentifizierungseinstellungen, Region, Teamzugänge, Datensicherung) über ausschließlich lesende, auf das eine
+    Projekt beschränkte Werkzeuge abgerufen oder aus Exporten und Screenshots der Organisation übernommen. Jeder
+    Nachweis wurde bei Eingang gehasht und hält fest, wie er gewonnen wurde. Jede Anforderung wurde anhand dieser
+    Nachweise durch Einsichtnahme, Beobachtung aufgezeichneter Systemausgaben und, soweit möglich, erneute Durchführung
+    bewertet. Kein System wurde verändert, kein Penetrationstest durchgeführt und keine personenbezogenen Daten in der
+    Anwendung gelesen. Feststellungen werden mit dem objektiven Nachweis, auf dem sie beruhen, zu genau einer
+    Anforderung erfasst und als wesentliche Schwachstellen, geringfügige Schwachstellen oder Verbesserungspotenziale
+    eingestuft.
+  sampling: >-
+    Die Bewertung hat den Code, die Konfiguration und die Dokumente mit Stand vom Stichtag geprüft. Sie findet
+    verbreitete Schwachstellen; sie kann nicht jede Schwachstelle finden, und das Fehlen einer Feststellung bedeutet
+    weder, dass keine besteht, noch, dass die Anwendung gegen jeden Angriff geschützt ist, noch, dass die Verarbeitung in
+    jeder Hinsicht mit der DSGVO oder der NIS-2-Richtlinie vereinbar ist.
+  summary_heading: "Zusammenfassung der Feststellungen"
+  summary_counts: "Diese Bewertung hat folgende Feststellungen ergeben: wesentliche Schwachstellen: {majors}, geringfügige Schwachstellen: {minors}, Verbesserungspotenziale: {ofis}. Jede Feststellung ist in Teil III dargestellt."
+  grades:
+    major: "Wesentliche Schwachstelle: Ein Schutz, den die Anwendung braucht, fehlt oder versagt, sodass personenbezogene Daten offenliegen oder von Personen ohne Berechtigung verändert werden können, oder ein für die Verarbeitung personenbezogener Daten erforderlicher Vertrag oder eine erforderliche Garantie fehlt."
+    minor: "Geringfügige Schwachstelle: Eine Anforderung ist nicht erfüllt, der wesentliche Schutz ist aber vorhanden und wirksam, oder die Schwachstelle hat nur begrenzte Reichweite."
+    ofi: "Verbesserungspotenzial: Die Anforderung ist erfüllt, die Bewertung hat jedoch eine Möglichkeit festgestellt, die Sicherheit oder Datenverarbeitung der Anwendung zu verbessern."
+  stage1_grades: "Feststellungen sind Schwachstellen mit Stand vom Stichtag. Die Konfiguration kann sich danach ändern; ob eine Schwachstelle behoben ist, zeigt nur eine neue Bewertung."
+  conformity_heading: "Sicherheit und Datenverarbeitung der Anwendung"
+  highlights_heading: "Zugriffskontrolle, Datenverarbeitung und Unterauftragsverarbeiter"
+  highlights:
+    access_control: "Zugriffskontrolle (Zeilenbasierte Zugriffskontrolle (RLS), Zugriffsrichtlinien, Berechtigungsprüfung auf dem Server, keine privilegierten Schlüssel im Browser): {result}"
+    data_processing: "Datenverarbeitung (Inventar der personenbezogenen Daten, Löschung, Datenflüsse zu KI-Diensten): {result}"
+    subprocessors: "Unterauftragsverarbeiter (Ermittlung, Auftragsverarbeitungsverträge, Übermittlungen außerhalb des EWR): {result}"
+  scope_appropriate_heading: "Angemessenheit des Umfangs"
+  scope_appropriate:
+    "yes": "Der Umfang der Bewertung und die angegebene Rolle der Organisation sind der Anwendung und der Beteiligung der Organisation an ihrem Betrieb angemessen."
+    "no": "Der Umfang der Bewertung oder die angegebene Rolle der Organisation sind der Anwendung oder der Beteiligung der Organisation an ihrem Betrieb nicht angemessen."
+  objectives_met_heading: "Erfüllung der Ziele der Bewertung"
+  objectives_met:
+    "yes": "Die Ziele der Bewertung wurden erfüllt."
+    "no": "Die Ziele der Bewertung wurden aufgrund der nachstehend beschriebenen Einschränkungen des Umfangs nicht vollständig erfüllt."
+  limitations_heading: "Einschränkungen des Umfangs"
+  recommendation_heading: "Schlussfolgerung"
+  recommendation:
+    assessment:
+      recommended: "Keine wesentlichen Schwachstellen festgestellt: Mit Stand vom Stichtag erfüllen der geprüfte Code, die geprüfte Konfiguration und die geprüften Dokumente die Anforderungen, die für die Rolle der Organisation und die von der Anwendung genutzten Funktionen gelten, soweit die geprüften Nachweise dies zeigen. Es wurden keine Schwachstellen festgestellt."
+      recommended-with-actions: "Geringfügige Schwachstellen zu beheben: Mit Stand vom Stichtag wurde keine wesentliche Schwachstelle festgestellt; die geringfügigen Schwachstellen in Teil III sind jedoch zu beheben, und für die oben als nicht verifiziert beschriebenen Anforderungen sind Nachweise erforderlich, bevor man sich auf sie verlassen kann."
+      not-recommended: "Wesentliche Schwachstellen zu beheben: Die wesentlichen Schwachstellen in Teil III müssen behoben werden, bevor man sich darauf verlassen kann, dass die Anwendung die von ihr verarbeiteten personenbezogenen Daten schützt. Ob sie behoben sind, kann nur eine neue Bewertung zeigen."
+      no-conclusion: "Aufgrund der oben beschriebenen Einschränkungen des Umfangs wird keine Schlussfolgerung zur Sicherheit und Datenverarbeitung der Anwendung gezogen."
+  ai_disclaimer: >-
+    Diese Schlussfolgerungen sind die des Modells und beruhen ausschließlich auf den Nachweisen im Paket. Sie sind keine
+    Rechtsberatung und binden niemanden. Sie sind nicht das Ergebnis eines Penetrationstests und bescheinigen nicht,
+    dass die Anwendung sicher ist. Ob eine Verarbeitung mit der DSGVO vereinbar ist, können nur eine Aufsichtsbehörde
+    oder ein Gericht entscheiden, ob eine Einrichtung ihre Pflichten nach der NIS-2-Richtlinie erfüllt, nur die
+    zuständigen Behörden, und eine Zertifizierung nach {certification} kann nur eine akkreditierte
+    Zertifizierungsstelle erteilen.
+  independence_heading: "Unabhängigkeit und Einschränkungen"
+  independence: >-
+    Das Modell, das diese KI-Bewertung unterzeichnet, ist keine Aufsichts- oder zuständige Behörde, keine nach
+    {certification} akkreditierte Zertifizierungsstelle, kein Penetrationstester, nicht der Datenschutzbeauftragte der
+    Organisation oder ihres Kunden und kein Rechtsanwalt, und es ist nicht unabhängig in dem Sinne, wie es von einer
+    Zertifizierungsstelle verlangt wird. Es hat kein System angegriffen oder verändert, die personenbezogenen Daten in
+    der Anwendung nicht gelesen und niemanden befragt; es stützte sich auf den Code, die über ausschließlich lesende
+    Werkzeuge abgerufene Konfiguration sowie die Exporte, Dokumente und Angaben der Organisation.
+  restricted_use_heading: "Verwendung dieses Berichts"
+  restricted_use: >-
+    Dieser Bericht ist für die Leitung von {org} bestimmt, für den Kunden, für den die Anwendung bereitgestellt wird,
+    sowie für Parteien, denen {org} oder der Kunde ihn zur Beschreibung der Sicherheit und Datenverarbeitung der
+    Anwendung zugänglich macht. Er ist eine KI-Bewertung. Er ist weder ein Penetrationstest noch eine Zertifizierung,
+    ein Siegel oder ein Prüfzeichen nach {certification} noch ein SOC-2-Bericht noch eine Feststellung einer Behörde
+    noch eine Rechtsberatung. Er berechtigt {org} nicht, eine Zertifizierung oder Rechtskonformität für sich in Anspruch
+    zu nehmen, und er darf nicht als eines davon dargestellt werden.
+  signature_footer: "Kein Penetrationstest. Keine Zertifizierung. Keine Rechtsberatung."
+
+section2:
+  title: "Die Anwendung und ihr Kontext"
+  intro: >-
+    Dieser Teil enthält die Beschreibung der bewerteten Anwendung und ihres Kontexts durch die Organisation. Es handelt
+    sich um dokumentierte Information der Organisation, nicht um eine Schlussfolgerung dieser KI-Bewertung.
+  unapproved: "Diese Beschreibung ist nicht als von der Leitung freigegeben gekennzeichnet."
+  omitted: >-
+    Eine Beschreibung der Anwendung und ihres Kontexts für die Leser dieses Berichts wurde nicht bereitgestellt. Aus
+    anderen Quellen übernommener Text ist Nachweismaterial und wird hier nicht abgedruckt.
+  headings:
+    scope_statement: "Bewertete Anwendung"
+    services: "Nutzer, betroffene Personen und personenbezogene Daten"
+    role: "Rolle der Organisation"
+    boundaries: "Architektur und Abgrenzung"
+    sites: "Hosting-Regionen und Standorte"
+    outsourced: "Unterauftragsverarbeiter und Dienstleister"
+    changes: "Wesentliche Änderungen"
+    people: "Organisation und Zuständigkeiten"
+    processes: "Entwicklungs- und Betriebsprozesse"
+
+section3:
+  title: "Feststellungen"
+  intro: >-
+    Jede Feststellung ist zu genau einer Anforderung des Katalogs erfasst, mit einer Beschreibung der Schwachstelle und
+    dem objektiven Nachweis, auf dem sie beruht. Diese KI-Bewertung schreibt keine Behebung vor und bewertet weder
+    Bußgelder noch andere rechtliche Folgen; von der Organisation wird erwartet, über die Korrektur zu entscheiden und
+    sie umzusetzen.
+  intro_stage1: >-
+    Jede Feststellung ist eine Schwachstelle mit Stand vom Stichtag, zu genau einer Anforderung des Katalogs erfasst,
+    mit einer Beschreibung der Schwachstelle und dem objektiven Nachweis, auf dem sie beruht. Diese KI-Bewertung
+    schreibt keine Behebung vor und bewertet weder Bußgelder noch andere rechtliche Folgen; von der Organisation wird
+    erwartet, über die Korrektur zu entscheiden und sie umzusetzen.
+  none: "Es wurden keine Schwachstellen und keine Verbesserungspotenziale festgestellt."
+  labels:
+    requirement: "Anforderung"
+    statement: "Beschreibung"
+    statement_ofi: "Verbesserungspotenzial"
+    evidence: "Objektiver Nachweis"
+    units: "Zugehörige Bewertungseinheiten"
+  grade_names:
+    major: "Wesentliche Schwachstelle"
+    minor: "Geringfügige Schwachstelle"
+    ofi: "Verbesserungspotenzial"
+
+section4:
+  title: "Anforderungen, Bewertung und Ergebnisse"
+  intro: >-
+    Dieser Teil führt für jede Anforderung im Umfang die Vorschriften der DSGVO und der NIS-2-Richtlinie auf, die sie
+    unterstützt, was bewertet wurde, die Prüfhandlungen dieser KI-Bewertung und die Ergebnisse. Für die Anwendung und
+    ihre Maßnahmen ist {org} verantwortlich; für die Prüfhandlungen und Ergebnisse ist diese KI-Bewertung
+    verantwortlich. Eine Zuordnung zur DSGVO oder NIS-2-Richtlinie zeigt, welche Vorschrift eine Anforderung
+    unterstützt; die Erfüllung der Anforderung belegt für sich genommen nicht die Einhaltung dieser Vorschrift.
+  methods: >-
+    Die Prüfhandlungen nutzten eine oder mehrere der folgenden Methoden. Einsichtnahme: Untersuchung von Code, über
+    ausschließlich lesende Werkzeuge abgerufener Konfiguration, Exporten, Screenshots und Dokumenten. Beobachtung:
+    Untersuchung des Verhaltens eines Systems anhand seiner eigenen aufgezeichneten Ausgaben, etwa der Ergebnisse eines
+    Sicherheitsberaters (Security Advisor). Erneute Durchführung: unabhängige Wiederholung einer Prüfung anhand der
+    aufgezeichneten Nachweise und Vergleich des Ergebnisses. Befragung: Berücksichtigung schriftlicher Angaben der
+    Organisation; eine Anforderung, die nur durch Angaben gestützt ist, wird als nicht verifiziert ausgewiesen. Jede
+    Anforderung wurde einmal mit Stand vom Stichtag bewertet.
+  columns: ["Anforderung", "Einheit", "Bewerteter Gegenstand", "Durchgeführte Prüfhandlungen", "Ergebnis"]
+  conforming: "Keine Schwachstellen festgestellt."
+  not_audited: "Nicht bewertet. {reason}"
+  design_gap: "Nicht vorhanden. {reason}"
+  not_sampled: "Nicht Gegenstand dieser Bewertung."
+  inquiry_only: "Nicht verifiziert: beruht nur auf Angaben der Organisation."
+
+section5:
+  title: "Anwendbarkeit der Anforderungen"
+  intro: >-
+    Die Rolle der Organisation für diese Anwendung ist: {scope_values}. Von den Anforderungen im Katalog gelten
+    {applicable} für diese Rolle und die von der Anwendung genutzten Funktionen und {excluded} nicht, weil sie nur für
+    die andere Rolle gelten (Betriebspflichten treffen denjenigen, der das Produktivsystem betreibt; die übergebene
+    Dokumentation betrifft einen Entwickler, dessen Kunde das System selbst betreibt) oder eine Funktion betreffen, die
+    die Anwendung nicht nutzt (Dateispeicher, KI-Verarbeitung). Die Tabelle zeigt für jede Anforderung, ob sie gilt, den
+    Grund, wenn sie nicht gilt, und das Ergebnis dieser Bewertung.
+  missing: >-
+    Die Rolle der Organisation ließ sich aus den Nachweisen nicht feststellen. Für diese Bewertung wurde jede
+    Anforderung als anwendbar behandelt.
+  columns: ["Anforderung", "Titel", "Anwendbar", "Grund der Nichtanwendbarkeit", "Ergebnis"]
+  results:
+    conforming: "Konform"
+    excluded: "Nicht anwendbar"
+    not_audited: "Nicht bewertet"
+    not_sampled: "Nicht Gegenstand dieser Bewertung"
+    inquiry_only: "Nicht verifiziert (nur Angaben)"
+
+section6:
+  title: "Stellungnahme der Organisation zu den Feststellungen"
+  intro: >-
+    Die Informationen in diesem Teil sind die eigene Stellungnahme der Organisation zu den Feststellungen,
+    einschließlich vorgenommener oder geplanter Korrekturen. Sie wurden von dieser KI-Bewertung nicht verifiziert; ob
+    eine Schwachstelle behoben ist, kann nur eine neue Bewertung zeigen.
+  none: "Die Organisation hat keine Stellungnahme zu den Feststellungen abgegeben."
+
+# Anhänge A und B, im PDF nach Teil VI und als bearbeitbares Markdown neben dem PDF.
+annex:
+  measures:
+    title: "Technische und organisatorische Maßnahmen (TOM), geprüft mit Stand vom {period_dates}"
+    intro: >-
+      Dieser Anhang kann einem Auftragsverarbeitungsvertrag als Anlage zu den technischen und organisatorischen
+      Maßnahmen (Art. 28 Abs. 3 Buchst. c und Art. 32 DSGVO) beigefügt werden. Er führt jede Sicherheitsanforderung auf,
+      die für die Anwendung gilt, das Ergebnis dieser KI-Bewertung und wie es nachgewiesen wurde. Nur Zeilen mit dem
+      Ergebnis „Konform“ beschreiben Maßnahmen, die mit Stand vom {period_dates} als vorhanden verifiziert wurden; eine
+      Zeile mit einer Feststellung, „Nicht verifiziert“ oder „Nicht bewertet“ ist keine verifizierte Maßnahme und sollte
+      behoben oder nachgewiesen werden, bevor man sich in einem Vertrag auf sie stützt. Die Konfiguration kann sich nach
+      diesem Datum ändern.
+    columns: ["Anforderung", "Maßnahme", "Ergebnis", "Nachgewiesen durch"]
+    none: "Für die Anwendung gilt keine Sicherheitsanforderung."
+  subprocessors:
+    title: "In der Anwendung festgestellte Unterauftragsverarbeiter"
+    intro: >-
+      Dieser Anhang führt die Drittdienste auf, die im Code und in der Konfiguration der Anwendung sowie in der
+      Beschreibung der Anwendung durch die Organisation festgestellt wurden. Jeder Dienst, der im Auftrag des Kunden
+      personenbezogene Daten verarbeitet, ist ein Unterauftragsverarbeiter; der Kunde muss als Verantwortlicher ihn vor
+      dem Einsatz genehmigen (Art. 28 Abs. 2 DSGVO), und jeder muss durch einen Auftragsverarbeitungsvertrag gebunden
+      sein (Art. 28 Abs. 4 DSGVO). Die Spalte „AVV des Anbieters“ verweist, soweit bekannt, auf den Standardvertrag des
+      Anbieters; ob er abgeschlossen wurde, wird unter DP-SUP-03 bewertet. Ein Dienst, der keine personenbezogenen Daten
+      verarbeitet, kann aus der einem Vertrag beigefügten Liste entfernt werden.
+    columns: ["Unterauftragsverarbeiter", "Leistung", "AVV des Anbieters"]
+    none: "Es wurden keine Drittdienste festgestellt."
+
+# fixes.md, die Behebungsliste für den Entwickler. Wird unverändert ausgegeben (keine Platzhalter).
+fixes:
+  title: "Behebungsliste"
+  intro: >-
+    Die Schwachstellen, die diese KI-Bewertung festgestellt hat, nach Schwere geordnet, für den Entwickler der
+    Anwendung. Jeder Eintrag nennt die Feststellung, die Anforderung und was nicht erfüllt ist; den objektiven Nachweis
+    enthält Teil III des Berichts. Beheben Sie sie in einer eigenen Arbeitssitzung, nicht in den Systemen, wie sie
+    bewertet wurden, und lassen Sie die Anwendung danach erneut bewerten, um die Behebung zu zeigen. Die letzte Liste
+    nennt die Einheiten, die nur auf Angaben beruhen: Reichen Sie dafür Nachweise ein (einen Export, einen Screenshot,
+    ein Dokument), damit sie verifiziert werden können.
+  grades:
+    major: "Wesentliche Schwachstellen: zuerst beheben"
+    minor: "Geringfügige Schwachstellen: danach beheben"
+    ofi: "Verbesserungspotenziale"
+  unverified: "Nicht verifiziert: Nachweise einreichen"
+
+# Kurze Bezeichnungen und Sätze, die der Renderer und das PDF-Layout verwenden.
+labels:
+  lang: de                     # Typst-Textsprache (Silbentrennung, Anführungszeichen)
+  paper: a4
+  auditor: "KI-Bewertung"
+  signer_title: "KI-Auditor"
+  auditor_line: "{model}, KI-Auditor"
+  period:                      # stage1: Bewertung zum Stichtag; other wird von diesem Profil nicht verwendet
+    stage1: "Stand: {date}"
+    other: "für den Zeitraum vom {start} bis {end}"
+  period_dates:
+    stage1: "{date}"
+    other: "{start} bis {end}"
+  clause_group: "{title}"
+  "yes": "Ja"
+  "no": "Nein"
+  no_justification: "Keine angegeben."
+  see: "; siehe {ids}"
+  req_unit_title: "{title}"
+  excluded:
+    scope: "Gilt nur für die andere Rolle; die Rolle der Organisation ist: {scope_values}."
+    optional: "Betrifft eine Funktion, die die Anwendung nicht nutzt (Dateispeicher oder KI-Verarbeitung)."
+  scope_values:
+    processor: "betreibt das Produktivsystem für ihren Kunden und verarbeitet personenbezogene Daten in dessen Auftrag (Auftragsverarbeiter)"
+    developer: "hat die Anwendung entwickelt; der Kunde betreibt das Produktivsystem selbst (Entwickler)"
+  strength: "So wurden die {applicable} Anforderungen im Umfang nachgewiesen: {direct} durch Lesen des Codes oder direkte Prüfung des Live-Systems, {captured} aus der aktuellen, über ausschließlich lesende Werkzeuge abgerufenen Konfiguration, {client} aus Dokumenten und Screenshots der Organisation, {inquiry} nur durch Angaben (nicht verifiziert), und {none} wurden nicht bewertet."
+  tier_names:
+    direct: "Code oder Live-Prüfung"
+    captured: "Konfiguration"
+    client: "Dokumente"
+    inquiry: "nur Angaben"
+    none: "nicht bewertet"
+  crosswalk_names: {gdpr: DSGVO, nis2: NIS2}
+  annex: "Anhang"
+  draft:
+    inspection: "Einsichtnahme in die mit dieser Einheit verknüpften Konfigurationen, Codestellen, Aufzeichnungen und Dokumente, um festzustellen, ob das Merkmal erfüllt ist."
+    attribute: "{title}"
+    none: "Für diese Einheit lag kein Nachweis vor; sie konnte nicht bewertet werden."
+  grade_short: {major: wesentlich, minor: geringfügig}
+  see_sentence: " Siehe {ids}."
+  sample: "Stichprobe von {sample} aus einer Grundgesamtheit von {population}."
+  lowercase_states: false      # Substantive werden großgeschrieben: „SEC-OPS-02 Nicht verifiziert“
+  clause_result:
+    nonconforming: "Schwachstellen festgestellt. Siehe {ids}."
+    conforming: "In den bewerteten Anforderungen wurden keine Schwachstellen festgestellt."
+    related: " Eine zugehörige Feststellung ist zu einer anderen Anforderung erfasst: {ids}."
+  # PDF-Layout
+  header: "KI-Bewertung – kein Penetrationstest, keine Zertifizierung, keine Rechtsberatung"
+  footer_final: "KI-Bewertung. Kein Penetrationstest, keine Zertifizierung, keine Prüfung durch eine Behörde, keine Rechtsberatung."
+  footer_draft: "Entwurf einer KI-Bewertung. Nicht unterzeichnet. Kein Penetrationstest, keine Zertifizierung, keine Rechtsberatung."
+  page_of: "1 von 1"           # Typst-Zählermuster
+  kicker: "KI-BEWERTUNG · SICHERHEIT UND DATENVERARBEITUNG EINER ANWENDUNG"
+  not_official: "Kein Penetrationstest, keine Zertifizierung, keine Prüfung durch eine Behörde, keine Rechtsberatung"
+  scope_label: "Bewertete Anwendung:"
+  signed_by: "Unterzeichnet von:"
+  watermark: "ENTWURF"
+  draft_note: "ENTWURF. Erstellt am {generated}. Noch nicht von dem Modell unterzeichnet, das die Bewertung durchgeführt hat."
+  contents: "Inhalt"
+  section: "Teil"
+  finding: "Feststellung:"
+  response: "Stellungnahme der Organisation:"
+  # workpapers.xlsx
+  xlsx:
+    sheets: {units: Einheiten, samples: Stichproben, deviations: Auffälligkeiten, findings: Feststellungen, soa: Anwendbarkeit, evidence: Nachweise}
+    units: [Einheit, Anforderungen, Häufigkeit, Art, Grundgesamtheit, Stichprobe, Angemessen gestaltet, Schlussfolgerung,
+            Auffälligkeiten, Konfidenz, Erstellt von, Bewerteter Gegenstand]
+    samples: [Einheit, Element, Ergebnisse, Nachweise, Anmerkung]
+    deviations: [Einheit, Element, Beschreibung, Nachweise]
+    findings: [ID, Einstufung, Anforderung, Beschreibung, Objektiver Nachweis, Auffälligkeiten, Nachweise, Stellungnahme der Organisation]
+    soa: [Anforderung, Anwendbar, Begründung, Status, Einheiten]
+    evidence: [ID, Titel, Art, Pfad, SHA-256, Herkunft, Datum, Maßnahmen, Anforderungen]
+    "yes": "ja"
+    "no": "nein"

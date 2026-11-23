@@ -1,0 +1,361 @@
+# Report wording for an AI assessment of one application's security and data processing.
+#
+# The criteria are the requirements of the app catalog (assets/frameworks/app.yaml):
+# security (SEC-*) and data processing (DP-*), each mapped to the GDPR and NIS2
+# provisions it supports. The layout follows the content of a management system audit
+# report (ISO 19011:2018, 6.5.1). The document is an AI assessment. It is not a
+# penetration test, not a certification (ISO/IEC 27001, Art. 42 GDPR) or SOC 2
+# attestation, not an audit or decision of a supervisory or competent authority, and
+# not legal advice.
+#
+# The key structure is the one the requirements engine reads (scripts/engine/render.py),
+# shared with the GDPR, NIS2 and ISO/IEC 27001 skills. Some keys keep audit names
+# (stage1 means a point-in-time assessment; coverage.surveillance and labels.period.other
+# are unused while the profile has only the assessment type). Keys only this profile uses:
+# labels.strength, labels.tier_names, labels.crosswalk_names, labels.annex, annex, fixes.
+#
+# Placeholders: {org} {scope} {model} {type_label} {period} {period_dates}
+# {standard} {standard_full} {certification} {scope_values} {applicable} {excluded}
+# {sampled} {majors} {minors} {ofis} {representative}; in labels.strength also
+# {direct} {captured} {client} {inquiry} {none}. fixes.* is printed as written.
+
+standards:
+  full: "the app assessment catalog of the compliance skills, “Security and data processing of an application”: requirements for access control, authentication, data protection, secure code, operations, data inventory, sub-processors, retention and deletion, incidents and AI processing, each mapped to the provisions of Regulation (EU) 2016/679 (GDPR) and Directive (EU) 2022/2555 (NIS2) it supports"
+  short: "the app assessment catalog (security and data processing)"
+  certification: "ISO/IEC 27001 or Art. 42 GDPR"
+  auditing: "ISO 19011:2018"
+
+audit_types:
+  assessment:
+    label: "Assessment as of a date (code, configuration and documents)"
+    period_heading: "Assessed as of"
+    objectives:
+      - "establish the application in scope, its architecture and the services it uses, and whether the organization runs the production system for its client or only developed it;"
+      - "assess whether access to the application's data is controlled where it is enforced: row-level security and access policies in the database, server functions, storage buckets and authentication settings;"
+      - "assess the code and its configuration for privileged keys and secrets, known vulnerabilities, and authorization decided only in the browser;"
+      - "assess the processing of personal data: what the application stores, the sub-processors and AI services it sends data to, the contracts and transfer mechanisms that cover them, retention and deletion, and, where the organization runs production, backups, logging and breach notice;"
+      - "state how each requirement was verified, and identify the weaknesses to fix."
+
+cover:
+  kicker: "AI Assessment"
+  disclaimer: "Not a penetration test. Not a certification or attestation. Not an audit or decision of a supervisory or competent authority. Not legal advice. No certificate, seal or mark is or can be issued on the basis of this report."
+  title: "AI Assessment of the Security and Data Processing of the Application Provided by {org}"
+  restricted: "This AI assessment is not a penetration test, a certification, a finding of an authority or legal advice, and must not be presented as any of them."
+
+section1:
+  title: "AI Assessment Report"
+  notice: >-
+    This is an AI assessment prepared and signed by {model}. It assesses one application against {standard} and
+    follows the method of a management system audit (ISO 19011:2018). It is not a penetration test, not a
+    certification under {certification}, not a SOC 2 attestation, not an audit or decision of a supervisory or
+    competent authority, and not legal advice. Only a supervisory authority or a court can decide whether processing
+    complies with the GDPR, and only the competent authorities can decide whether an entity meets its obligations under
+    NIS2.
+  notice_unsigned: >-
+    This is an AI assessment. It has not been signed yet. It assesses one application against {standard} and follows
+    the method of a management system audit (ISO 19011:2018). It is not a penetration test, not a certification under
+    {certification}, not a SOC 2 attestation, not an audit or decision of a supervisory or competent authority, and not
+    legal advice. Only a supervisory authority or a court can decide whether processing complies with the GDPR, and
+    only the competent authorities can decide whether an entity meets its obligations under NIS2.
+  addressee: "To the Management of {org}"
+  facts_heading: "Assessment Details"
+  facts:
+    organization: "Organization"
+    representative: "Organization's representative"
+    audit_type: "Type of assessment"
+    criteria: "Assessment criteria"
+    records: "Date"
+    auditor: "Assessment performed and signed by"
+    method: "Assessment method"
+    method_value: "Automated scan of the application's code, read-only reads of its live configuration, and review of exports, documents and answers in a hashed evidence bundle; no penetration testing, no changes to any system, no access to the personal data the application holds"
+  criteria: >-
+    The requirements of {standard_full}; and the organization's own documented commitments for the application, such
+    as its data processing agreements and its description of technical and organizational measures.
+  objectives_heading: "Assessment Objectives"
+  objectives_intro: "The objectives of this assessment were to:"
+  scope_heading: "Assessment Scope"
+  scope: >-
+    The application provided by {org} (role of the organization: {scope_values}), with the scope: {scope}
+  coverage:
+    full: >-
+      The assessment covered the {applicable} requirements of the catalog that apply to the organization's role and to
+      the features the application uses. It did not cover the {excluded} requirements that apply only to the other role
+      or concern a feature the application does not use (file storage, AI processing). Section V lists every
+      requirement and why it applies or not.
+    surveillance: >-
+      This assessment covered a sample of {sampled} of the {applicable} requirements of the catalog that apply to the
+      organization's role. Section V shows which.
+  method_heading: "Assessment Method"
+  method: >-
+    The application's repository was scanned by a script for secrets, privileged keys in code that runs in the browser,
+    authorization decided in the browser, AI services called from the browser, and the third-party services the code
+    sends data to. The application's stack was detected from the code, and for each component its live configuration
+    (row-level security and policies, storage buckets, authentication settings, project region, team access, backups)
+    was read through read-only tools limited to the one project, or taken from exports and screenshots the organization
+    provided. Every item of evidence was hashed on receipt and records how it was obtained. Each requirement was
+    assessed against that evidence by inspection, observation of recorded system output and, where possible,
+    reperformance. No system was changed, no penetration test was performed, and no personal data held by the
+    application was read. Findings are recorded against one requirement with the objective evidence they rest on, and
+    graded as major weaknesses, minor weaknesses or opportunities for improvement.
+  sampling: >-
+    The assessment examined the code, the configuration and the documents as they stood on the assessment date. It
+    finds common weaknesses; it cannot find every weakness, and the absence of a finding is not a statement that none
+    exists, that the application is secure against every attack, or that the processing complies with the GDPR or NIS2
+    in every respect.
+  summary_heading: "Summary of Findings"
+  summary_counts: "This assessment identified {majors} major weaknesses, {minors} minor weaknesses and {ofis} opportunities for improvement. Each is set out in Section III."
+  grades:
+    major: "Major weakness: a protection the application needs is missing or broken, so that personal data are exposed or can be changed by people who should not have access, or a contract or safeguard required for the processing of personal data is missing."
+    minor: "Minor weakness: a requirement is not met, but the main protection is in place and works, or the weakness is limited in reach."
+    ofi: "Opportunity for improvement: the requirement is met, but the assessment identified a way the application's security or data processing could be improved."
+  stage1_grades: "Findings are weaknesses as they stood on the assessment date. Configuration can change after that date; a fix is shown only by a new assessment."
+  conformity_heading: "Security and Data Processing of the Application"
+  highlights_heading: "Access Control, Data Processing and Sub-processors"
+  highlights:
+    access_control: "Access control (row-level security, access policies, authorization on the server, no privileged keys in the browser): {result}"
+    data_processing: "Data processing (inventory of personal data, erasure, data flows to AI services): {result}"
+    subprocessors: "Sub-processors (identification, data processing agreements, transfers outside the EEA): {result}"
+  scope_appropriate_heading: "Appropriateness of the Scope"
+  scope_appropriate:
+    "yes": "The scope of the assessment and the organization's role as stated are appropriate to the application and to the organization's involvement in running it."
+    "no": "The scope of the assessment or the organization's role as stated are not appropriate to the application or to the organization's involvement in running it."
+  objectives_met_heading: "Fulfilment of the Assessment Objectives"
+  objectives_met:
+    "yes": "The assessment objectives were fulfilled."
+    "no": "The assessment objectives were not fully fulfilled because of the scope limitations described below."
+  limitations_heading: "Scope Limitations"
+  recommendation_heading: "Conclusion"
+  recommendation:
+    assessment:
+      recommended: "No significant weaknesses found: as of the assessment date, the code, configuration and documents examined meet the requirements that apply to the organization's role and to the features the application uses, as far as the evidence examined shows. No weaknesses were identified."
+      recommended-with-actions: "Minor weaknesses to fix: as of the assessment date, no significant weakness was found, but the minor weaknesses in Section III need to be fixed, and the requirements described above as not verified need evidence before they can be relied on."
+      not-recommended: "Significant weaknesses to fix: the major weaknesses in Section III must be fixed before the application can be relied on to protect the personal data it processes. Whether they have been fixed can only be shown by a new assessment."
+      no-conclusion: "No conclusion on the security and data processing of the application is stated, because of the scope limitations described above."
+  ai_disclaimer: >-
+    These conclusions are the model's, based only on the evidence in the bundle. They are not legal advice and do not
+    bind anyone. They are not the result of a penetration test and do not certify that the application is secure. Only
+    a supervisory authority or a court can decide whether processing complies with the GDPR, only the competent
+    authorities can decide whether an entity meets its obligations under NIS2, and only an accredited certification
+    body can issue a certification under {certification}.
+  independence_heading: "Independence and Limitations"
+  independence: >-
+    The model that signs this AI assessment is not a supervisory or competent authority, not a certification body
+    accredited under {certification}, not a penetration tester, not the organization's or its client's data protection
+    officer, and not a lawyer, and it is not independent in the sense required of a certification body. It did not
+    attack or change any system, did not read the personal data the application holds, and did not interview anyone; it
+    relied on the code, the configuration read through read-only tools, and the exports, documents and answers the
+    organization provided.
+  restricted_use_heading: "Use of This Report"
+  restricted_use: >-
+    This report is intended for the management of {org}, for its client for whom the application is provided, and for
+    parties {org} or the client chooses to share it with to describe the security and data processing of the
+    application. It is an AI assessment. It is not a penetration test, not a certification, seal or mark under
+    {certification}, not a SOC 2 report, not a finding of an authority and not legal advice. It does not entitle {org}
+    to claim certification or compliance, and it must not be presented as any of these.
+  signature_footer: "Not a penetration test. Not a certification. Not legal advice."
+
+section2:
+  title: "The Application and Its Context"
+  intro: >-
+    This section is the organization's description of the application in scope and its context. It is the
+    organization's documented information, not a conclusion of this AI assessment.
+  unapproved: "This description is not marked management-approved."
+  omitted: >-
+    A description of the application and its context for readers of this report has not been provided. Text pulled
+    from other sources is evidence and is not printed here.
+  headings:
+    scope_statement: "Application in Scope"
+    services: "Users, Data Subjects and Personal Data"
+    role: "Role of the Organization"
+    boundaries: "Architecture and Boundaries"
+    sites: "Hosting Regions and Locations"
+    outsourced: "Sub-processors and Service Providers"
+    changes: "Significant Changes"
+    people: "Organization and Responsibilities"
+    processes: "Development and Operating Processes"
+
+section3:
+  title: "Findings"
+  intro: >-
+    Each finding is recorded against one requirement of the catalog, with a statement of the weakness and the objective
+    evidence it rests on. This AI assessment does not prescribe the fix, and it does not assess fines or other legal
+    consequences; the organization is expected to decide on and carry out the correction.
+  intro_stage1: >-
+    Each finding is a weakness as it stood on the assessment date, recorded against one requirement of the catalog,
+    with a statement of the weakness and the objective evidence it rests on. This AI assessment does not prescribe the
+    fix, and it does not assess fines or other legal consequences; the organization is expected to decide on and carry
+    out the correction.
+  none: "No weaknesses or opportunities for improvement were identified."
+  labels:
+    requirement: "Requirement"
+    statement: "Statement"
+    statement_ofi: "Opportunity"
+    evidence: "Objective evidence"
+    units: "Related assessment units"
+  grade_names:
+    major: "Major weakness"
+    minor: "Minor weakness"
+    ofi: "Opportunity for improvement"
+
+section4:
+  title: "Requirements, Assessment and Results"
+  intro: >-
+    This section lists, for each requirement in scope, the GDPR and NIS2 provisions it supports, what was assessed,
+    the procedures this AI assessment performed and the results. The application and its measures are the
+    responsibility of {org}; the procedures and results are the responsibility of this AI assessment. A mapping to the
+    GDPR or NIS2 shows which provision a requirement supports; meeting the requirement does not by itself show
+    compliance with that provision.
+  methods: >-
+    Procedures used one or more of these methods. Inspection: examining code, configuration read through read-only
+    tools, exports, screenshots and documents. Observation: examining a system's behaviour as recorded in its own output,
+    such as a security advisor's results. Reperformance: independently repeating a check against the recorded evidence
+    and comparing the result. Inquiry: considering the organization's written answers; a requirement supported only by
+    answers is reported as not verified. Each requirement was assessed once, as of the assessment date.
+  columns: ["Requirement", "Unit", "What was assessed", "Procedures performed", "Result"]
+  conforming: "No weaknesses noted."
+  not_audited: "Not assessed. {reason}"
+  design_gap: "Not in place. {reason}"
+  not_sampled: "Not covered in this assessment."
+  inquiry_only: "Not verified: based on the organization's answers only."
+
+section5:
+  title: "Applicability of the Requirements"
+  intro: >-
+    The organization's role for this application is: {scope_values}. Of the requirements in the catalog, {applicable}
+    apply to this role and to the features the application uses, and {excluded} do not, because they apply only to
+    the other role (operating duties apply to whoever runs the production system; handover documentation applies to a
+    developer whose client runs it), or because they concern a feature the application does not use (file storage, AI
+    processing). The table shows each requirement, whether it applies, the reason when it does not, and the result of
+    this assessment.
+  missing: >-
+    The organization's role could not be established from the evidence. Every requirement was treated as applicable
+    for this assessment.
+  columns: ["Requirement", "Title", "Applicable", "Reason it does not apply", "Result"]
+  results:
+    conforming: "Conforming"
+    excluded: "Not applicable"
+    not_audited: "Not assessed"
+    not_sampled: "Not in this assessment"
+    inquiry_only: "Not verified (answers only)"
+
+section6:
+  title: "The Organization's Response to Findings"
+  intro: >-
+    The information in this section is the organization's own response to the findings, including corrections made or
+    planned. It has not been verified by this AI assessment; only a new assessment can show that a weakness has been
+    fixed.
+  none: "The organization has not provided a response to the findings."
+
+# Annexes A and B, printed after Section VI and written as editable Markdown next to the PDF.
+annex:
+  measures:
+    title: "Technical and Organizational Measures as Verified on {period_dates}"
+    intro: >-
+      This annex can be attached to a data processing agreement as the annex on technical and organizational measures
+      (Art. 28(3)(c) and Art. 32 GDPR). It lists each security requirement that applies to the application, the result
+      of this AI assessment, and how the result was verified. Only rows with the result “Conforming” describe measures
+      verified as in place on {period_dates}; a row with a finding, “Not verified” or “Not assessed” is not a verified
+      measure and should be fixed, or supported with evidence, before it is relied on in an agreement. Configuration can
+      change after that date.
+    columns: ["Requirement", "Measure", "Result", "Verified by"]
+    none: "No security requirement applies to the application."
+  subprocessors:
+    title: "Sub-processors Found in the Application"
+    intro: >-
+      This annex lists the third-party services found in the application's code and configuration and in the
+      organization's description of the application. Each one that processes personal data on behalf of the client is a
+      sub-processor; the client, as controller, must authorize them before they are used (Art. 28(2) GDPR), and each
+      must be bound by a data processing agreement (Art. 28(4) GDPR). The provider DPA column links to the provider's
+      standard agreement where it is known; whether it has been concluded is assessed under DP-SUP-03. A service that
+      processes no personal data can be removed from the list attached to an agreement.
+    columns: ["Sub-processor", "Service", "Provider DPA"]
+    none: "No third-party services were found."
+
+# fixes.md, the fix list for the developer. Printed as written (no placeholders).
+fixes:
+  title: "Fix List"
+  intro: >-
+    The weaknesses this AI assessment found, ordered by severity, for the developer of the application. Each item names
+    the finding, the requirement and what is not met; Section III of the report has the objective evidence. Fix them in
+    a separate working session, not in the systems as they were assessed, and have the application assessed again to
+    show the fixes. The last list names the units that rest on answers only: provide evidence for them (an export, a
+    screenshot, a document) so they can be verified.
+  grades:
+    major: "Major weaknesses: fix first"
+    minor: "Minor weaknesses: fix next"
+    ofi: "Opportunities for improvement"
+  unverified: "Not verified: provide evidence"
+
+# Short labels and sentences the renderer and the PDF layout use.
+labels:
+  lang: en                     # Typst text language (hyphenation, quotes)
+  paper: a4
+  auditor: "AI Assessment"
+  signer_title: "AI Auditor"
+  auditor_line: "{model}, AI Auditor"
+  period:                      # stage1: point-in-time (assessment); other is unused by this profile
+    stage1: "as of {date}"
+    other: "for the period from {start} to {end}"
+  period_dates:
+    stage1: "{date}"
+    other: "{start} to {end}"
+  clause_group: "{title}"
+  "yes": "Yes"
+  "no": "No"
+  no_justification: "None given."
+  see: "; see {ids}"
+  req_unit_title: "{title}"
+  excluded:                    # Section V reason when a requirement does not apply
+    scope: "Applies only to the other role; the organization's role is: {scope_values}."
+    optional: "Concerns a feature the application does not use (file storage or AI processing)."
+  scope_values:                # engagement roles as printed
+    processor: "runs the production system for its client and processes personal data on the client's behalf (processor)"
+    developer: "developed the application; the client runs the production system (developer)"
+  strength: "How the {applicable} requirements in scope were verified: {direct} by reading the code or checking the live system directly, {captured} from live configuration read through read-only tools, {client} from documents and screenshots the organization provided, {inquiry} from answers only (not verified), and {none} not assessed."
+  tier_names:                  # Annex A "Verified by", the strongest evidence tier a requirement rests on
+    direct: "code or live check"
+    captured: "configuration"
+    client: "documents"
+    inquiry: "answers only"
+    none: "not assessed"
+  crosswalk_names: {gdpr: GDPR, nis2: NIS2}
+  annex: "Annex"
+  draft:                      # pre-filled by `draft`; printed in Section IV unless the auditor changes it
+    inspection: "Inspected the configuration, code, records and documents linked to this unit to determine whether the attribute is met."
+    attribute: "{title}"
+    none: "No evidence was available for this unit; it could not be assessed."
+  grade_short: {major: major, minor: minor}   # after a finding ID: "NC-01 (major)"
+  see_sentence: " See {ids}."
+  sample: "Sample of {sample} selected from a population of {population}."
+  lowercase_states: true       # "SEC-OPS-02 not verified" rather than "SEC-OPS-02 Not verified"
+  clause_result:
+    nonconforming: "weaknesses found. See {ids}."
+    conforming: "no weaknesses found in the requirements assessed."
+    related: " A related finding is recorded against another requirement: {ids}."
+  # PDF layout
+  header: "AI Assessment — not a penetration test, not a certification, not legal advice"
+  footer_final: "AI Assessment. Not a penetration test, not a certification, not an authority audit, not legal advice."
+  footer_draft: "Draft AI Assessment. Not signed. Not a penetration test, not a certification, not legal advice."
+  page_of: "1 of 1"            # Typst counter pattern
+  kicker: "AI ASSESSMENT · APPLICATION SECURITY AND DATA PROCESSING"
+  not_official: "Not a penetration test, not a certification, not an authority audit, not legal advice"
+  scope_label: "Application in scope:"
+  signed_by: "Signed by:"
+  watermark: "DRAFT"
+  draft_note: "DRAFT. Generated {generated}. Not yet signed by the model that ran the assessment."
+  contents: "Contents"
+  section: "Section"
+  finding: "Finding:"
+  response: "Organization's response:"
+  # workpapers.xlsx
+  xlsx:
+    sheets: {units: Units, samples: Samples, deviations: Deviations, findings: Findings, soa: Applicability, evidence: Evidence}
+    units: [Unit, Requirements, Frequency, Nature, Population, Sample, Design effective, Conclusion, Deviations,
+            Confidence, Prepared by, What was assessed]
+    samples: [Unit, Item, Results, Evidence, Note]
+    deviations: [Unit, Item, Description, Evidence]
+    findings: [ID, Grade, Requirement, Statement, Objective evidence, Deviations, Evidence, "Organization's response"]
+    soa: [Requirement, Applicable, Justification, Status, Units]
+    evidence: [ID, Title, Kind, Path, SHA-256, Obtained, Date, Controls, Requirements]
+    "yes": "yes"
+    "no": "no"

@@ -55,7 +55,7 @@ Copy this checklist and keep it updated:
 
 **4. Plan.** `python scripts/iso27001.py plan <dir>`, then complete every row of `testplan.csv` and run `python scripts/iso27001.py sample <dir>`. How to set frequency, nature, population, and which units a surveillance audit may leave out: [references/planning.md](references/planning.md).
 
-**5. Audit.** Follow [references/control-testing.md](references/control-testing.md) for each unit. Each unit is an independent piece of work that reads the bundle and writes one file, `workpapers/<unit>.json`. If you can run parallel workers or sub-agents, give each one a unit ID, the engagement path and that reference; otherwise audit units one after another.
+**5. Audit.** Run `python scripts/iso27001.py draft <dir>` first: it fills every workpaper with what follows mechanically (the linked evidence, the test attribute, an inspection procedure) and closes units with no evidence as not-audited. Then `python scripts/iso27001.py unit <dir>` lists the pending units in batches. Give each batch to one worker, a sub-agent on a smaller, cheaper model where your agent allows it. A worker runs `python scripts/iso27001.py unit <dir> <id>` for each unit (the requirement, the sample and short excerpts of the linked evidence: everything it needs), decides pass or fail, writes the rationale, deviations and conclusion following [references/control-testing.md](references/control-testing.md), and checks its work with `python scripts/iso27001.py validate <dir> --unit <id>` before moving on. Without workers, audit the units one after another the same way. Re-run `draft` after new evidence arrives: it reopens units it had closed.
 
 **6. Validate.** `python scripts/iso27001.py validate <dir>`. Fix every error it names and run it again until it passes.
 
@@ -64,6 +64,21 @@ Copy this checklist and keep it updated:
 **8. Findings.** `python scripts/iso27001.py rollup <dir>`, then grade every deviation as a major nonconformity, minor nonconformity or opportunity for improvement, and write `findings.json` with the conclusion, following [references/evaluating.md](references/evaluating.md).
 
 **9. Report.** Confirm `management.name` and `management.title` are the real person and role. Write `isms.yaml` at the engagement root for readers of the report: the scope, boundaries, locations, context, interested parties and Statement of Applicability version, from the organization's documented information; no one named but `management.name`, no email address, no phone number. Where a control title is not enough for Section IV, set that workpaper's `statement`. Then `python scripts/iso27001.py validate <dir> --final`, `signoff --model "<model that ran this audit>"`, `render` and `packet`. Tell the user it is an AI Audit and not an ISO/IEC 27001 certification. The report is the PDF. `review/packet.md` stays internal. How the report is built: [references/reporting.md](references/reporting.md).
+
+## Cost: which model does what
+
+Most of the work is many small, similar decisions; a few steps need the strongest judgment.
+Where your agent lets you choose models (Claude Code sub-agents take a `model`), split it so:
+
+| Step | Model |
+|---|---|
+| Testing units (one batch of about 8 per worker) | a smaller, cheaper model (Sonnet- or Haiku-class) |
+| Planning, grading findings, the conclusion, report wording | the strongest model available |
+| QA review | a different model from the one that tested, in a fresh context |
+
+The scripts do the counting (drafting, sampling, validation, rendering), so no model spends
+tokens on it. Read evidence through `unit <id>` excerpts, not whole bundle files; open a full
+file only when the excerpt is not enough.
 
 ## When things are missing
 

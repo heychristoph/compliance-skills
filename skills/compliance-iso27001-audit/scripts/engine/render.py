@@ -57,6 +57,8 @@ def render(eng: Engagement) -> dict:
     _write_xlsx(eng, xlsx, text["labels"]["xlsx"])
     index = eng.report / "evidence-index.csv"
     _write_evidence_index(eng, index)
+    if (PROFILE.get("report") or {}).get("annexes"):
+        _write_annex_files(eng, data, text)
     return {"pdf": pdf, "xlsx": xlsx, "evidence_index": index, "final": final, "warnings": warnings}
 
 
@@ -108,7 +110,9 @@ class _Results:
             return self.label(ncs) + see, True
         if not units:
             return (labels["not_sampled"] if self.surveillance else labels["not_audited"]), False
-        if all(wp["conclusion"] == "not-audited" for wp in units):
+        if all(wp["conclusion"] in ("not-audited", "inquiry-only") for wp in units):
+            if any(wp["conclusion"] == "inquiry-only" for wp in units):
+                return labels["inquiry_only"] + see, False
             return labels["not_audited"] + see, False
         ofis = [f for f in direct if f["grade"] == "ofi"]
         return labels["conforming"] + (f"; {self.label(ofis)}" if ofis else "") + see, False
@@ -181,6 +185,8 @@ def _report_data(eng: Engagement, text: dict, final: bool) -> dict:
          {"kind": "list", "items": [s1["grades"][g] for g in GRADE_ORDER]}]
     if eng.point_in_time:
         b.append({"kind": "para", "text": s1["stage1_grades"]})
+    if (PROFILE.get("report") or {}).get("evidence_strength"):
+        b.append({"kind": "para", "text": _fill(L["strength"], _Keep(v, **evidence_strength(eng, results)))})
     b += [{"kind": "heading", "text": s1["conformity_heading"]}, {"kind": "para", "text": doc["summary"].strip()}]
     # Requirements the report states a result for in Section I (ISO: internal audit and management review).
     highlights = [(h["key"], [x for x in h["requirements"] if any(r["id"] == x for r in eng.requirements)])
@@ -238,7 +244,7 @@ def _report_data(eng: Engagement, text: dict, final: bool) -> dict:
             if req["group"] != code:
                 continue
             units = results.units(req["id"])
-            rows.append({"id": req["id"], "title": req["title"], "units": [_unit_row(eng, wp, s4, results, L) for wp in units]
+            rows.append({"id": req["id"], "title": req["title"], **({"maps": _crosswalk(req, L)} if (PROFILE.get("report") or {}).get("crosswalk") else {}), "units": [_unit_row(eng, wp, s4, results, L) for wp in units]
                          or [{"control": "—", "activity": "", "tests": [], "result": s4["not_sampled"] if results.surveillance else s4["not_audited"].format(reason=""), "flag": False}]})
         if rows:
             groups.append({"title": (L["clause_group"].format(code=code, title=title) if not code.startswith(tuple((PROFILE.get("report") or {}).get("plain_group_prefixes") or [])) else title), "rows": rows})
@@ -272,7 +278,7 @@ def _report_data(eng: Engagement, text: dict, final: bool) -> dict:
     cover = text["cover"]
     return {
         "final": final,
-        "lang": L["lang"], "paper": L["paper"], "labels": {k: L[k] for k in TYPST_LABELS},
+        "lang": L["lang"], "paper": L["paper"], "labels": {k: L[k] for k in TYPST_LABELS + ("annex",) if k in L},
         "draft_note": L["draft_note"].format(generated=dt.date.today().isoformat()),
         "org": cfg["organization"], "scope": cfg["scope"].strip(), "auditor": L["auditor"],
         "model": model, "signer_name": model, "signer_title": L["signer_title"], "report_date": report_date,
@@ -281,7 +287,28 @@ def _report_data(eng: Engagement, text: dict, final: bool) -> dict:
         "counts": counts, "recommendation": doc["recommendation"],
         "generated": dt.date.today().isoformat(),
         "sections": [section1, section2], "section3": section3, "section4": section4, "section5": section5, "section6": section6,
+        **({"annexes": _annexes(eng, text, results, v)} if (PROFILE.get("report") or {}).get("annexes") else {}),
     }
+
+
+TIERS = ("direct", "captured", "client", "inquiry")
+
+
+def evidence_strength(eng: Engagement, results: "_Results") -> dict[str, str]:
+    """How each requirement in scope was verified: the strongest evidence tier its units cite.
+
+    Counts per tier, plus `none` for requirements no unit assessed (not audited, or no workpaper)."""
+    from review import _cited
+
+    counts = dict.fromkeys(TIERS + ("none",), 0)
+    for req in eng.requirements:
+        tiers = set()
+        for wp in results.units(req["id"]):
+            if wp["conclusion"] in ("not-audited", "pending"):
+                continue
+            tiers |= {eng.artifacts[i].get("obtained", "client") for i in _cited(wp) if i in eng.artifacts}
+        counts[next((t for t in TIERS if t in tiers), "none")] += 1
+    return {k: str(n) for k, n in counts.items()}
 
 
 def results_text(results: _Results, req_ids: list[str], text: dict) -> str:
@@ -311,6 +338,8 @@ def _unit_row(eng: Engagement, wp: dict, s4: dict, results: _Results, L: dict) -
         result = s4["conforming"]
     elif concl == "not-audited":
         result = _fill(s4["not_audited"], _Keep(reason=wp.get("scope_limitation") or ""))
+    elif concl == "inquiry-only":
+        result = s4["inquiry_only"]
     elif concl == "design-gap":
         result = _fill(s4["design_gap"], _Keep(reason=wp["design"]["rationale"]))
     else:
@@ -340,6 +369,78 @@ def _prose(value) -> list[dict]:
 
 
 # --- PDF -------------------------------------------------------------------------
+
+
+def _crosswalk(req: dict, L: dict) -> str:
+    """The provisions of other frameworks a requirement supports (profile report.crosswalk), e.g. "GDPR Art.32(1)(b) · NIS2 Art.21(2)(i)"."""
+    shown = (PROFILE.get("report") or {}).get("crosswalk") or []
+    names = L.get("crosswalk_names") or {}
+    parts = [f"{names.get(fw, fw.upper())} {', '.join(req['maps'][fw])}" for fw in shown if (req.get("maps") or {}).get(fw)]
+    return " · ".join(parts)
+
+
+def _annexes(eng: Engagement, text: dict, results: "_Results", v) -> list[dict]:
+    """Annex A, the measures actually verified (for a DPA's technical and organizational measures annex);
+    Annex B, the sub-processors found in the stack and the description."""
+    A = text["annex"]
+    L = text["labels"]
+    tiers = L["tier_names"]
+    prefixes = tuple((PROFILE.get("report") or {}).get("measures_groups") or ["SEC"])
+    from review import _cited
+
+    measures = []
+    for req in eng.requirements:
+        if not str(req.get("group", "")).startswith(prefixes):
+            continue
+        result, flag = results.result(req["id"], text["section5"]["results"])
+        found = set()
+        for wp in results.units(req["id"]):
+            if wp["conclusion"] not in ("not-audited", "pending"):
+                found |= {eng.artifacts[i].get("obtained", "client") for i in _cited(wp) if i in eng.artifacts}
+        tier = next((t for t in TIERS if t in found), "none")
+        measures.append({"cells": [req["id"], req["title"], result, tiers[tier]], "flag": flag})
+    subs = _subprocessors(eng)
+    return [
+        {"title": _fill(A["measures"]["title"], v), "intro": _fill(A["measures"]["intro"], v), "columns": A["measures"]["columns"],
+         "widths": [2.2, 6.0, 3.6, 3.2], "rows": measures, "none": A["measures"]["none"]},
+        {"title": _fill(A["subprocessors"]["title"], v), "intro": _fill(A["subprocessors"]["intro"], v), "columns": A["subprocessors"]["columns"],
+         "widths": [3.6, 6.4, 5.0], "rows": [{"cells": [s["name"], s["service"], s["dpa"] or "—"], "flag": False} for s in subs],
+         "none": A["subprocessors"]["none"]},
+    ]
+
+
+def _subprocessors(eng: Engagement) -> list[dict]:
+    """Sub-processors from stack detection (review/stack.yaml) and the organization's description (outsourced)."""
+    out: dict[str, dict] = {}
+    stack = eng.review / "stack.yaml"
+    if stack.exists():
+        for s in load_yaml(stack).get("subprocessors") or []:
+            out[s["name"]] = {"name": s["name"], "service": s.get("service") or "", "dpa": s.get("dpa") or ""}
+    for o in (privacy.report_description(eng) or {}).get("outsourced") or []:
+        if isinstance(o, dict) and o.get("name"):
+            out.setdefault(o["name"], {"name": o["name"], "service": o.get("service") or o.get("services") or "", "dpa": o.get("dpa") or ""})
+    return sorted(out.values(), key=lambda s: s["name"].lower())
+
+
+def _write_annex_files(eng: Engagement, data: dict, text: dict) -> None:
+    """Editable copies next to the PDF: the annexes (to attach to a DPA) and the fixes list, in the report language."""
+    for annex, name in zip(data["annexes"], ("annex-measures.md", "annex-subprocessors.md")):
+        lines = [f"# {annex['title']}", "", annex["intro"], "", "| " + " | ".join(annex["columns"]) + " |", "|" + "---|" * len(annex["columns"])]
+        lines += ["| " + " | ".join(str(c).replace("|", "/") for c in r["cells"]) + " |" for r in annex["rows"]] or [annex["none"]]
+        (eng.report / name).write_text("\n".join(lines) + "\n", encoding="utf-8")
+    F = text["fixes"]
+    doc = load_json(eng.findings_path)
+    lines = [f"# {F['title']}", "", F["intro"], ""]
+    for grade in ("major", "minor", "ofi"):
+        items = sorted((x for x in doc["findings"] if x["grade"] == grade), key=lambda x: x["id"])
+        if items:
+            lines += [f"## {F['grades'][grade]}", ""]
+            lines += [f"- **{x['id']}** ({x['requirement']}): {x['statement'].strip()}" for x in items]
+            lines.append("")
+    unverified = sorted(cid for cid, wp in eng.load_workpapers().items() if wp.get("conclusion") == "inquiry-only")
+    if unverified:
+        lines += [f"## {F['unverified']}", ""] + [f"- {cid}" for cid in unverified] + [""]
+    (eng.report / "fixes.md").write_text("\n".join(lines), encoding="utf-8")
 
 
 def _compile_pdf(data: dict, out: Path) -> None:

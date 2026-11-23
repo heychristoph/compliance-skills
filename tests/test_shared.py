@@ -18,7 +18,7 @@ sys.path.insert(0, str(ROOT / "shared"))
 from lib import i18n  # noqa: E402
 
 # Catalog name -> key of its list of entries.
-CATALOGS = {"soc2": "criteria", "iso27001": "requirements", "gdpr": "requirements", "nis2": "requirements"}
+CATALOGS = {"soc2": "criteria", "iso27001": "requirements", "gdpr": "requirements", "nis2": "requirements", "app": "requirements"}
 REPORT_TEXTS = sorted(ROOT.glob("skills/*/assets/report/text"))
 
 
@@ -75,6 +75,21 @@ class Catalogs(unittest.TestCase):
             for b, d in zip(base, de):
                 for field in set(b) - set(i18n.TEXT_FIELDS) - {"group"}:
                     self.assertEqual(b[field], d[field], f"{name} {b['id']}: overlay changed {field}")
+
+
+class Crosswalk(unittest.TestCase):
+    def test_app_maps_point_at_real_requirements(self):
+        """Each app requirement names the GDPR, NIS2, ISO and SOC 2 provisions it supports; every one must exist."""
+        ids = {name: {str(e["id"]) for e in _load(FRAMEWORKS / f"{name}.yaml")[key]} for name, key in CATALOGS.items()}
+        for e in _load(FRAMEWORKS / "app.yaml")["requirements"]:
+            for fw, refs in (e.get("maps") or {}).items():
+                self.assertFalse(set(refs) - ids[fw], f"app {e['id']}: unknown {fw} IDs {sorted(set(refs) - ids[fw])}")
+
+    def test_app_finder(self):
+        from lib import frameworks
+
+        find = frameworks.finder(FRAMEWORKS, "app")
+        self.assertEqual(find("see SEC-AC-01 and DP-SUP-03; not SEC-XX-99"), ["SEC-AC-01", "DP-SUP-03"])
 
 
 class ReportText(unittest.TestCase):

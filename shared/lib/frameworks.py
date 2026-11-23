@@ -22,6 +22,7 @@ PLATFORM_NAMES = {
     "iso27001": ("27001",),
     "gdpr": ("gdpr", "dsgvo", "general data protection", "2016/679"),
     "nis2": ("nis2", "nis 2", "nis-2", "2022/2555"),
+    "app": ("app assessment", "application security"),
 }
 
 
@@ -48,6 +49,11 @@ HINTS = {
         "access_entries": ["Art.21(2)(i)", "Art.21(2)(j)", "IR.11.2", "IR.11.7"], "context": ["Art.3", "Art.21(1)"],
         "vendors": ["Art.21(2)(d)", "Art.21(3)", "IR.5.2"],
     },
+    "app": {
+        "findings": ["DP-INC-01"], "risks": ["SEC-OPS-08"], "treatment": ["SEC-OPS-08"], "obligations": ["DP-INV-03"],
+        "assets": ["DP-INV-01"], "data": ["DP-INV-01", "DP-INV-02"], "audits": ["SEC-CODE-07"], "access_reviews": ["SEC-AC-07"],
+        "access_entries": ["SEC-AC-07", "SEC-AUTH-05"], "context": ["DP-INV-01"], "vendors": ["DP-SUP-01", "DP-SUP-03"],
+    },
 }
 
 # The organization's description of what is audited: the file each engine reads, and
@@ -57,6 +63,7 @@ DESCRIPTIONS = {
     "iso27001": {"file": "isms.yaml", "kind": "isms", "title": "ISMS scope and context inputs", "requirements": ["4.1", "4.2", "4.3"]},
     "gdpr": {"file": "context.yaml", "kind": "context", "title": "Processing scope and context inputs", "requirements": ["Art.24(1)", "Art.30(1)"]},
     "nis2": {"file": "context.yaml", "kind": "context", "title": "Entity scope and context inputs", "requirements": ["Art.3", "Art.21(1)"]},
+    "app": {"file": "context.yaml", "kind": "context", "title": "Application scope and context inputs", "requirements": ["DP-INV-01"]},
 }
 
 
@@ -147,6 +154,8 @@ ANNEX_RE = re.compile(r"\bA\s?\.?\s?([5-8])\.(\d{1,2})(?![\d.])")
 NUMBER_RE = re.compile(r"(?<![\w.])(\d{1,2})\.(\d{1,2})(?:\.(\d))?(?![\d]|\.\d)")
 # EU law articles: Art. 32, Art 32(1)(a), Article 21 (2) (d), Artikel 33 Abs. 1.
 ARTICLE_RE = re.compile(r"\b(?:Art(?:icle|ikel)?\.?)\s*(\d{1,3})((?:\s*\(\s*[0-9a-z]{1,4}\s*\))*)(?:\s*Abs\.?\s*(\d{1,2}))?", re.I)
+# App catalog IDs: SEC-AC-01, DP-SUP-03.
+APP_RE = re.compile(r"\b(?:SEC|DP)-[A-Z]{2,4}-\d{2}\b")
 # NIS2 Implementing Regulation (EU) 2024/2690 annex sections: IR.1.1, IR 3.2.
 IR_RE = re.compile(r"\bIR\s?\.?\s?(\d{1,2}\.\d{1,2})\b")
 
@@ -161,6 +170,9 @@ def finder(frameworks_dir: Path, name: str):
         clauses = frozenset(i for i, k in kinds.items() if k == "clause")
         controls = frozenset(i for i, k in kinds.items() if k == "annex")
         return lambda *texts, annex=None: _find_iso(texts, clauses, controls, annex)
+    if name == "app":
+        known = frozenset(ids)
+        return lambda *texts, annex=None: [x for x in dict.fromkeys(m for t in _texts(texts) for m in APP_RE.findall(t)) if x in known]
     return lambda *texts, annex=None: _find_articles(texts, ids)
 
 

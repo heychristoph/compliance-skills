@@ -53,7 +53,7 @@ Copy this checklist and keep it updated:
 
 **4. Plan.** `python scripts/soc2.py plan <dir>`, then complete every row of `testplan.csv` and run `python scripts/soc2.py sample <dir>`. How to set frequency, nature and population: [references/planning.md](references/planning.md).
 
-**5. Test.** Follow [references/control-testing.md](references/control-testing.md) for each control. Each control is an independent unit of work that reads the bundle and writes one file, `workpapers/<control>.json`. If you can run parallel workers or sub-agents, give each one a control ID, the engagement path and that reference; otherwise test controls one after another.
+**5. Test.** Follow [references/control-testing.md](references/control-testing.md) for each control. Each control is an independent unit of work that reads the bundle and writes one file, `workpapers/<control>.json`. If you can run parallel workers or sub-agents, give each a batch of about 8 controls, the engagement path and that reference, on a smaller, cheaper model where your agent allows it; otherwise test controls one after another.
 
 **6. Validate.** `python scripts/soc2.py validate <dir>`. Fix every error it names and run it again until it passes.
 
@@ -62,6 +62,20 @@ Copy this checklist and keep it updated:
 **8. Opinion.** `python scripts/soc2.py rollup <dir>`, then decide the opinion and write `opinion.json` following [references/evaluating.md](references/evaluating.md).
 
 **9. Report.** Confirm `management.name` and `management.title` are the real person and role. Write `system.yaml` at the engagement root for readers of the report: roles and facts, no copy of the connector draft, no one named but `management.name`, no email address, no phone number. Where a control title is not enough for Section IV, set that workpaper's `statement` to the sentence readers should see, under the same rule. Then `python scripts/soc2.py validate <dir> --final`, `signoff --model "<model that ran this audit>"`, `render` and `packet`. The PDF is signed with that model name, the title AI Auditor, management's name and title, and the date of the signature. Tell the user it is an AI Audit and not an official SOC 2 audit. The customer report is the PDF. `review/packet.md` stays internal. How the report is built: [references/reporting.md](references/reporting.md).
+
+## Cost: which model does what
+
+Most of the work is many small, similar decisions; a few steps need the strongest judgment.
+Where your agent lets you choose models (Claude Code sub-agents take a `model`), split it so:
+
+| Step | Model |
+|---|---|
+| Testing controls (one batch of about 8 per worker) | a smaller, cheaper model (Sonnet- or Haiku-class) |
+| Planning, grading findings, the conclusion, report wording | the strongest model available |
+| QA review | a different model from the one that tested, in a fresh context |
+
+The scripts do the counting (sampling, validation, rendering), so no model spends tokens on it.
+Open evidence files one at a time, by the artifact IDs the control cites.
 
 ## When things are missing
 

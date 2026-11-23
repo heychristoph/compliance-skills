@@ -213,6 +213,7 @@ section4:
   not_audited: "Not audited. {reason}"
   design_gap: "Not suitably designed. {reason}"
   not_sampled: "Not covered in this audit."
+  inquiry_only: "Not verified: based on the organization's answers only."
 
 section5:
   title: "Applicability of the Requirements"
@@ -230,6 +231,7 @@ section5:
     excluded: "Not applicable"
     not_audited: "Not audited"
     not_sampled: "Not in this audit's sample"
+    inquiry_only: "Not verified (answers only)"
 
 section6:
   title: "The Entity's Response to Findings"
@@ -264,6 +266,10 @@ labels:
     essential: "essential entity"
     important: "important entity"
     digital-providers: "digital provider under Implementing Regulation (EU) 2024/2690"
+  draft:                      # pre-filled by `draft`; printed in Section IV unless the auditor changes it
+    inspection: "Inspected the configuration, code, records and documents linked to this unit to determine whether the attribute is met."
+    attribute: "{title}"
+    none: "No evidence was available for this unit; it could not be assessed."
   grade_short: {major: major, minor: minor}   # after a finding ID: "NC-01 (major)"
   see_sentence: " See {ids}."
   sample: "Sample of {sample} selected from a population of {population}."

@@ -35,9 +35,9 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import checks  # noqa: E402
 import planning  # noqa: E402
 import review  # noqa: E402
-from common import connectors  # noqa: E402
-from common.bundle import BundleWriter  # noqa: E402
-from core import APPLICABILITY, AUDIT_TYPES, CLI, PROFILE, AuditError, Engagement, dump_yaml, load_json  # noqa: E402
+from common.io import tool_version  # noqa: E402
+from common import capture, connectors, detect, ingest  # noqa: E402
+from core import APPLICABILITY, ASSETS, AUDIT_TYPES, CLI, PROFILE, AuditError, Engagement, dump_yaml, load_json, load_requirements, load_yaml  # noqa: E402
 
 NOT_CERT = f"This is an AI Audit. {PROFILE['not_official']}"
 
@@ -66,9 +66,13 @@ def cmd_init(a) -> int:
         if not (a.start and a.end):
             raise AuditError(f"A {a.type} audit needs --start and --end (the period whose records are sampled).")
         cfg["period"] = {"start": a.start, "end": a.end}
-    options = dict(o.split("=", 1) for o in a.option or [])
-    cfg["source"] = {"connector": a.connector, "options": options}
+    entries = ingest.parse_options(a.connector, a.option)
+    if len(entries) == 1:
+        cfg["source"] = entries[0]
+    else:
+        cfg["sources"] = entries
     cfg["sampling_seed"] = secrets.randbelow(10**9)
+    cfg["tool_version"] = tool_version()
     cfg["signoff"] = None
     dump_yaml(cfg, root / "engagement.yaml")
     Engagement(root).config  # validate
@@ -78,22 +82,104 @@ def cmd_init(a) -> int:
 
 def cmd_ingest(a) -> int:
     eng = Engagement(a.engagement)
-    src = eng.config["source"]
-    if eng.bundle.exists():
-        if not a.replace:
-            raise AuditError("bundle/ already exists. Evidence is collected once per engagement; use --replace to pull again "
-                             "(the old bundle is kept as bundle.replaced-<timestamp>).")
-        stamp = dt.datetime.now().strftime("%Y%m%d-%H%M%S")
-        shutil.move(str(eng.bundle), str(eng.root / f"bundle.replaced-{stamp}"))
-    writer = BundleWriter(eng.bundle, src["connector"], framework=eng.framework)
-    connectors.load(src["connector"]).pull(writer, src.get("options") or {}, eng)
-    manifest = writer.finish()
+    src = {"connector": "+".join(x["connector"] for x in ingest.sources(eng.config))}
+    manifest = ingest.run(eng, replace=a.replace)
     kinds = {}
     for art in manifest["artifacts"]:
         kinds[art["kind"]] = kinds.get(art["kind"], 0) + 1
     print(f"Ingested {len(manifest['artifacts'])} artifacts via {src['connector']}: " + ", ".join(f"{v} {k}" for k, v in sorted(kinds.items())))
     if eng.workpaper_files():
         print("warning: workpapers already exist and may cite artifact IDs from the previous bundle; run validate.")
+    return 0
+
+
+def cmd_rollforward(a) -> int:
+    from common.rollforward import rollforward
+
+    prev = Engagement(a.previous)
+    atype = a.type or prev.audit_type
+    if atype not in AUDIT_TYPES:
+        raise AuditError(f"--type must be one of {', '.join(AUDIT_TYPES)}")
+    done = rollforward(prev.root, Path(a.engagement), description_file=prev.framework.description["file"], findings_file="findings.json",
+                       as_of=a.as_of, start=a.start, end=a.end, point_in_time=bool(PROFILE["audit_types"][atype].get("as_of")))
+    if a.type:
+        cfg = load_yaml(Path(a.engagement) / "engagement.yaml")
+        cfg["audit_type"] = atype
+        dump_yaml(cfg, Path(a.engagement) / "engagement.yaml")
+    Engagement(a.engagement).config  # validate
+    for line in done:
+        print(f"- {line}")
+    print(f"Next: {CLI} ingest {a.engagement} (and detect, for an app), then plan. Every previous finding needs a follow-up in findings.json.")
+    return 0
+
+
+def cmd_probe(a) -> int:
+    """Run an active read-only check against the live system and record it as evidence."""
+    import json
+
+    from common import codescan, probes
+
+    if not a.authorized:
+        raise AuditError("probe sends requests to the live system. Confirm with the user that they may test it, then add --authorized.")
+    eng = Engagement(a.engagement)
+    repo = Path(a.repo or eng.config.get("repo") or ".")
+    stack = load_yaml(eng.review / "stack.yaml") if (eng.review / "stack.yaml").exists() else {}
+    if a.name == "supabase-anon":
+        url, key = codescan.supabase_anon_key(repo)
+        url = a.url or url
+        if not (url and key):
+            raise AuditError("no Supabase URL and anon key found in the app's client code; give --url, or run detect --repo first")
+        tables = sorted(set(stack.get("tables") or []) | set(filter(None, (a.tables or "").split(","))))
+        buckets = sorted(set(stack.get("buckets") or []) | set(filter(None, (a.buckets or "").split(","))))
+        result = probes.supabase_anon(url, key, tables, buckets)
+        reqs = ["SEC-AC-01", "SEC-AC-02", "SEC-AC-06"]
+        title = "Anonymous access to the live Supabase API (row counts and bucket listing, no data read)"
+    else:
+        raise AuditError(f"unknown probe {a.name}; available: {', '.join(probes.PROBES)}")
+    known = {r["id"] for r in eng.requirements}
+    path = capture.capture(eng.root, via="probe", title=title, payload=json.dumps(result, indent=2).encode(),
+                           requirements=[r for r in reqs if r in known], recipe=a.name, by="probe")
+    s = result["summary"]
+    print(f"Probed {len(result['tables'])} tables and {len(result['buckets'])} buckets. Readable by anyone: "
+          f"{', '.join(s['tables_readable_by_anyone']) or 'none'}; listable buckets: {', '.join(s['buckets_listable_by_anyone']) or 'none'}.")
+    print(f"Recorded as {path.name}. Run ingest --replace.")
+    return 0
+
+
+def cmd_detect(a) -> int:
+    """Scan the repository, match stack recipes, record the scan as evidence and write the evidence plan."""
+    import json
+
+    eng = Engagement(a.engagement)
+    repo = Path(a.repo or eng.config.get("repo") or ".").expanduser().resolve()
+    if not repo.is_dir():
+        raise AuditError(f"--repo {repo} is not a directory; give the path of the application's repository checkout")
+    recipes = detect.load_recipes(ASSETS / "recipes")
+    components, scan = detect.detect(repo, recipes)
+    # Remember the repository, and switch on the optional requirements the stack uses (AI processing, file storage).
+    cfg = load_yaml(eng.config_path)
+    cfg["repo"] = str(repo)
+    enabled = [x for c in components for x in c.get("enables") or []]
+    if enabled:
+        cfg["include_optional"] = sorted(set(cfg.get("include_optional") or []) | set(enabled))
+    dump_yaml(cfg, eng.config_path)
+    eng = Engagement(a.engagement)
+    scan_reqs = sorted({r for c in components for i in c.get("items") or [] if i.get("scan_rules") for r in i.get("requirements") or []})
+    capture.capture(eng.root, via="scan", title=f"Code scan of the {repo.name} repository", payload=json.dumps(scan, indent=2).encode(),
+                    requirements=[r for r in scan_reqs if r in {x["id"] for x in eng.requirements}], by="codescan (detect)")
+    catalog = {r["id"]: r for r in load_requirements(eng.language)}
+    in_scope = {r["id"] for r in eng.requirements}
+    rows = detect.evidence_plan(components, scan, catalog, in_scope, eng.language)
+    covered = {x for r in rows for x in r["requirements"]}
+    uncovered = [catalog[i] for i in sorted(in_scope - covered)]
+    from common.rollforward import prior_captures
+
+    detect.write_plan(eng.review, components, scan, rows, uncovered, prior=prior_captures(eng.root))
+    names = ", ".join(c.get("title", c["component"]) for c in components) or "nothing recognized"
+    print(f"Detected: {names}. {len(scan['findings'])} code scan findings, {len(scan['services'])} third-party services.")
+    print(f"Evidence plan: {eng.review / 'evidence-plan.md'} ({len(rows)} items, {len(uncovered)} requirements without a recipe).")
+    if enabled:
+        print(f"Included optional requirements the stack uses: {', '.join(sorted(set(enabled)))}")
     return 0
 
 
@@ -106,6 +192,10 @@ def cmd_check(a) -> int:
 def cmd_plan(a) -> int:
     eng = Engagement(a.engagement)
     todo = planning.plan(eng)
+    if eng.config.get("tool_version") != tool_version():
+        cfg = load_yaml(eng.config_path)
+        cfg["tool_version"] = tool_version()
+        dump_yaml(cfg, eng.config_path)
     print(f"Wrote {eng.testplan_path}.")
     if todo:
         print("Complete these rows (see references/planning.md), then run sample:")
@@ -126,8 +216,33 @@ def cmd_sample(a) -> int:
     return 0
 
 
+def cmd_draft(a) -> int:
+    import draft
+
+    counts = draft.draft(Engagement(a.engagement))
+    print(f"Drafted {counts['drafted']} units; {counts['no_evidence']} had no linked evidence and are not-audited "
+          f"(re-run draft after new evidence); {counts['kept']} already worked on were left alone.")
+    print(draft.batches(Engagement(a.engagement)), end="")
+    return 0
+
+
+def cmd_unit(a) -> int:
+    import draft
+
+    eng = Engagement(a.engagement)
+    print(draft.unit_pack(eng, a.unit) if a.unit else draft.batches(eng), end="")
+    return 0
+
+
 def cmd_validate(a) -> int:
     eng = Engagement(a.engagement)
+    if a.unit:
+        wp_path = eng.workpaper_path(a.unit)
+        if not wp_path.exists():
+            raise AuditError(f"no workpaper for {a.unit}")
+        plan_rows = {r["control_id"]: r for r in eng.testplan()}
+        errors, warnings = review._check_workpaper(eng, a.unit, load_json(wp_path), plan_rows.get(a.unit))
+        return _report(errors, warnings, ok=f"{a.unit} valid.")
     errors, warnings = review.validate(eng, final=a.final)
     return _report(errors, warnings, ok="All checks passed." if a.final else "Workpapers valid.")
 
@@ -174,6 +289,8 @@ def cmd_signoff(a) -> int:
 def cmd_status(a) -> int:
     root = Path(a.engagement)
     eng = Engagement(root)
+    if (root / "engagement.yaml").exists():
+        print(_version_note(eng), end="")
     if not eng.config_path.exists():
         return _next("No engagement yet.", f"{CLI} init {root} --org ... (see references/engagement-folder.md)")
     eng.config
@@ -221,6 +338,18 @@ def _next(state: str, step: str) -> int:
     print(f"State: {state}\nNext:  {step}")
     return 0
 
+def _version_note(eng) -> str:
+    """Tell the user when the skill changed since this engagement was planned, and that the work so far is kept."""
+    from common.io import tool_version
+
+    was, now = eng.config.get("tool_version"), tool_version()
+    if was == now:
+        return ""
+    return (f"Note:  the skill is version {now}; this engagement was planned with {was or 'an earlier version'}. "
+            "Run `plan` to pick up new or changed requirements (existing workpapers and auditor edits are kept), "
+            "and `ingest --replace` for new connector features (unchanged evidence keeps its ID).\n")
+
+
 
 def _report(errors: list[str], warnings: list[str], ok: str) -> int:
     for w in warnings:
@@ -253,9 +382,34 @@ def main(argv=None) -> int:
     s.add_argument("--start", help=f"start of the records period ({', '.join(periodic)})")
     s.add_argument("--end", help="end of the records period")
     s.add_argument("--as-of", help=f"date of the documentation review ({', '.join(point)})")
-    s.add_argument("--connector", required=True, choices=connectors.available())
-    s.add_argument("--option", action="append", help="connector option key=value (repeatable)")
+    s.add_argument("--connector", required=True, action="append", choices=connectors.available(),
+                   help="evidence source; repeat for several (e.g. --connector records --connector intake)")
+    s.add_argument("--option", action="append", help="connector option key=value, or <connector>.key=value with several connectors (repeatable)")
     s.set_defaults(fn=cmd_init)
+
+    s = sub.add_parser("rollforward", help="start a new engagement from a finished one (settings, decisions and findings carried over)")
+    s.add_argument("previous", help="the finished engagement")
+    s.add_argument("engagement", help="the new engagement folder")
+    s.add_argument("--type", help="audit type, if different from the previous engagement")
+    s.add_argument("--as-of")
+    s.add_argument("--start")
+    s.add_argument("--end")
+    s.set_defaults(fn=cmd_rollforward)
+
+    s = sub.add_parser("probe", help="active read-only check of the live system (supabase-anon: what anonymous visitors can read)")
+    s.add_argument("engagement")
+    s.add_argument("name", help="supabase-anon")
+    s.add_argument("--authorized", action="store_true", help="the user confirmed they may test this system")
+    s.add_argument("--repo", help="repository checkout (default: the engagement's repo)")
+    s.add_argument("--url", help="API base URL, if not the one in the app's code")
+    s.add_argument("--tables", help="extra table names, comma-separated")
+    s.add_argument("--buckets", help="extra bucket names, comma-separated")
+    s.set_defaults(fn=cmd_probe)
+
+    s = sub.add_parser("detect", help="scan the app repository, match stack recipes, write the evidence plan")
+    s.add_argument("engagement")
+    s.add_argument("--repo", help="path of the application's repository checkout (remembered in engagement.yaml)")
+    s.set_defaults(fn=cmd_detect)
 
     s = sub.add_parser("ingest", help="pull evidence into bundle/")
     s.add_argument("engagement")
@@ -274,9 +428,19 @@ def main(argv=None) -> int:
     s.add_argument("--force", action="store_true", help="overwrite or remove workpapers whose plan changed")
     s.set_defaults(fn=cmd_sample)
 
+    s = sub.add_parser("draft", help="pre-fill pending workpapers from the bundle (evidence links, attributes, no-evidence units)")
+    s.add_argument("engagement")
+    s.set_defaults(fn=cmd_draft)
+
+    s = sub.add_parser("unit", help="one unit's context pack for a worker; without an ID, the pending units in batches")
+    s.add_argument("engagement")
+    s.add_argument("unit", nargs="?")
+    s.set_defaults(fn=cmd_unit)
+
     s = sub.add_parser("validate", help="check workpapers")
     s.add_argument("engagement")
     s.add_argument("--final", action="store_true", help="also check findings, QA and the description")
+    s.add_argument("--unit", help="check only this unit's workpaper (fast, for a worker)")
     s.set_defaults(fn=cmd_validate)
 
     s = sub.add_parser("qa", help="record a QA review of one workpaper")
@@ -292,6 +456,8 @@ def main(argv=None) -> int:
     s.add_argument("engagement")
     s.add_argument("--model", required=True, help="model name that performed the audit, as printed on the report")
     s.set_defaults(fn=cmd_signoff)
+
+    capture.add_parser(sub)
 
     a = p.parse_args(argv)
     try:

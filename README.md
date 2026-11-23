@@ -16,6 +16,7 @@ The skills follow the open [Agent Skills](https://agentskills.io/specification) 
 | [`compliance-iso27001-audit`](skills/compliance-iso27001-audit/SKILL.md) | audit | AI Audit modeled on an ISO/IEC 27001:2022 Stage 1, Stage 2, surveillance or recertification audit |
 | [`compliance-gdpr-audit`](skills/compliance-gdpr-audit/SKILL.md) | audit | AI Audit of GDPR compliance for the organization's roles (controller, processor): an assessment as of a date, or an audit of records over a period |
 | [`compliance-nis2-audit`](skills/compliance-nis2-audit/SKILL.md) | audit | AI Audit of NIS2 compliance for an essential or important entity, including Implementing Regulation (EU) 2024/2690 for digital providers |
+| [`compliance-app-assessment`](skills/compliance-app-assessment/SKILL.md) | audit | Assessment of one application's security and data processing ("assess my app"): detects the stack, gathers evidence through whatever access exists, and delivers a report, DPA annexes and a fix list. Mapped to GDPR and NIS2 |
 
 **Prep and audit stay separate on purpose.** Prep writes to the system of record. An audit reads a hashed snapshot of it and never changes it. Every audit skill reads the same sources: Probo, Vanta, Drata, an export folder, or the compliance-prep records folder directly (`--connector records`). Run the audit in a fresh context, ideally with a different model, so the one that prepared the records does not grade its own work.
 
@@ -26,11 +27,38 @@ The skills follow the open [Agent Skills](https://agentskills.io/specification) 
 | `soc2` | Trust Services Criteria 2017 (revised 2022): CC1–CC9, A1, C1, PI1, P1–P8 | yes | yes |
 | `iso27001` | ISO/IEC 27001:2022 with Amd 1:2024: clauses 4–10, 93 Annex A controls | yes | yes |
 | `gdpr` | Regulation (EU) 2016/679: 92 auditable controller and processor obligations, chapters II–V | yes | yes |
+| `app` | Security and data processing of one application: 60 requirements (access control and RLS, auth, secrets, dependencies, backups, sub-processors, AI processing), each mapped to GDPR, NIS2, ISO 27001 and SOC 2, with OWASP ASVS 5.0 references | — | yes |
 | `nis2` | Directive (EU) 2022/2555: scope (Art. 3, 26), governance, risk-management measures, reporting, registration (Art. 20–27), and Implementing Regulation (EU) 2024/2690; notes on German BSIG and Austrian NISG 2026 | yes | yes |
 
 - **Where they live:** the catalogs live once in [`shared/frameworks/`](shared/frameworks), and German text in [`shared/frameworks/de/`](shared/frameworks/de).
 - **Text only:** a translation changes only titles, summaries and evidence hints, never IDs or mappings, so the language never changes what is audited.
 - **Paraphrases:** the summaries are paraphrases for navigation. The authoritative texts are the AICPA criteria, the ISO standard, and the EU legal texts on EUR-Lex. A licensed firm can add a `text:` field to any entry with the official wording, and the reports print it.
+
+## Evidence without a connector
+
+Not every system has a connector. Every audit skill can also take evidence the agent gathers itself, recorded with `capture` and labelled by how strong it is:
+
+| Tier | Where it comes from |
+|---|---|
+| `direct` | a connector script or the repository scan read it from the source |
+| `captured` | a read-only MCP tool call or CLI command, with the call recorded |
+| `client` | an export, screenshot or document the user provided |
+| `inquiry` | the user's answer to a question |
+
+An engagement can combine sources (`--connector records --connector intake`). Answers alone never make a requirement pass: the unit is concluded `inquiry-only` and the report says "not verified". For apps, `detect` scans the repository and plans, for each piece of evidence, the best way to get it with the access that exists: MCP, then CLI, then an export request, then a question. Stack knowledge lives in data (`assets/recipes/`), so a new stack is a YAML file.
+
+## Iterating: build on what exists
+
+Engagements are meant to be re-run and extended, not redone.
+
+- **Re-run inside an engagement.** Capture new evidence and `ingest --replace`. Unchanged evidence keeps its ID, so existing workpapers stay valid. Changed evidence gets a new ID, so `validate` points at exactly the units to look at again. `plan` keeps every auditor decision and adds only new units. `sample` leaves finished workpapers alone.
+- **After the skill changes.** `status` says when the skill is newer than the engagement. `plan` picks up new or changed requirements, and `ingest --replace` picks up new connector features, without losing work.
+- **Requirement IDs are stable.** `tools/sync.py` keeps `shared/ids.lock.yaml`. A catalog may add IDs, but removing or renaming one requires a `retired:` entry naming its replacement, otherwise `--check` fails.
+- **The next assessment.** `rollforward <previous> <new> --as-of <date>` (or `--start/--end`) carries over:
+  - the settings, the description and the test-plan decisions
+  - the previous findings, workpapers and captures, under `prior/`
+
+  The evidence plan lists earlier exports and answers, so the user is only asked what changed. Every previous finding must be followed up (closed, partly or open) before the report can be signed.
 
 ## Languages
 
@@ -77,11 +105,13 @@ skills/                       one self-contained folder per skill (what agents i
 ├── compliance-soc2-audit/    SOC 2 opinion engine (scripts/) on the shared library
 ├── compliance-iso27001-audit/   assets/profile.yaml + report text; engine copied in
 ├── compliance-gdpr-audit/       "
-└── compliance-nis2-audit/       "
+├── compliance-nis2-audit/       "
+└── compliance-app-assessment/   " plus assets/recipes/ (per-stack evidence recipes)
 shared/                       single source for files several skills need
 ├── frameworks/               soc2, iso27001, gdpr, nis2 catalogs; de/ translations
 ├── lib/                      -> scripts/common/: IO, languages, catalogs and ID finders, bundle writer,
-│                                audit connectors (probo, vanta, drata, folder, records), manifest schema
+│                                audit connectors (probo, vanta, drata, folder, records, intake), capture,
+│                                repository scan and stack detection, sampling, privacy, manifest schema
 └── engines/requirements/     -> scripts/engine/: the requirements audit engine (check, plan, sample,
                                  validate, findings, render) used by the ISO 27001, GDPR and NIS2 skills
 tools/sync.py                 copies shared/ into each skill; --check fails on a stale copy
@@ -110,6 +140,7 @@ python evals/soc2/run.py --case type2 --agent oracle --language de
 python evals/iso27001/make_fixture.py && python evals/iso27001/run.py --case stage2 --agent oracle
 python evals/gdpr/make_fixture.py && python evals/gdpr/run.py --case audit --agent oracle
 python evals/nis2/make_fixture.py && python evals/nis2/run.py --case audit --agent oracle
+python evals/app/make_fixture.py && python evals/app/run.py --case processor --agent oracle
 python evals/soc2/test_probo_connector.py && python evals/iso27001/test_probo_connector.py
 ```
 

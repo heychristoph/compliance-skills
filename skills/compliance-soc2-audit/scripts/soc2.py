@@ -33,9 +33,9 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import checks  # noqa: E402
 import planning  # noqa: E402
 import review  # noqa: E402
-from common import connectors  # noqa: E402
-from common.bundle import BundleWriter  # noqa: E402
-from core import AuditError, Engagement, dump_yaml, load_json, read_csv  # noqa: E402
+from common.io import tool_version  # noqa: E402
+from common import capture, connectors, ingest  # noqa: E402
+from core import AuditError, Engagement, dump_yaml, load_json, read_csv, load_yaml  # noqa: E402
 
 
 def cmd_init(a) -> int:
@@ -61,9 +61,13 @@ def cmd_init(a) -> int:
         cfg["as_of"] = a.as_of
     cfg["categories"] = a.categories.split(",")
     cfg["subservice_organizations"] = []
-    options = dict(o.split("=", 1) for o in a.option or [])
-    cfg["source"] = {"connector": a.connector, "options": options}
+    entries = ingest.parse_options(a.connector, a.option)
+    if len(entries) == 1:
+        cfg["source"] = entries[0]
+    else:
+        cfg["sources"] = entries
     cfg["sampling_seed"] = secrets.randbelow(10**9)
+    cfg["tool_version"] = tool_version()
     cfg["signoff"] = None
     dump_yaml(cfg, root / "engagement.yaml")
     Engagement(root).config  # validate
@@ -73,22 +77,32 @@ def cmd_init(a) -> int:
 
 def cmd_ingest(a) -> int:
     eng = Engagement(a.engagement)
-    src = eng.config["source"]
-    if eng.bundle.exists():
-        if not a.replace:
-            raise AuditError("bundle/ already exists. Evidence is collected once per engagement; use --replace to pull again "
-                             "(the old bundle is kept as bundle.replaced-<timestamp>).")
-        stamp = dt.datetime.now().strftime("%Y%m%d-%H%M%S")
-        shutil.move(str(eng.bundle), str(eng.root / f"bundle.replaced-{stamp}"))
-    writer = BundleWriter(eng.bundle, src["connector"], framework=eng.framework)
-    connectors.load(src["connector"]).pull(writer, src.get("options") or {}, eng)
-    manifest = writer.finish()
+    src = {"connector": "+".join(x["connector"] for x in ingest.sources(eng.config))}
+    manifest = ingest.run(eng, replace=a.replace)
     kinds = {}
     for art in manifest["artifacts"]:
         kinds[art["kind"]] = kinds.get(art["kind"], 0) + 1
     print(f"Ingested {len(manifest['artifacts'])} artifacts via {src['connector']}: " + ", ".join(f"{v} {k}" for k, v in sorted(kinds.items())))
     if eng.workpaper_files():
         print("warning: workpapers already exist and may cite artifact IDs from the previous bundle; run validate.")
+    return 0
+
+
+def cmd_rollforward(a) -> int:
+    from common.rollforward import rollforward
+
+    prev = Engagement(a.previous)
+    rtype = a.type or prev.report_type
+    done = rollforward(prev.root, Path(a.engagement), description_file="system.yaml", findings_file="opinion.json",
+                       as_of=a.as_of, start=a.start, end=a.end, point_in_time=rtype == 1)
+    if a.type:
+        cfg = load_yaml(Path(a.engagement) / "engagement.yaml")
+        cfg["report_type"] = rtype
+        dump_yaml(cfg, Path(a.engagement) / "engagement.yaml")
+    Engagement(a.engagement).config  # validate
+    for line in done:
+        print(f"- {line}")
+    print(f"Next: soc2.py ingest {a.engagement}, then plan. Review the previous exceptions in prior/ when testing the same controls.")
     return 0
 
 
@@ -101,6 +115,10 @@ def cmd_check(a) -> int:
 def cmd_plan(a) -> int:
     eng = Engagement(a.engagement)
     todo = planning.plan(eng)
+    if eng.config.get("tool_version") != tool_version():
+        cfg = load_yaml(eng.config_path)
+        cfg["tool_version"] = tool_version()
+        dump_yaml(cfg, eng.config_path)
     print(f"Wrote {eng.testplan_path}.")
     if todo:
         print("Complete these rows (see references/planning.md), then run sample:")
@@ -168,6 +186,8 @@ def cmd_signoff(a) -> int:
 def cmd_status(a) -> int:
     root = Path(a.engagement)
     eng = Engagement(root)
+    if (root / "engagement.yaml").exists():
+        print(_version_note(eng), end="")
     if not eng.config_path.exists():
         return _next("No engagement yet.", f"soc2.py init {root} --org ... (see references/engagement-folder.md)")
     eng.config
@@ -216,6 +236,18 @@ def _next(state: str, step: str) -> int:
     print(f"State: {state}\nNext:  {step}")
     return 0
 
+def _version_note(eng) -> str:
+    """Tell the user when the skill changed since this engagement was planned, and that the work so far is kept."""
+    from common.io import tool_version
+
+    was, now = eng.config.get("tool_version"), tool_version()
+    if was == now:
+        return ""
+    return (f"Note:  the skill is version {now}; this engagement was planned with {was or 'an earlier version'}. "
+            "Run `plan` to pick up new or changed requirements (existing workpapers and auditor edits are kept), "
+            "and `ingest --replace` for new connector features (unchanged evidence keeps its ID).\n")
+
+
 
 def _report(errors: list[str], warnings: list[str], ok: str) -> int:
     for w in warnings:
@@ -243,9 +275,19 @@ def main(argv=None) -> int:
     s.add_argument("--as-of")
     s.add_argument("--categories", default="security", help="comma-separated: security,availability,confidentiality,processing-integrity,privacy")
     s.add_argument("--language", default="en", choices=["en", "de"], help="language of the report (default en)")
-    s.add_argument("--connector", required=True, choices=connectors.available())
-    s.add_argument("--option", action="append", help="connector option key=value (repeatable)")
+    s.add_argument("--connector", required=True, action="append", choices=connectors.available(),
+                   help="evidence source; repeat for several (e.g. --connector records --connector intake)")
+    s.add_argument("--option", action="append", help="connector option key=value, or <connector>.key=value with several connectors (repeatable)")
     s.set_defaults(fn=cmd_init)
+
+    s = sub.add_parser("rollforward", help="start a new engagement from a finished one (settings and decisions carried over)")
+    s.add_argument("previous", help="the finished engagement")
+    s.add_argument("engagement", help="the new engagement folder")
+    s.add_argument("--type", type=int, choices=[1, 2], help="report type, if different from the previous engagement")
+    s.add_argument("--as-of")
+    s.add_argument("--start")
+    s.add_argument("--end")
+    s.set_defaults(fn=cmd_rollforward)
 
     s = sub.add_parser("ingest", help="pull evidence into bundle/")
     s.add_argument("engagement")
@@ -282,6 +324,8 @@ def main(argv=None) -> int:
     s.add_argument("engagement")
     s.add_argument("--model", required=True, help="model name that performed the audit, as printed on the report")
     s.set_defaults(fn=cmd_signoff)
+
+    capture.add_parser(sub)
 
     a = p.parse_args(argv)
     try:

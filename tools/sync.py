@@ -11,6 +11,11 @@ inside that folder. Shared files live once in shared/ and are copied here:
 
 Edit shared/, then run `python tools/sync.py`. `--check` exits 1 when a copy is stale,
 so tests and CI catch a forgotten sync. Never edit the copies.
+
+It also keeps `shared/ids.lock.yaml`: every requirement ID any catalog has ever had.
+Engagements cite these IDs, so an ID must never silently disappear. To drop or rename one,
+list it under `retired:` in its catalog (`OLD-ID: {replaced_by: NEW-ID, note: ...}`);
+`--check` fails on an ID that vanished without that.
 """
 
 from __future__ import annotations
@@ -65,18 +70,66 @@ def stale(want: dict[Path, bytes]) -> list[str]:
     return problems
 
 
+LOCK = ROOT / "shared" / "ids.lock.yaml"
+
+
+def _catalog_ids() -> dict[str, tuple[set[str], set[str]]]:
+    """Per catalog: (current IDs, retired IDs)."""
+    import yaml
+
+    out = {}
+    for path in sorted((SHARED / "frameworks").glob("*.yaml")):
+        data = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+        entries = data.get("criteria") or data.get("requirements") or []
+        out[path.stem] = ({str(e["id"]) for e in entries}, {str(k) for k in (data.get("retired") or {})})
+    return out
+
+
+def lock_problems() -> tuple[list[str], dict[str, list[str]]]:
+    import yaml
+
+    locked = yaml.safe_load(LOCK.read_text(encoding="utf-8")) if LOCK.exists() else {}
+    locked = locked or {}
+    problems, merged = [], {}
+    for name, (current, retired) in _catalog_ids().items():
+        old = set(locked.get(name) or [])
+        gone = sorted(old - current - retired)
+        if gone:
+            problems.append(f"{name}: IDs removed without `retired:` entries: {', '.join(gone)}")
+        new = sorted(current - old)
+        if new:
+            problems.append(f"{name}: {len(new)} new IDs not in shared/ids.lock.yaml (run tools/sync.py)")
+        merged[name] = sorted(old | current)
+    return problems, merged
+
+
+def write_lock(merged: dict[str, list[str]]) -> None:
+    import yaml
+
+    header = "# Every requirement ID each catalog has ever had. Maintained by tools/sync.py; append-only.\n"
+    LOCK.write_text(header + yaml.safe_dump(merged, sort_keys=True, width=120), encoding="utf-8")
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--check", action="store_true", help="report stale copies and exit 1; change nothing")
     args = ap.parse_args()
     want = expected()
     if args.check:
-        problems = stale(want)
+        problems = stale(want) + lock_problems()[0]
         for line in problems:
             print(line)
         if problems:
             print("Run: python tools/sync.py")
         return 1 if problems else 0
+    lock_errors, merged = lock_problems()
+    removed = [p for p in lock_errors if "removed without" in p]
+    if removed:
+        for p in removed:
+            print(p)
+        print("Add the removed IDs under `retired:` in their catalog, then run sync again.")
+        return 1
+    write_lock(merged)
     for problem in stale(want):
         if problem.startswith("not in shared/: "):
             (ROOT / problem.removeprefix("not in shared/: ")).unlink()

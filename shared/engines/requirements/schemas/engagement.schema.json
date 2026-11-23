@@ -8,7 +8,6 @@
     "scope",
     "auditor",
     "audit_type",
-    "source",
     "sampling_seed"
   ],
   "additionalProperties": false,
@@ -151,7 +150,56 @@
         "type": "string"
       },
       "description": "Optional requirements audited anyway (GDPR Art.40 to Art.43 when the organization relies on a code of conduct or certification)"
+    },
+    "sources": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "connector"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "connector": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_]*$"
+          },
+          "options": {
+            "type": "object"
+          }
+        }
+      },
+      "description": "Several evidence sources pulled into one bundle, e.g. records for documents plus intake for captured configuration. Use this or `source`."
+    },
+    "repo": {
+      "type": "string",
+      "description": "Path of the application's repository checkout (app assessments); set by `detect --repo`"
+    },
+    "tool_version": {
+      "type": "string",
+      "description": "Version of compliance-skills the engagement was last planned with (init and plan set it); status says when the skill is newer"
+    },
+    "prior": {
+      "type": "string",
+      "description": "Path of the previous engagement this one was rolled forward from (rollforward sets it)"
     }
   },
-  "description": "engagement.yaml for the requirements engine; audit_type and period/as_of are checked against the skill's profile by core.py"
+  "description": "engagement.yaml for the requirements engine; audit_type and period/as_of are checked against the skill's profile by core.py",
+  "allOf": [
+    {
+      "anyOf": [
+        {
+          "required": [
+            "source"
+          ]
+        },
+        {
+          "required": [
+            "sources"
+          ]
+        }
+      ]
+    }
+  ]
 }

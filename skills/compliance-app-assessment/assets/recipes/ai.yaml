@@ -1,0 +1,23 @@
+# AI APIs called by the app (OpenAI, Anthropic, Google, Mistral ...).
+component: ai
+title: AI services
+detect:
+  dependencies: [openai, "@anthropic-ai/sdk", "@google/generative-ai", "@google/genai", "@mistralai/mistralai", groq-sdk, replicate, "@ai-sdk/openai", "@ai-sdk/anthropic", ai]
+enables: [DP-AI-01, DP-AI-02, DP-AI-03, DP-AI-04, DP-AI-05, DP-AI-06, DP-AI-07]
+items:
+  - id: ai-calls
+    title: Where the app calls AI models, and from where
+    requirements: [DP-AI-01, DP-AI-05]
+    scan_rules: [ai-sdk-in-client, openai-key, anthropic-key]
+  - id: ai-provider-settings
+    title: Provider data controls (training opt-out, retention)
+    requirements: [DP-AI-02]
+    export:
+      en: "For each AI provider: screenshot of the organization's data controls (OpenAI: Settings → Data controls; Anthropic: the commercial terms and retention settings)."
+      de: "Für jeden KI-Anbieter: Screenshot der Datenschutzeinstellungen der Organisation (OpenAI: Settings → Data controls; Anthropic: kommerzielle Bedingungen und Aufbewahrungseinstellungen)."
+  - id: ai-dpa
+    title: DPA and transfer mechanism with each AI provider
+    requirements: [DP-AI-03]
+    export:
+      en: "The accepted data processing addendum of each AI provider (PDF or a screenshot of its acceptance)."
+      de: "Der akzeptierte Auftragsverarbeitungsvertrag jedes KI-Anbieters (PDF oder Screenshot der Annahme)."

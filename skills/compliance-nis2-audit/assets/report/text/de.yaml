@@ -229,6 +229,7 @@ section4:
   not_audited: "Nicht auditiert. {reason}"
   design_gap: "Nicht angemessen gestaltet. {reason}"
   not_sampled: "Nicht Gegenstand dieses Audits."
+  inquiry_only: "Nicht verifiziert: beruht nur auf Angaben der Organisation."
 
 section5:
   title: "Anwendbarkeit der Anforderungen"
@@ -248,6 +249,7 @@ section5:
     excluded: "Nicht anwendbar"
     not_audited: "Nicht auditiert"
     not_sampled: "Nicht in der Stichprobe dieses Audits"
+    inquiry_only: "Nicht verifiziert (nur Angaben)"
 
 section6:
   title: "Stellungnahme der Einrichtung zu den Feststellungen"
@@ -283,6 +285,10 @@ labels:
     essential: "wesentliche Einrichtung"
     important: "wichtige Einrichtung"
     digital-providers: "digitaler Anbieter nach der Durchführungsverordnung (EU) 2024/2690"
+  draft:
+    inspection: "Einsichtnahme in die mit dieser Einheit verknüpften Konfigurationen, Codestellen, Aufzeichnungen und Dokumente, um festzustellen, ob das Merkmal erfüllt ist."
+    attribute: "{title}"
+    none: "Für diese Einheit lag kein Nachweis vor; sie konnte nicht bewertet werden."
   grade_short: {major: Hauptabweichung, minor: Nebenabweichung}
   see_sentence: " Siehe {ids}."
   sample: "Stichprobe von {sample} aus einer Grundgesamtheit von {population}."

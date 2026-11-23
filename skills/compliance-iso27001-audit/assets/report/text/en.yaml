@@ -226,6 +226,7 @@ section4:
   not_audited: "Not audited. {reason}"
   design_gap: "Not suitably designed. {reason}"
   not_sampled: "Not covered in this surveillance audit."
+  inquiry_only: "Not verified: based on the organization's answers only."
 
 section5:
   title: "Statement of Applicability"
@@ -242,6 +243,7 @@ section5:
     excluded: "Excluded"
     not_audited: "Not audited"
     not_sampled: "Not in this audit's sample"
+    inquiry_only: "Not verified (answers only)"
 
 section6:
   title: "The Organization's Response to Findings"
@@ -272,6 +274,10 @@ labels:
   excluded:                    # Section V reason when a requirement is out of scope by role or entity type
     scope: "Out of scope: applies to other roles than {scope_values}."
     optional: "Optional; not relied on by the organization."
+  draft:                      # pre-filled by `draft`; printed in Section IV unless the auditor changes it
+    inspection: "Inspected the configuration, code, records and documents linked to this unit to determine whether the attribute is met."
+    attribute: "{title}"
+    none: "No evidence was available for this unit; it could not be assessed."
   grade_short: {major: major, minor: minor}   # after a finding ID: "F-01 (major)"
   see_sentence: " See {ids}."
   sample: "Sample of {sample} selected from a population of {population}."

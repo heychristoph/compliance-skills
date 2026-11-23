@@ -1,0 +1,39 @@
+# Framework profile for the requirements engine (scripts/engine/, copied from
+# shared/engines/requirements by tools/sync.py). The wording is in assets/report/text/<lang>.yaml,
+# the stack knowledge in assets/recipes/.
+framework: app
+name: App assessment (security and data processing)
+cli: app.py
+report_stem: app-assessment
+not_official: It is not a penetration test, not a certification, not an audit or decision of a supervisory or competent authority, and not legal advice.
+scope_help: the application and environment assessed, as the report prints it (e.g. "The Acme booking app, production on Supabase EU")
+id_examples: SEC-AC-01, DP-SUP-03
+
+audit_types:
+  assessment: {label: Assessment, as_of: true}   # configuration, code and documents as of a date
+
+applicability:
+  always: []
+  # processor: the supplier runs the production system for the client (everything applies).
+  # developer: the client runs production; only the system as built and handed over is assessed.
+  scope: {field: roles, config: roles, choices: [processor, developer],
+          help: "processor if you run the production system for the client, developer if the client runs it"}
+  optional_field: optional                       # AI processing, file storage: switched on by detect
+
+description:
+  file: context.yaml
+  label: application scope and context
+  fields: [scope_statement, services, role, boundaries]
+  request_requirement: DP-INV-01
+
+always_reported: []
+
+report:
+  plain_group_prefixes: []
+  evidence_strength: true          # Section I: how each requirement was verified
+  crosswalk: [gdpr, nis2]          # Section IV: the GDPR and NIS2 provisions each requirement supports
+  annexes: true                    # measures annex, sub-processor annex and fixes list
+  highlights:
+    - {key: access_control, requirements: [SEC-AC-01, SEC-AC-02, SEC-AC-03, SEC-CODE-01]}
+    - {key: data_processing, requirements: [DP-INV-01, DP-LIFE-02, DP-AI-01]}
+    - {key: subprocessors, requirements: [DP-SUP-01, DP-SUP-03, DP-SUP-04]}

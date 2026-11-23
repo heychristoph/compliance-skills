@@ -1,0 +1,26 @@
+# GitHub repository. The gh CLI resolves {owner}/{repo} from the repository checkout
+# (capture runs CLI commands in the engagement's repo).
+component: github
+title: GitHub
+detect:
+  files: [".github/*", ".github/workflows/*.yml"]
+subprocessor: {name: GitHub, service: "source code hosting and CI", dpa: "https://github.com/customer-terms/github-data-protection-agreement"}
+items:
+  - id: github-branch-protection
+    title: Review and protection on the production branch
+    requirements: [SEC-OPS-06]
+    cli: {command: [gh, api, "repos/{owner}/{repo}/rules/branches/main"]}
+    export:
+      en: "GitHub → the repository → Settings → Rules (or Branches): screenshot of the rules on the main branch."
+      de: "GitHub → das Repository → Settings → Rules (oder Branches): Screenshot der Regeln für den main-Branch."
+  - id: github-vulnerability-alerts
+    title: Dependabot and secret scanning alerts
+    requirements: [SEC-CODE-03, SEC-CODE-04, SEC-CODE-02]
+    cli: {command: [gh, api, "repos/{owner}/{repo}/dependabot/alerts?state=open"]}
+    export:
+      en: "GitHub → the repository → Security: screenshot of open Dependabot and secret scanning alerts."
+      de: "GitHub → das Repository → Security: Screenshot der offenen Dependabot- und Secret-Scanning-Hinweise."
+  - id: github-access
+    title: Who can push to the repository
+    requirements: [SEC-AC-07]
+    cli: {command: [gh, api, "repos/{owner}/{repo}/collaborators?affiliation=all"]}

@@ -239,6 +239,7 @@ section4:
   not_audited: "Nicht auditiert. {reason}"
   design_gap: "Nicht angemessen gestaltet. {reason}"
   not_sampled: "Nicht Gegenstand dieses Überwachungsaudits."
+  inquiry_only: "Nicht verifiziert: beruht nur auf Angaben der Organisation."
 
 section5:
   title: "Erklärung zur Anwendbarkeit"
@@ -255,6 +256,7 @@ section5:
     excluded: "Ausgeschlossen"
     not_audited: "Nicht auditiert"
     not_sampled: "Nicht in der Stichprobe dieses Audits"
+    inquiry_only: "Nicht verifiziert (nur Angaben)"
 
 section6:
   title: "Stellungnahme der Organisation zu den Feststellungen"
@@ -285,6 +287,10 @@ labels:
   excluded:
     scope: "Nicht im Umfang: gilt für andere Rollen als {scope_values}."
     optional: "Optional; von der Organisation nicht in Anspruch genommen."
+  draft:
+    inspection: "Einsichtnahme in die mit dieser Einheit verknüpften Konfigurationen, Codestellen, Aufzeichnungen und Dokumente, um festzustellen, ob das Merkmal erfüllt ist."
+    attribute: "{title}"
+    none: "Für diese Einheit lag kein Nachweis vor; sie konnte nicht bewertet werden."
   grade_short: {major: Hauptabweichung, minor: Nebenabweichung}
   see: "; siehe {ids}"
   see_sentence: " Siehe {ids}."

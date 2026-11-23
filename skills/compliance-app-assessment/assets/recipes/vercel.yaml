@@ -1,0 +1,20 @@
+component: vercel
+title: Vercel
+detect:
+  dependencies: ["@vercel/analytics", "@vercel/speed-insights", "@vercel/blob"]
+  files: [vercel.json, .vercel/project.json]
+subprocessor: {name: Vercel, service: "frontend hosting and serverless functions", dpa: "https://vercel.com/legal/dpa"}
+items:
+  - id: vercel-env
+    title: Secrets kept in environment variables per environment
+    requirements: [SEC-CODE-02, SEC-OPS-05]
+    cli: {command: [vercel, env, ls]}
+    export:
+      en: "Vercel → the project → Settings → Environment Variables: screenshot of the variable names per environment (not the values)."
+      de: "Vercel → das Projekt → Settings → Environment Variables: Screenshot der Variablennamen je Umgebung (nicht der Werte)."
+  - id: vercel-region-team
+    title: Function region and team access
+    requirements: [SEC-DATA-01, SEC-AC-07, SEC-AUTH-05]
+    export:
+      en: "Vercel → the project → Settings → Functions (region) and Team → Members (roles, MFA): screenshots."
+      de: "Vercel → das Projekt → Settings → Functions (Region) und Team → Members (Rollen, MFA): Screenshots."

@@ -1,0 +1,22 @@
+# Lovable (AI app builder). Lovable's MCP server acts with full account rights and has no
+# read-only mode, so this recipe does not use it. The app's code comes from the GitHub sync.
+component: lovable
+title: Lovable
+detect:
+  dependencies: [lovable-tagger]
+  text: [lovable.dev]
+subprocessor: {name: Lovable, service: "AI app builder used to develop the app; may access the connected backend project", dpa: ""}
+enables: [DP-AI-08]
+items:
+  - id: lovable-backend-access
+    title: What the builder can reach in production
+    requirements: [DP-AI-08, SEC-OPS-05]
+    export:
+      en: "Lovable → the project → Settings / Integrations: screenshot showing which Supabase project (or other backend) is connected, and whether it is the production project."
+      de: "Lovable → das Projekt → Settings / Integrations: Screenshot, welches Supabase-Projekt (oder anderes Backend) verbunden ist und ob es das Produktionsprojekt ist."
+  - id: lovable-workspace
+    title: Who has access to the Lovable workspace
+    requirements: [SEC-AC-07]
+    export:
+      en: "Lovable → Workspace settings → Members: screenshot of members and roles."
+      de: "Lovable → Workspace settings → Members: Screenshot der Mitglieder und Rollen."

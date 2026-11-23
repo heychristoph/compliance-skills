@@ -1,0 +1,12 @@
+component: netlify
+title: Netlify
+detect:
+  files: [netlify.toml, netlify/functions/*]
+subprocessor: {name: Netlify, service: "frontend hosting and serverless functions", dpa: "https://www.netlify.com/pdf/netlify-dpa.pdf"}
+items:
+  - id: netlify-env-team
+    title: Environment variables, deploy contexts and team access
+    requirements: [SEC-CODE-02, SEC-OPS-05, SEC-AC-07, SEC-AUTH-05]
+    export:
+      en: "Netlify → Site configuration → Environment variables (names and scopes, not values) and Team → Members (roles, MFA): screenshots."
+      de: "Netlify → Site configuration → Environment variables (Namen und Geltungsbereiche, nicht die Werte) und Team → Members (Rollen, MFA): Screenshots."

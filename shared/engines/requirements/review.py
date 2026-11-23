@@ -17,7 +17,7 @@ from core import AUDIT_TYPES, CLI, DESCRIPTION, PROFILE, AuditError, Engagement,
 from planning import expected_plan, surveillance_gaps
 import privacy
 
-DONE = ("conforming", "deviations", "design-gap", "not-audited")
+DONE = ("conforming", "deviations", "design-gap", "not-audited", "inquiry-only")
 GRADE_NAMES = {"major": "major nonconformity", "minor": "minor nonconformity", "ofi": "opportunity for improvement"}
 
 
@@ -96,6 +96,11 @@ def _check_workpaper(eng: Engagement, cid: str, wp: dict, plan_row: dict | None)
     cite = lambda ids, label: [f"{where}: {label} cites {i}, which is not in bundle/manifest.json" for i in ids if i not in eng.artifacts]
 
     design = wp["design"]
+    if concl == "not-audited" and not design["evidence"]:
+        # Nothing could be examined: the scope limitation says why; there is no design evidence to cite.
+        if not (wp.get("scope_limitation") or "").strip():
+            errors.append(f"{where}: conclusion 'not-audited' needs scope_limitation (why the unit could not be audited)")
+        return errors, warnings
     if design["effective"] is None:
         errors.append(f"{where}: design.effective must be true or false")
     if not design["rationale"].strip():
@@ -113,6 +118,16 @@ def _check_workpaper(eng: Engagement, cid: str, wp: dict, plan_row: dict | None)
         if not (wp.get("scope_limitation") or "").strip():
             errors.append(f"{where}: conclusion 'not-audited' needs scope_limitation (why the unit could not be audited)")
         return errors, warnings
+
+    tiers = {eng.artifacts[i].get("obtained") for i in _cited(wp) if i in eng.artifacts}
+    if concl == "inquiry-only":
+        if not wp["procedures"] or any(p["method"] != "inquiry" for p in wp["procedures"]):
+            errors.append(f"{where}: 'inquiry-only' means every procedure is inquiry; if you inspected evidence, conclude on it instead")
+        if "inquiry" not in tiers:
+            errors.append(f"{where}: 'inquiry-only' must cite the recorded answer (capture --via answer, evidence tier inquiry)")
+        return errors, warnings
+    if concl == "conforming" and tiers and tiers <= {"inquiry"}:
+        errors.append(f"{where}: answers alone cannot make a unit conforming; inspect evidence, or conclude 'inquiry-only' (not verified)")
 
     if not wp["procedures"]:
         errors.append(f"{where}: procedures is empty; list what was done (inquiry, inspection, observation, reperformance)")
@@ -227,6 +242,20 @@ def _check_findings(eng: Engagement, workpapers: dict) -> tuple[list[str], list[
     majors = sum(f["grade"] == "major" for f in findings)
     minors = sum(f["grade"] == "minor" for f in findings)
     limits = bool(doc["scope_limitations"])
+    from common.rollforward import prior_findings
+
+    prior = prior_findings(eng, "findings.json")
+    followed = {x["id"]: x for x in doc.get("prior_followup") or []}
+    missing_followup = [f["id"] for f in prior if f["id"] not in followed]
+    if missing_followup:
+        errors.append(f"findings.json: follow up every finding of the previous engagement in prior_followup (closed, partly or open): "
+                      f"{', '.join(missing_followup)}; see prior/findings.json")
+    for x in followed.values():
+        errors += [f"findings.json: prior_followup {x['id']} cites {i}, which is not in bundle/manifest.json" for i in x.get("evidence") or [] if i not in eng.artifacts]
+    unverified = sorted(cid for cid, w in workpapers.items() if w.get("conclusion") == "inquiry-only")
+    if unverified and not limits:
+        errors.append(f"findings.json: {len(unverified)} units are supported only by answers ({', '.join(unverified[:6])}{' ...' if len(unverified) > 6 else ''}); "
+                      "say so in scope_limitations, so the conclusion reflects what was not verified")
     rec = doc["recommendation"]
     if rec == "recommended" and (majors or minors or limits):
         errors.append("findings.json: 'recommended' needs no nonconformities and no scope limitations")
@@ -308,6 +337,8 @@ def rollup(eng: Engagement) -> str:
             flag = "Design gap: a nonconformity"
         elif any(n for _, _, n in entries):
             flag = "Deviations: grade them in findings.json"
+        elif all(c == "inquiry-only" for _, c, _ in entries):
+            flag = "Answers only: not verified"
         elif all(c == "not-audited" for _, c, _ in entries):
             flag = "Not audited: scope limitation or no occurrences?"
         lines.append(f"| {req['id']} | {req['title']} | {cell} | {flag} |")
@@ -372,6 +403,7 @@ def packet(eng: Engagement) -> str:
         ("Deviations", [w for w in workpapers.values() if w["deviations"]]),
         ("Design gaps", [w for w in workpapers.values() if w["conclusion"] == "design-gap"]),
         ("Not audited (scope limitations)", [w for w in workpapers.values() if w["conclusion"] == "not-audited"]),
+        ("Not verified (answers only)", [w for w in workpapers.values() if w["conclusion"] == "inquiry-only"]),
         ("Low or medium confidence conclusions", [w for w in workpapers.values() if w.get("confidence") in ("low", "medium")]),
         ("Observations raised by the auditor", [w for w in workpapers.values() if w.get("observations")]),
     ]
@@ -435,3 +467,11 @@ def signoff(eng: Engagement, model: str) -> str:
 def signed_off(eng: Engagement) -> bool:
     s = load_yaml(eng.config_path).get("signoff") or {}
     return bool(s.get("model")) and s.get("digest") == eng.digest()
+
+
+def _cited(wp: dict) -> set[str]:
+    """Every artifact a workpaper cites."""
+    ids = set(wp["design"]["evidence"]) | {e for i in wp["items"] for e in i["evidence"]} | {e for x in wp["deviations"] for e in x["evidence"]}
+    if wp.get("population_check"):
+        ids |= set(wp["population_check"]["evidence"])
+    return ids
