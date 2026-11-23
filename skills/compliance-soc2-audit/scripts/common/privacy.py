@@ -80,7 +80,7 @@ def forbidden(bundle: Path, description_file: str, allowed: set[str]) -> set[str
     for path in bundle.rglob("*"):
         if not path.is_file() or path.suffix.lower() not in TEXT_SUFFIXES:
             continue
-        text = path.read_text(encoding="utf-8", errors="replace")
+        text = path.read_text(encoding="utf-8", errors="replace").removeprefix("\ufeff")  # Excel's UTF-8 BOM
         for match in EMAIL.finditer(text):
             local = match.group(0).split("@", 1)[0].lower()
             if re.fullmatch(r"[a-z]{9,}", local) and local not in GENERIC_LOCAL:

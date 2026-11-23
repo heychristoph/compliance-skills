@@ -132,8 +132,12 @@ UNSAFE_OPTIONS = {
 # Help and browser switches start viewers or browsers, some of them configurable by the repository.
 HELP = {"--help", "-h", "help", "--man", "--web", "-w", "--info"}
 # Git runs with helpers switched off, whatever the repository's own config says.
+GIT_NO_VERIFIER = "/nonexistent/compliance-skills-capture-disabled"
 GIT_SAFE = ["-c", "diff.external=", "-c", "core.pager=cat", "-c", "core.fsmonitor=false", "-c", "core.hooksPath=/dev/null",
-            "-c", "pager.log=false", "-c", "pager.diff=false", "-c", "pager.show=false", "--no-pager"]
+            "-c", "pager.log=false", "-c", "pager.diff=false", "-c", "pager.show=false",
+            # Signature verification runs a configurable program: never show or verify signatures.
+            "-c", "log.showSignature=false", "-c", f"gpg.program={GIT_NO_VERIFIER}", "-c", f"gpg.openpgp.program={GIT_NO_VERIFIER}",
+            "-c", f"gpg.ssh.program={GIT_NO_VERIFIER}", "-c", f"gpg.x509.program={GIT_NO_VERIFIER}", "--no-pager"]
 GIT_NO_HELPERS = {"log": ["--no-ext-diff", "--no-textconv"], "show": ["--no-ext-diff", "--no-textconv"]}
 
 
@@ -213,6 +217,9 @@ def check_read_only(command: list[str]) -> None:
         _check_gh_api(command[2:])
     unsafe = [a for a in command[1:] for o in UNSAFE_OPTIONS.get(program, ()) if a == o or a.startswith(o + "=")
               or (o.startswith("--") and a.startswith(o))]
+    if program == "git":
+        # Signature options and %G format placeholders make git run the signature verifier.
+        unsafe += [a for a in command[1:] if a.startswith(("--show-signature", "--verify")) or "%G" in a]
     if unsafe:
         raise AuditError(f"{', '.join(sorted(set(unsafe)))} would run a helper program or write a file; not allowed in a capture")
     hit = MUTATING.search(" ".join(command[1:]))

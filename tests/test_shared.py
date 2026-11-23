@@ -188,7 +188,7 @@ class Privacy(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             bundle = Path(tmp)
             (bundle / "evidence").mkdir()
-            (bundle / "evidence" / "EV-0002_hr.csv").write_text("full_name,email\nJosé García,jose@example.invalid\nLi Wu,li@example.invalid\n")
+            (bundle / "evidence" / "EV-0002_hr.csv").write_text("\ufefffull_name,email\nJosé García,jose@example.invalid\nLi Wu,li@example.invalid\n")
             self.assertEqual(privacy.forbidden(bundle, "context.yaml", set()), {"José García", "Li Wu"})
 
     def test_probe_never_turns_a_missing_count_into_no_access(self):
