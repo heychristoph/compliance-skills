@@ -314,6 +314,7 @@ class Engagement:
         files = [self.config_path.name]
         files += [p.relative_to(self.root).as_posix() for p in [self.manifest_path, self.description_path, self.testplan_path, self.findings_path, self.qa_path]]
         files += [p.relative_to(self.root).as_posix() for p in self.workpaper_files()]
+        files.append("review/stack.yaml")  # the sub-processor annex is built from it
         for rel in files:
             path = self.root / rel
             if not path.exists():
