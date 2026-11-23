@@ -33,10 +33,8 @@ def supabase_anon(url: str, key: str, tables: list[str], buckets: list[str]) -> 
     for t in names:
         status, rng = _request("HEAD", f"{base}/rest/v1/{quote(t)}?select=*",
                                {**headers, "Prefer": "count=exact", "Range-Unit": "items", "Range": "0-0"})
-        count = _count(rng)
-        out_tables.append({"table": t, "status": status, "visible_rows": count,
-                           "exposed_in_api": t in exposed,
-                           "result": "readable by anyone" if count else ("not readable anonymously" if status in (200, 206, 401, 403, 404) else "unknown")})
+        count = _count(rng) if status in (200, 206) else None
+        out_tables.append({"table": t, "status": status, "visible_rows": count, "exposed_in_api": t in exposed, "result": _outcome(status, count)})
     out_buckets = []
     for b in sorted(set(buckets)):
         status, body = _request("POST", f"{base}/storage/v1/object/list/{quote(b)}", {**headers, "Content-Type": "application/json"},
@@ -46,7 +44,26 @@ def supabase_anon(url: str, key: str, tables: list[str], buckets: list[str]) -> 
     return {"probe": "supabase-anon", "project": urlparse(base).netloc, "at": now_utc(), "api_schema_status": openapi_status,
             "tables": out_tables, "buckets": out_buckets,
             "summary": {"tables_readable_by_anyone": [t["table"] for t in out_tables if t["visible_rows"]],
-                        "buckets_listable_by_anyone": [b["bucket"] for b in out_buckets if b["listable_by_anyone"]]}}
+                        "tables_no_rows_visible": [t["table"] for t in out_tables if t["visible_rows"] == 0],
+                        "tables_denied": [t["table"] for t in out_tables if t["status"] in (401, 403)],
+                        "tables_unknown": [t["table"] for t in out_tables if t["result"] == "unknown"],
+                        "buckets_listable_by_anyone": [b["bucket"] for b in out_buckets if b["listable_by_anyone"]]},
+            "note": ("'no rows visible' proves only that an anonymous caller saw no rows at the time: an empty table without "
+                     "row-level security looks the same. Only 'denied' shows the API refused anonymous access.")}
+
+
+def _outcome(status: int, count: int | None) -> str:
+    if status in (401, 403):
+        return "denied to anonymous callers"
+    if status == 404:
+        return "not exposed through the API"
+    if status in (200, 206) and count is None:
+        return "unknown"  # answered, but without a row count
+    if status in (200, 206) and count > 0:
+        return f"readable by anyone ({count} rows)"
+    if status in (200, 206):
+        return "no rows visible anonymously (an empty table looks the same)"
+    return "unknown"
 
 
 def _openapi_tables(base: str, headers: dict) -> tuple[list[str], int]:
@@ -55,9 +72,10 @@ def _openapi_tables(base: str, headers: dict) -> tuple[list[str], int]:
     return sorted(p.strip("/") for p in paths if p.strip("/") and not p.startswith("/rpc/")), status
 
 
-def _count(content_range: str | None) -> int:
+def _count(content_range: str | None) -> int | None:
+    """Rows in a Content-Range header ("0-0/42", "*/0"); None when the header is missing or has no total."""
     m = re.search(r"/(\d+)$", content_range or "")
-    return int(m.group(1)) if m else 0
+    return int(m.group(1)) if m else None
 
 
 def _request(method: str, url: str, headers: dict, data: bytes | None = None, want_body: bool = False):

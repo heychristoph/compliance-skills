@@ -134,3 +134,21 @@ Say what each item is for in a few words, and that anything they cannot provide 
 - Pass every requirement the evidence supports. The recipe item lists them; add others if the evidence is relevant to them (the schema dump also shows SEC-AC-05 functions).
 - Unknown requirement IDs are dropped at ingest with a warning. Requirements out of scope are kept as hints but do not matter.
 - After capturing, run `python scripts/app.py ingest <dir> --replace` (or `ingest <dir>` the first time).
+
+## The anonymous-access probe
+
+`python scripts/app.py probe <dir> supabase-anon --authorized` asks the live Supabase API, with the
+public anon key from the app's own code, what an anonymous visitor can reach. It reads no data: for
+each table it gets only a row count (HEAD with `Prefer: count=exact`), and for each bucket only
+whether listing works. Ask the user first whether they may test the live project; that is what
+`--authorized` records. The result is `direct` evidence for SEC-AC-01, SEC-AC-02 and SEC-AC-06.
+
+Read each outcome exactly as stated:
+
+| Outcome | What it shows |
+|---|---|
+| `readable by anyone (N rows)` | Anonymous visitors can read those rows. A deviation when they hold personal data. |
+| `denied to anonymous callers` | The API refused anonymous access. Supports the requirement. |
+| `no rows visible anonymously` | Nothing was visible at that moment. An empty table without row-level security looks the same, so this alone does not prove protection: combine it with the RLS status from the advisors or the policy query. |
+| `not exposed through the API` | The table is not in the API schema. |
+| `unknown` | The API answered without a count. Proves nothing; use other evidence. |

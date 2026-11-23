@@ -94,6 +94,13 @@ def forbidden(bundle: Path, description_file: str, allowed: set[str]) -> set[str
                 _walk(json.loads(text), found)
             except json.JSONDecodeError:
                 pass
+        if path.suffix.lower() in (".yaml", ".yml"):
+            try:
+                import yaml
+
+                _walk(yaml.safe_load(text), found)
+            except Exception:  # an unparsable file is still scanned for emails above
+                pass
         if path.parent.name == "populations" and path.stem in ("hires", "terminations"):
             for row in csv.DictReader(text.splitlines()):
                 _add_named(row.get("name") or "", found)

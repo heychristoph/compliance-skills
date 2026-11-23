@@ -114,9 +114,8 @@ READ_ONLY = {
     "gh": [["api"], ["repo", "view"], ["pr", "list"], ["pr", "view"], ["run", "list"], ["run", "view"], ["secret", "list"],
            ["ruleset", "list"], ["ruleset", "view"], ["api", "--paginate"]],
     "supabase": [["projects", "list"], ["db", "dump"], ["inspect"], ["functions", "list"], ["secrets", "list"], ["branches", "list"]],
+    # npm only: yarn and pnpm can load executables and hooks from the repository (yarnPath, .pnpmfile.cjs).
     "npm": [["audit"], ["ls"], ["outdated"]],
-    "pnpm": [["audit"], ["ls"], ["outdated"]],
-    "yarn": [["audit"], ["list"], ["outdated"]],
     "vercel": [["env", "ls"], ["project", "ls"], ["ls"], ["inspect"]],
     "netlify": [["status"], ["sites:list"]],
     "firebase": [["projects:list"], ["apps:list"]],
@@ -128,8 +127,10 @@ UNSAFE_OPTIONS = {
     "git": ("--ext-diff", "--textconv", "--output", "--exec", "--upload-pack", "--receive-pack", "-c", "--config-env",
             "--exec-path", "--git-dir", "--work-tree", "--open-files-in-pager", "-O"),
     "supabase": ("-f", "--file", "-o", "--output"),
-    "npm": ("fix", "--fix"), "pnpm": ("fix", "--fix"), "yarn": ("fix", "--fix"),
+    "npm": ("fix", "--fix"),
 }
+# Help and browser switches start viewers or browsers, some of them configurable by the repository.
+HELP = {"--help", "-h", "help", "--man", "--web", "-w", "--info"}
 # Git runs with helpers switched off, whatever the repository's own config says.
 GIT_SAFE = ["-c", "diff.external=", "-c", "core.pager=cat", "-c", "core.fsmonitor=false", "-c", "core.hooksPath=/dev/null",
             "-c", "pager.log=false", "-c", "pager.diff=false", "-c", "pager.show=false", "--no-pager"]
@@ -153,10 +154,14 @@ def check_read_only(command: list[str]) -> None:
     program = Path(command[0]).name
     forms = READ_ONLY.get(program)
     args = [a for a in command[1:] if not a.startswith("-")]
-    if not forms or not any(args[:len(f)] == f for f in forms):
+    # The allowed form must be the literal start of the command: no options before the subcommand,
+    # because they can switch the program into another mode (`git --help log`).
+    if not forms or not any(command[1:1 + len(f)] == f for f in forms):
         allowed = "; ".join(f"{p} {' '.join(f)}" for p, fs in READ_ONLY.items() for f in fs)
         raise AuditError(f"`{' '.join(command[:3])}` is not a known read-only command; capture only runs: {allowed}. "
                          "For anything else, run it yourself and capture the output as an export (`--via export --file`).")
+    if HELP & set(command[1:]):
+        raise AuditError("help and browser switches are not allowed in a capture")
     if program == "gh" and args[:1] == ["api"]:
         rest = command[2:]
         methods = [rest[i + 1] for i, a in enumerate(rest[:-1]) if a in ("-X", "--method")] + \

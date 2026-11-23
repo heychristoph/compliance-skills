@@ -171,6 +171,24 @@ class Privacy(unittest.TestCase):
         self.assertEqual(found, {"José García", "Dana van Dijk", "Li Wu"})
         self.assertTrue(privacy.leaks("Approved by José García.", found))
 
+    def test_yaml_evidence_is_searched_for_names(self):
+        import tempfile
+        from lib import privacy
+
+        with tempfile.TemporaryDirectory() as tmp:
+            bundle = Path(tmp)
+            (bundle / "evidence").mkdir()
+            (bundle / "evidence" / "EV-0001_people.yaml").write_text("- full_name: José García\n- full_name: Li Wu\n")
+            self.assertEqual(privacy.forbidden(bundle, "context.yaml", set()), {"José García", "Li Wu"})
+
+    def test_probe_never_turns_a_missing_count_into_no_access(self):
+        from lib import probes
+
+        self.assertEqual(probes._outcome(200, None), "unknown")
+        self.assertEqual(probes._outcome(403, None), "denied to anonymous callers")
+        self.assertIn("empty table looks the same", probes._outcome(200, 0))
+        self.assertIn("readable by anyone", probes._outcome(206, 42))
+
     def test_sharing_a_first_name_with_the_representative_exempts_nobody(self):
         import json, tempfile
         from lib import privacy

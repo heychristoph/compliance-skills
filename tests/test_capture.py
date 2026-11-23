@@ -64,7 +64,8 @@ class Capture(unittest.TestCase):
                     [sys.executable, "-c", "open('proof.txt', 'a').close()"], ["node", "-e", "1"], ["gh", "api", "-X", "DELETE", "repos/a/b"],
                     ["gh", "api", "repos/a/b/issues", "-f", "title=x"], ["git", "diff", "--ext-diff"], ["git", "log", "--output=x"],
                     ["git", "-c", "diff.external=x", "log"], ["supabase", "db", "dump", "-f", "out.sql"], ["npm", "audit", "fix"],
-                    ["gh", "api", "repos/a/b/subscription", "-XDELETE"], ["git", "blame", "data.txt"], ["git", "diff"], ["git", "status"]):
+                    ["gh", "api", "repos/a/b/subscription", "-XDELETE"], ["git", "blame", "data.txt"], ["git", "diff"], ["git", "status"],
+                    ["git", "--help", "log"], ["git", "-p", "log"], ["yarn", "audit"], ["pnpm", "audit"], ["gh", "repo", "view", "--web"]):
             r = self.capture("--via", "cli", "--title", "x", "--", *cmd)
             self.assertNotEqual(r.returncode, 0, cmd)
         self.assertFalse((self.eng / "intake").exists() and list((self.eng / "intake").glob("*.meta.json")))
