@@ -171,7 +171,19 @@ class Platform(Connector):
         control_id = control_id.split(":")[-1]
         http_json(f"{self.api}/controls/{control_id}/documents/{resource_id}", method="DELETE", headers=self.headers)
 
+    def evidence_target(self, measure: dict, document: str | None) -> str:
+        """Vanta takes uploads on a document (evidence request) of the control, not on the control."""
+        docs = measure.get("document_ids") or []
+        if document:
+            if document not in docs:
+                raise PrepError(f"Document {document} is not an evidence request of '{measure['name']}' (it has: {', '.join(docs) or 'none'}).")
+            return document
+        if len(docs) == 1:
+            return docs[0]
+        raise PrepError(f"'{measure['name']}' has {len(docs)} evidence requests in Vanta; choose one with --document "
+                        f"({', '.join(docs) or 'none: add one in Vanta first'}).")
+
     def upload_evidence(self, measure_id: str, path: Path) -> str:
-        """measure_id is the Vanta document (evidence request) the file belongs to."""
+        """measure_id is the Vanta document (evidence request) the file belongs to; see evidence_target."""
         out = http_multipart(f"{self.api}/documents/{measure_id}/uploads", {"description": path.name}, {"file": path}, self.headers)
         return (out or {}).get("id", "")

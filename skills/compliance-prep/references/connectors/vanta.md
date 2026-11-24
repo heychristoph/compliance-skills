@@ -25,8 +25,9 @@ account: the code follows Vanta's published OpenAPI spec. Report anything that d
 - `create_control`: `POST /controls` (custom control).
 - Link or unlink a document on a control: `POST /controls/{id}/add-document-to-control`,
   `DELETE /controls/{id}/documents/{documentId}`.
-- Evidence: `POST /documents/{documentId}/uploads`. Pass the Vanta document id as the
-  measure in `prep.py evidence`.
+- Evidence: `POST /documents/{documentId}/uploads`. Name the control as the measure in
+  `prep.py evidence`; the file goes to its evidence request (document). If the control has
+  several, pick one with `--document <documentId>`.
 - Vanta's API cannot create a framework. `prep.py ai-framework --apply` writes
   `<name>.csv`. Import it under Frameworks > Custom frameworks with the exact name, then
   map the controls.

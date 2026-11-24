@@ -148,11 +148,12 @@ def cmd_evidence(args):
     config, connector, snap = load(args)
     m = find_measure(snap, args.measure)
     before = m["evidence_count"]
+    target = connector.evidence_target(m, args.document)
     for f in args.files:
         path = Path(f)
         if not path.is_file():
             raise PrepError(f"{path} is not a file.")
-        evidence_id = connector.upload_evidence(m["id"], path)
+        evidence_id = connector.upload_evidence(target, path)
         print(f"attached {path.name} to '{m['name']}' ({evidence_id})")
     after = find_measure(connector.snapshot(), m["id"])["evidence_count"]
     print(f"evidence files on '{m['name']}': {before} -> {after}")
@@ -198,6 +199,7 @@ def main(argv=None) -> int:
     p = sub.add_parser("evidence")
     p.add_argument("measure", help="measure id or (part of its) name")
     p.add_argument("files", nargs="+")
+    p.add_argument("--document", help="Vanta: the evidence request (document id) of the measure to upload to")
     p.set_defaults(fn=cmd_evidence)
     p = sub.add_parser("snapshot")
     p.add_argument("-o", "--output")

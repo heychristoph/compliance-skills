@@ -170,3 +170,18 @@ class PlantedDefects(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class VantaEvidenceTarget(unittest.TestCase):
+    def test_upload_goes_to_the_measures_document(self):
+        from connectors.vanta import Platform  # noqa: E402
+        from core import PrepError  # noqa: E402
+
+        v = Platform.__new__(Platform)
+        one = {"id": "control-1", "name": "MFA", "document_ids": ["document-1"]}
+        self.assertEqual(v.evidence_target(one, None), "document-1")
+        self.assertEqual(v.evidence_target(one, "document-1"), "document-1")
+        with self.assertRaises(PrepError):
+            v.evidence_target(one, "document-9")
+        with self.assertRaises(PrepError):
+            v.evidence_target({**one, "document_ids": ["d1", "d2"]}, None)

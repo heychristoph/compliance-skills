@@ -111,5 +111,11 @@ class Connector:
     def create_audit(self, framework_id: str, name: str, firm: str, state: str) -> str:
         self._unsupported("create an audit record")
 
+    def evidence_target(self, measure: dict, document: str | None) -> str:
+        """Where `prep.py evidence` uploads for a measure. Most platforms take the measure itself."""
+        if document:
+            raise PrepError(f"The {self.name} connector attaches evidence to the measure; drop --document.")
+        return measure["id"]
+
     def upload_evidence(self, measure_id: str, path: Path) -> str:
         self._unsupported("upload evidence")
