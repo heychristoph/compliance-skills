@@ -129,7 +129,7 @@ def main(root: str, truth_path: str) -> None:
             missing = next((d for d in mine if d["kind"] == "population"), None)
             record = truth["population_records"].get(cid)
             rec = [a["id"] for a in evidence if record and Path(a.get("source_ref", "")).name == record]
-            wp["population_check"] = {"complete": missing is None, "rationale": T["population"], "evidence": rec or [a["id"] for a in evidence if a["id"] != pop["source"]][:1] or [pop["source"]]}
+            wp["population_check"] = {"complete": missing is None, "rationale": T["population"], "evidence": rec or [a["id"] for a in evidence if a["id"] != pop["source"] and a.get("obtained") != "inquiry"][:1] or [pop["source"]]}
             if missing:
                 wp["deviations"].append({"item": "population", "description": f"{note(missing)}.", "evidence": rec})
         wp["conclusion"] = "deviations" if wp["deviations"] else "conforming"

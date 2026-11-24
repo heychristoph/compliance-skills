@@ -73,7 +73,7 @@ def main(root: str, truth_path: str) -> None:
         if pop and pop["source"].startswith("PO-") and not eng.point_in_time:
             missing = next((d for d in mine if d["kind"] == "population"), None)
             roster = [a["id"] for a in evidence if "roster" in a.get("source_ref", "")]
-            wp["population_check"] = {"complete": missing is None, "rationale": "Compared the population to the system of record.", "evidence": roster or [a["id"] for a in evidence if a["id"] != pop["source"]][:1] or [pop["source"]]}
+            wp["population_check"] = {"complete": missing is None, "rationale": "Compared the population to the system of record.", "evidence": roster or [a["id"] for a in evidence if a["id"] != pop["source"] and a.get("obtained") != "inquiry"][:1] or [pop["source"]]}
             if missing:
                 wp["deviations"].append({"item": "population", "description": missing["note"] + ".", "evidence": roster})
         wp["conclusion"] = "deviations" if wp["deviations"] else "conforming"

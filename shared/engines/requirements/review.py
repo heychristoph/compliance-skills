@@ -196,9 +196,11 @@ def _check_workpaper(eng: Engagement, cid: str, wp: dict, plan_row: dict | None)
                 errors += cite(pc["evidence"], "population_check")
                 if not (pc.get("rationale") or "").strip():
                     errors.append(f"{where}: population_check.rationale is empty; say what the population was compared with")
-                if pc["complete"] is not False and not [e for e in pc["evidence"] if e != wp["plan"]["population"]["source"]]:
+                independent = [e for e in pc["evidence"] if e != wp["plan"]["population"]["source"]
+                               and eng.artifacts.get(e, {}).get("obtained") != "inquiry"]
+                if pc["complete"] is not False and not independent:
                     errors.append(f"{where}: population_check cites no independent record; a complete population must be "
-                                  "compared with evidence other than the population itself")
+                                  "compared with a record other than the population itself, not only the organization's answer")
                 if pc["complete"] is False and "population" not in deviated:
                     errors.append(f"{where}: population_check.complete is false, so add a deviation with item 'population'")
 
