@@ -355,3 +355,14 @@ class CodescanTracked(unittest.TestCase):
 
             (repo / "src" / "über.ts").write_text('const k = "sk_live_' + "a" * 24 + '";\n')
             self.assertEqual(scan(repo)["files_scanned"], 1)
+
+
+class PopulationIds(unittest.TestCase):
+    def test_a_population_cannot_repeat_an_event(self):
+        from lib.bundle import BundleWriter
+        from lib.io import AuditError
+
+        with tempfile.TemporaryDirectory() as tmp:
+            w = BundleWriter(Path(tmp) / "b", "test")
+            with self.assertRaises(AuditError):
+                w.add_population("hires", [{"id": "H-1", "date": "2026-01-02"}, {"id": "H-1", "date": "2026-01-03"}], title="Hires")

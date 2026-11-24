@@ -293,9 +293,9 @@ def pull(writer: BundleWriter, options: dict, engagement) -> None:
         s, e = parse_date(contract.get("start")), parse_date(contract.get("end"))
         base_row = {"name": p.get("full_name", ""), "email": p.get("email_address", ""), "position": p.get("position") or "", "state": p.get("state", "")}
         if s and in_scope(s):
-            hires.append({"id": f"H-{slug(p['id'])[-8:]}", "date": s.isoformat(), **base_row})
+            hires.append({"id": f"H-{slug(p['id'])}", "date": s.isoformat(), **base_row})
         if e and in_scope(e):
-            terms.append({"id": f"T-{slug(p['id'])[-8:]}", "date": e.isoformat(), **base_row})
+            terms.append({"id": f"T-{slug(p['id'])}", "date": e.isoformat(), **base_row})
     pop_hires = writer.add_population("hires", hires, title="New hires in period (Probo people, contract start)", source_ref="probo:listUsers")
     pop_terms = writer.add_population("terminations", terms, title="Terminations in period (Probo people, contract end)", source_ref="probo:listUsers")
     writer.add_bytes(json.dumps(people, indent=2), "people.json", title="Probo people export (all)", source_ref="probo:listUsers")
@@ -303,7 +303,7 @@ def pull(writer: BundleWriter, options: dict, engagement) -> None:
     vendors = list(api.pages("listThirdParties", "thirdParties", organization_id=org))
     writer.add_population(
         "vendors",
-        [{"id": f"V-{slug(v['id'])[-8:]}", "date": (v.get("created_at") or "")[:10], "name": v["name"], "category": v.get("category") or ""} for v in vendors if v.get("created_at")],
+        [{"id": f"V-{slug(v['id'])}", "date": (v.get("created_at") or "")[:10], "name": v["name"], "category": v.get("category") or ""} for v in vendors if v.get("created_at")],
         title="Third parties (Probo)",
         source_ref="probo:listThirdParties",
     )
@@ -312,7 +312,7 @@ def pull(writer: BundleWriter, options: dict, engagement) -> None:
     pop_ncs = None
     if findings_error is None:
         export(findings, "findings-register", "Findings register (Probo): nonconformities, observations and exceptions", hint("findings"), "probo:listFindings")
-        ncs = [{"id": f.get("reference_id") or f"NC-{slug(f['id'])[-8:]}", "date": (f.get("identified_on") or f.get("created_at") or "")[:10],
+        ncs = [{"id": f.get("reference_id") or f"NC-{slug(f['id'])}", "date": (f.get("identified_on") or f.get("created_at") or "")[:10],
                 "kind": f.get("kind"), "status": f.get("status"), "source": f.get("source") or ""}
                for f in findings if f.get("kind") in ("MAJOR_NONCONFORMITY", "MINOR_NONCONFORMITY") and (f.get("identified_on") or f.get("created_at"))]
         pop_ncs = writer.add_population("nonconformities", ncs, title="Nonconformities identified (Probo findings)", source_ref="probo:listFindings")

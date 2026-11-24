@@ -81,9 +81,9 @@ def pull(writer: BundleWriter, options: dict, engagement) -> None:
         s, e = parse_date(p.get("startDate")), parse_date(p.get("endDate"))
         row = {"name": p.get("name", ""), "email": p.get("email", ""), "job_title": p.get("jobTitle") or "", "status": str(p.get("employmentStatus") or "")}
         if s and in_scope(s):
-            hires.append({"id": f"H-{slug(p['id'])[-8:]}", "date": s.isoformat(), **row})
+            hires.append({"id": f"H-{slug(p['id'])}", "date": s.isoformat(), **row})
         if e and in_scope(e):
-            terms.append({"id": f"T-{slug(p['id'])[-8:]}", "date": e.isoformat(), **row})
+            terms.append({"id": f"T-{slug(p['id'])}", "date": e.isoformat(), **row})
     pop_hires = writer.add_population("hires", hires, title="New hires in period (Vanta people)", source_ref="vanta:personnel/people")
     pop_terms = writer.add_population("terminations", terms, title="Terminations in period (Vanta people)", source_ref="vanta:personnel/people")
 
@@ -93,7 +93,7 @@ def pull(writer: BundleWriter, options: dict, engagement) -> None:
             code = ch.get("codeChange") or {}
             closed = parse_date(code.get("closedAt"))
             if closed and in_scope(closed):
-                changes.append({"id": f"CH-{slug(ch['id'])[-8:]}", "date": closed.isoformat(), "identifier": code.get("identifier", ""),
+                changes.append({"id": f"CH-{slug(ch['id'])}", "date": closed.isoformat(), "identifier": code.get("identifier", ""),
                                 "repository": code.get("repository", ""), "service": code.get("service", "")})
     except AuditError as e:
         writer.warn(f"code changes: {e}")

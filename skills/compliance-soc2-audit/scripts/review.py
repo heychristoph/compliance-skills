@@ -139,7 +139,7 @@ def _check_workpaper(eng: Engagement, cid: str, wp: dict, plan_row: dict | None)
             what = "implementation as of the examination date" if eng.report_type == 1 else "operating effectiveness"
             errors.append(f"{where}: the sample is empty (no events to examine), so {what} was not tested; "
                           "conclude 'not-tested' with a scope_limitation saying why")
-        if wp["items"] and concl == "no-exceptions" and not any(v == "pass" for i in wp["items"] for v in i["results"].values()):
+        if wp["items"] and concl == "no-exceptions" and not any(i["results"].get(k) == "pass" for i in wp["items"] for k in wp["attributes"]):
             errors.append(f"{where}: no sampled item passes an attribute (all n/a), so nothing was tested; "
                           "conclude 'not-tested' with a scope_limitation saying why")
         tested = [i["id"] for i in wp["items"]]
@@ -152,6 +152,9 @@ def _check_workpaper(eng: Engagement, cid: str, wp: dict, plan_row: dict | None)
             missing_attrs = sorted(set(wp["attributes"]) - set(item["results"]))
             if missing_attrs:
                 errors.append(f"{where}: item {item['id']} has no result for attributes {missing_attrs}")
+            undefined = sorted(set(item["results"]) - set(wp["attributes"]))
+            if undefined:
+                errors.append(f"{where}: item {item['id']} has results for attributes {undefined} that `attributes` does not define")
             if not item["evidence"] and any(v == "pass" for v in item["results"].values()):
                 errors.append(f"{where}: item {item['id']} passes an attribute but cites no evidence; a pass must be supported")
             elif any(v == "pass" for v in item["results"].values()) and all(

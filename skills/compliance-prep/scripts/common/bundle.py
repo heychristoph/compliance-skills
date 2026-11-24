@@ -157,9 +157,13 @@ class BundleWriter:
 
     def add_population(self, name: str, rows: list[dict], *, title: str, obtained: str = "direct", source_ref: str = "") -> str:
         """Write a population file. Each row needs `id` and `date`; other columns are kept."""
+        seen: set[str] = set()
         for i, row in enumerate(rows):
             if not row.get("id") or not row.get("date"):
                 raise AuditError(f"Population '{name}' row {i + 1} needs non-empty 'id' and 'date' columns.")
+            if str(row["id"]) in seen:
+                raise AuditError(f"Population '{name}' row {i + 1} repeats item ID {row['id']}; each event must appear once.")
+            seen.add(str(row["id"]))
         artifact_id = f"PO-{slug(name)}"
         path = self.dir / "populations" / f"{slug(name)}.csv"
         extra = []

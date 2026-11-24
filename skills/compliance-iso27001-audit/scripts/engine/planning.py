@@ -153,6 +153,11 @@ def _validated_plan(eng: Engagement) -> tuple[list[dict], list[str]]:
             errors.append(f"{where}: event-driven controls need a population artifact ID (PO-...)")
         if r.get("population") and r["population"] not in eng.artifacts:
             errors.append(f"{where}: population {r['population']} is not in the bundle")
+        elif r.get("population"):
+            ids = [x["id"] for x in eng.population(r["population"])]
+            dupes = sorted({i for i in ids if ids.count(i) > 1})
+            if dupes:
+                errors.append(f"{where}: population {r['population']} repeats item IDs {dupes[:5]}; each event must appear once")
         if r.get("sample_size"):
             if not r["sample_size"].isdigit():
                 errors.append(f"{where}: sample_size must be a whole number or empty")
