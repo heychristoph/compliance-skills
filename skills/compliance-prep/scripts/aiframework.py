@@ -76,6 +76,11 @@ def plan(snap: dict, real: dict, ai: dict | None, name: str, prune: bool = True)
             elif (current["applicable"], current["justification"]) != (s["applicable"], s["justification"]):
                 ops.append({"op": "update_applicability", "ref": ref, "statement_id": current["id"],
                             "applicable": s["applicable"], "justification": s["justification"]})
+        # A decision the real framework no longer has must not live on in the copy: the audit reads its scope from it.
+        real_soas = {s["soa_id"] for s in statements.get(rc["id"], [])}
+        for soa_id, current in sorted(ai_by_soa.items()):
+            if soa_id not in real_soas:
+                ops.append({"op": "remove_applicability", "ref": ref, "statement_id": current["id"], "applicable": current["applicable"]})
     for ref in sorted(set(ai_controls) - set(real_controls)):
         ops.append({"op": "extra_control", "ref": ref})
     return ops
@@ -93,6 +98,9 @@ def describe(op: dict, names: dict[str, str]) -> str:
         verb = "add" if kind.startswith("add") else "set"
         state = "applicable" if op["applicable"] else "not applicable"
         return f"{op['ref']}: {verb} scope decision '{state}'"
+    if kind == "remove_applicability":
+        state = "applicable" if op["applicable"] else "not applicable"
+        return f"{op['ref']}: remove scope decision '{state}' (the real framework no longer has it)"
     if kind == "extra_control":
         return f"{op['ref']}: only in the AI framework; delete it in the platform if the real framework dropped it"
     return str(op)
@@ -123,6 +131,12 @@ def apply(connector, snap: dict, real: dict, ai: dict | None, ops: list[dict], l
             connector.add_applicability(op["soa_id"], ai_ids[op["ref"]], op["applicable"], op["justification"] or None)
         elif kind == "update_applicability":
             connector.update_applicability(op["statement_id"], op["applicable"], op["justification"] or None)
+        elif kind == "remove_applicability":
+            try:
+                connector.remove_applicability(op["statement_id"])
+            except PrepError as e:
+                log(f"manual: {op['ref']}: delete the scope decision in the AI framework yourself ({e})")
+                continue
         elif kind == "extra_control":
             log(f"skipped: {op['ref']} exists only in the AI framework")
             continue

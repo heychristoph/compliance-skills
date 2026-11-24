@@ -105,6 +105,9 @@ class Connector:
     def update_applicability(self, statement_id: str, applicable: bool, justification: str | None) -> None:
         self._unsupported("change a scope decision")
 
+    def remove_applicability(self, statement_id: str) -> None:
+        self._unsupported("remove a scope decision")
+
     def create_audit(self, framework_id: str, name: str, firm: str, state: str) -> str:
         self._unsupported("create an audit record")
 

@@ -193,6 +193,32 @@ class RecordsConnector(unittest.TestCase):
         self.assertIn("plan does not match", out.stdout + out.stderr)
         self.assertNotEqual(run(sys.executable, SOC2, "sample", eng).returncode, 0, "same IDs, different records: retest")
 
+    def test_moved_as_of_date_needs_a_new_test(self):
+        eng = self.tmp / "moved"
+        run(sys.executable, SOC2, "init", eng, "--org", "Example Inc.", "--system", "Example", "--type", "1",
+            "--as-of", "2026-01-31", "--connector", "records", "--option", f"path={self.records}")
+        run(sys.executable, SOC2, "ingest", eng)
+        run(sys.executable, SOC2, "plan", eng)
+        plan = eng / "testplan.csv"
+        with plan.open() as f:
+            rows = list(csv.DictReader(f))
+        for row in rows:
+            row.update(frequency="continuous", nature="automated")
+        with plan.open("w", newline="") as f:
+            w = csv.DictWriter(f, fieldnames=list(rows[0]))
+            w.writeheader()
+            w.writerows(rows)
+        self.assertEqual(run(sys.executable, SOC2, "sample", eng).returncode, 0)
+        wp_path = eng / "workpapers" / f"{rows[0]['control_id']}.json"
+        wp = json.loads(wp_path.read_text())
+        wp["conclusion"] = "no-exceptions"
+        wp_path.write_text(json.dumps(wp))
+        cfg = eng / "engagement.yaml"
+        cfg.write_text(cfg.read_text().replace("2026-01-31", "2026-11-24"))
+        out = run(sys.executable, SOC2, "validate", eng)
+        self.assertIn("plan does not match", out.stdout + out.stderr)
+        self.assertNotEqual(run(sys.executable, SOC2, "sample", eng).returncode, 0, "results for another date are not kept")
+
     def test_iso_engagement_prefers_ai_audited_framework_and_builds_soa(self):
         eng = self.tmp / "iso"
         r = run(sys.executable, ISO, "init", eng, "--org", "Example Inc.", "--scope", "The Example platform.", "--type", "stage2",

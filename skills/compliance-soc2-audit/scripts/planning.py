@@ -78,6 +78,8 @@ def expected_plan(eng: Engagement, row: dict) -> dict:
                          start=start, end=end, point_in_time=point, population=population, sample_size=row["sample_size"])
     if planned["population"] and planned["population"]["source"] in eng.artifacts:
         planned["population"]["sha256"] = eng.artifacts[planned["population"]["source"]]["sha256"]
+    # Results hold for this audit type and these dates only: moving the as-of date or the period means testing again.
+    planned["window"] = {"audit_type": f"type{eng.report_type}", "start": start.isoformat(), "end": end.isoformat()}
     return planned
 
 def skeleton(control: dict, planned: dict) -> dict:

@@ -67,6 +67,21 @@ class CleanTemplate(unittest.TestCase):
         self.assertIn("SOC 2 Criteria, AI Audited", names)
 
 
+class ScopeDecisionRemoved(unittest.TestCase):
+    def test_decision_dropped_from_real_framework_leaves_the_copy(self):
+        r = Records()
+        r.edit("frameworks/soc-2.yaml", lambda f: f["controls"][0].update(applicable=False, justification="Out of scope."))
+        r.sync_ai_framework()
+        self.assertNotIn("AI_FRAMEWORK_DRIFT", r.codes("error"))
+        r.edit("frameworks/soc-2.yaml", lambda f: [f["controls"][0].pop(k) for k in ("applicable", "justification")])
+        self.assertIn("AI_FRAMEWORK_DRIFT", r.codes("error"), "a stale exclusion in the AI copy is drift")
+        r.sync_ai_framework()
+        self.assertNotIn("AI_FRAMEWORK_DRIFT", r.codes("error"))
+        ai = next(f for f in Path(r.dir / "records" / "frameworks").glob("*.yaml") if "ai-audited" in f.name)
+        cc61 = next(c for c in yaml.safe_load(ai.read_text())["controls"] if c["ref"] == "CC6.1")
+        self.assertNotIn("applicable", cc61)
+
+
 class PlantedDefects(unittest.TestCase):
     def setUp(self):
         self.r = Records()
