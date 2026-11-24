@@ -160,6 +160,9 @@ def _check_workpaper(eng: Engagement, cid: str, wp: dict, plan_row: dict | None)
         if not planned and concl == "conforming":
             errors.append(f"{where}: the sample is empty (no events to examine), so operation was not audited; "
                           "conclude 'not-audited' with a scope_limitation saying why")
+        if wp["items"] and concl == "conforming" and not any(v == "pass" for i in wp["items"] for v in i["results"].values()):
+            errors.append(f"{where}: no sampled item passes an attribute (all n/a), so nothing was tested; "
+                          "conclude 'not-audited' with a scope_limitation saying why")
         tested = [i["id"] for i in wp["items"]]
         if sorted(tested) != sorted(planned):
             missing, extra = sorted(set(planned) - set(tested)), sorted(set(tested) - set(planned))

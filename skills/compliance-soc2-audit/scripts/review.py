@@ -139,6 +139,9 @@ def _check_workpaper(eng: Engagement, cid: str, wp: dict, plan_row: dict | None)
             what = "implementation as of the examination date" if eng.report_type == 1 else "operating effectiveness"
             errors.append(f"{where}: the sample is empty (no events to examine), so {what} was not tested; "
                           "conclude 'not-tested' with a scope_limitation saying why")
+        if wp["items"] and concl == "no-exceptions" and not any(v == "pass" for i in wp["items"] for v in i["results"].values()):
+            errors.append(f"{where}: no sampled item passes an attribute (all n/a), so nothing was tested; "
+                          "conclude 'not-tested' with a scope_limitation saying why")
         tested = [i["id"] for i in wp["items"]]
         if sorted(tested) != sorted(planned):
             missing, extra = sorted(set(planned) - set(tested)), sorted(set(tested) - set(planned))
