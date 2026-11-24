@@ -12,7 +12,7 @@ import random
 from collections import defaultdict
 
 from core import AuditError, Engagement, dump_json, dump_yaml, load_json, load_yaml, parse_date, read_csv, schema_errors, sha256_file
-from planning import expected_plan
+from planning import _validated_plan, expected_plan
 import privacy
 
 DONE = ("no-exceptions", "exceptions", "design-deficiency", "not-tested")
@@ -25,6 +25,11 @@ def validate(eng: Engagement, final: bool = False) -> tuple[list[str], list[str]
     if not plan_rows:
         return ["No testplan.csv. Run `soc2.py plan` and `soc2.py sample` first."], []
     workpapers = eng.load_workpapers()
+    # The rules `sample` enforces (who may leave a unit out, frequencies, populations) hold at validation and sign-off too.
+    try:
+        _validated_plan(eng)
+    except AuditError as e:
+        errors += [line.strip() for line in str(e).splitlines()[1:]] or [str(e)]
     current = {c["id"] for c in eng.controls}
     for cid in sorted(set(plan_rows) - current):
         errors.append(f"testplan.csv: {cid} is no longer in the bundle's control matrix; re-run `soc2.py plan` and `soc2.py sample`")

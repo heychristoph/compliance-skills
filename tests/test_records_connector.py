@@ -219,6 +219,33 @@ class RecordsConnector(unittest.TestCase):
         self.assertIn("plan does not match", out.stdout + out.stderr)
         self.assertNotEqual(run(sys.executable, SOC2, "sample", eng).returncode, 0, "results for another date are not kept")
 
+    def test_full_audit_cannot_drop_a_unit_after_sampling(self):
+        eng = self.tmp / "dropped"
+        run(sys.executable, ISO, "init", eng, "--org", "Example Inc.", "--scope", "The Example platform.", "--type", "stage2",
+            "--start", "2026-01-01", "--end", "2026-06-30", "--connector", "records", "--option", f"path={self.records}")
+        run(sys.executable, ISO, "ingest", eng)
+        run(sys.executable, ISO, "plan", eng)
+        plan = eng / "testplan.csv"
+        with plan.open() as f:
+            rows = list(csv.DictReader(f))
+        for row in rows:
+            row.update(frequency="annual", nature="manual")
+        with plan.open("w", newline="") as f:
+            w = csv.DictWriter(f, fieldnames=list(rows[0]))
+            w.writeheader()
+            w.writerows(rows)
+        self.assertEqual(run(sys.executable, ISO, "sample", eng).returncode, 0)
+        rows[0]["include"] = "no"
+        with plan.open("w", newline="") as f:
+            w = csv.DictWriter(f, fieldnames=list(rows[0]))
+            w.writeheader()
+            w.writerows(rows)
+        for wp in (eng / "workpapers").glob("*.json"):
+            if json.loads(wp.read_text())["control_id"] == rows[0]["control_id"]:
+                wp.unlink()
+        out = run(sys.executable, ISO, "validate", eng)
+        self.assertIn("only a partial audit", out.stdout + out.stderr)
+
     def test_iso_engagement_prefers_ai_audited_framework_and_builds_soa(self):
         eng = self.tmp / "iso"
         r = run(sys.executable, ISO, "init", eng, "--org", "Example Inc.", "--scope", "The Example platform.", "--type", "stage2",
