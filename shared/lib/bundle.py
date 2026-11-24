@@ -17,7 +17,7 @@ import urllib.error
 import urllib.request
 from pathlib import Path
 
-from .io import AuditError, dump_json, dump_yaml, now_utc, schema_errors, sha256_file, write_csv
+from .io import AuditError, dump_json, dump_yaml, now_utc, schema_errors, sha256_file, write_csv, urlopen
 
 CONTROL_COLUMNS = ["id", "title", "description", "criteria", "owner", "frequency", "nature", "population", "source_ref"]
 SOA_COLUMNS = ["control", "applicable", "justification", "status", "reference"]
@@ -76,7 +76,7 @@ class BundleWriter:
         if data is not None:
             req.add_header("Content-Type", "application/json")
         try:
-            with urllib.request.urlopen(req, timeout=timeout) as resp:
+            with urlopen(req, timeout=timeout) as resp:
                 raw = resp.read()
                 return json.loads(raw) if raw else None, dict(resp.headers)
         except urllib.error.HTTPError as e:
@@ -88,7 +88,7 @@ class BundleWriter:
         req = urllib.request.Request(url, headers=headers or {})
         dest.parent.mkdir(parents=True, exist_ok=True)
         try:
-            with urllib.request.urlopen(req, timeout=timeout) as resp, open(dest, "wb") as f:
+            with urlopen(req, timeout=timeout) as resp, open(dest, "wb") as f:
                 shutil.copyfileobj(resp, f)
         except urllib.error.HTTPError as e:
             raise AuditError(f"Download of {url} failed with HTTP {e.code}") from e

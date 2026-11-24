@@ -20,7 +20,7 @@ import urllib.error
 import urllib.request
 from urllib.parse import quote, urlparse
 
-from .io import AuditError, now_utc
+from .io import AuditError, now_utc, urlopen
 
 TIMEOUT = 20
 
@@ -98,7 +98,7 @@ def _count(content_range: str | None) -> int | None:
 def _request(method: str, url: str, headers: dict, data: bytes | None = None, want_body: bool = False):
     req = urllib.request.Request(url, data=data, method=method, headers=headers)
     try:
-        with urllib.request.urlopen(req, timeout=TIMEOUT) as resp:
+        with urlopen(req, timeout=TIMEOUT) as resp:
             if want_body:
                 raw = resp.read()
                 try:

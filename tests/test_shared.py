@@ -320,3 +320,38 @@ class PrivacyFolding(unittest.TestCase):
         self.assertTrue(privacy.scan("José Núñez signed.", names), "decomposed accents")
         self.assertFalse(privacy.scan("Annabel Grossmann approved it.", names))
         self.assertNotIn("Gross", privacy.redact("Reviewed by ANNA GROSS.", names))
+
+
+class Origins(unittest.TestCase):
+    def test_credentials_only_go_to_the_same_origin(self):
+        import urllib.request
+        from lib.io import _CredentialSafeRedirect, same_origin
+
+        base = "https://us.probo.com"
+        self.assertTrue(same_origin("https://us.probo.com/api/file", base))
+        self.assertTrue(same_origin("https://US.probo.com:443/x", base))
+        for other in ("https://us.probo.com.attacker.example/file", "https://us.probo.com:8443/f", "http://us.probo.com/f",
+                      "https://evil.example/?u=https://us.probo.com", "not a url"):
+            self.assertFalse(same_origin(other, base), other)
+        req = urllib.request.Request("https://us.probo.com/f", headers={"Authorization": "Bearer t", "Accept": "*/*"})
+        moved = _CredentialSafeRedirect().redirect_request(req, None, 302, "Found", {}, "https://cdn.example/f")
+        self.assertNotIn("Authorization", moved.headers)
+        same = _CredentialSafeRedirect().redirect_request(req, None, 302, "Found", {}, "https://us.probo.com/g")
+        self.assertIn("Authorization", same.headers)
+
+
+class CodescanTracked(unittest.TestCase):
+    def test_non_ascii_tracked_files_are_scanned(self):
+        from lib.codescan import _git_tracked
+
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            (repo / "src").mkdir()
+            (repo / "src" / "über.ts").write_text("x")
+            subprocess.run(["git", "-C", str(repo), "init", "-q"], check=True)
+            subprocess.run(["git", "-C", str(repo), "add", "."], check=True)
+            self.assertEqual({__import__("unicodedata").normalize("NFC", p) for p in _git_tracked(repo)}, {"src/über.ts"})
+            from lib.codescan import scan
+
+            (repo / "src" / "über.ts").write_text('const k = "sk_live_' + "a" * 24 + '";\n')
+            self.assertEqual(scan(repo)["files_scanned"], 1)

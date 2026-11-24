@@ -39,7 +39,7 @@ import urllib.request
 
 from ..bundle import BundleWriter, slug
 from ..sampling import event_window
-from ..io import AuditError, parse_date
+from ..io import AuditError, parse_date, same_origin, urlopen
 
 PAGE_SIZE = 100  # Largest page the API accepts; keeps request count low for big orgs.
 
@@ -102,7 +102,7 @@ class ProboMCP:
             headers["Mcp-Session-Id"] = self.session_id
         req = urllib.request.Request(self.url, data=json.dumps(body).encode(), headers=headers, method="POST")
         try:
-            with urllib.request.urlopen(req, timeout=60) as resp:
+            with urlopen(req, timeout=60) as resp:
                 self.session_id = resp.headers.get("Mcp-Session-Id") or self.session_id
                 raw = resp.read().decode()
                 ctype = resp.headers.get("Content-Type", "")
@@ -134,7 +134,7 @@ def evidence_file(base: str, token: str, evidence_id: str) -> dict | None:
         method="POST",
     )
     try:
-        with urllib.request.urlopen(req, timeout=60) as resp:
+        with urlopen(req, timeout=60) as resp:
             payload = json.loads(resp.read().decode())
     except (urllib.error.URLError, json.JSONDecodeError, TimeoutError):
         return None
@@ -356,7 +356,7 @@ def pull(writer: BundleWriter, options: dict, engagement) -> None:
                 file_url = urllib.parse.urljoin(base + "/", file_url)
             if not filename:
                 filename = os.path.basename(urllib.parse.urlparse(file_url).path) or f"{slug(title)}.bin"
-            headers = {"Authorization": f"Bearer {token}"} if file_url.startswith(base) else None
+            headers = {"Authorization": f"Bearer {token}"} if same_origin(file_url, base) else None
             writer.add_download(file_url, filename, title=title, headers=headers, controls=[cid], date=date, obtained="direct", source_ref=ref)
 
     # Task comments are part of the control record. A screenshot without the comment is incomplete.
@@ -461,7 +461,7 @@ def pull(writer: BundleWriter, options: dict, engagement) -> None:
                 if not urllib.parse.urlparse(url).scheme:
                     url = urllib.parse.urljoin(base + "/", url)
                 name = audit.get("report_filename") or f"{slug(audit.get('name') or audit['id'])}-report.pdf"
-                headers = {"Authorization": f"Bearer {token}"} if url.startswith(base) else None
+                headers = {"Authorization": f"Bearer {token}"} if same_origin(url, base) else None
                 writer.add_download(url, name, title=f"Audit report: {audit.get('name') or audit['id']}", headers=headers, requirements=hint("audits"),
                                     date=((audit.get("audit_dates") or {}).get("end") or "")[:10] or None, obtained="direct", source_ref=f"probo:audit/{audit['id']}")
 

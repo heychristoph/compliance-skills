@@ -6,6 +6,8 @@ import csv
 import datetime as dt
 import hashlib
 import json
+import urllib.parse
+import urllib.request
 from pathlib import Path
 
 import yaml
@@ -154,3 +156,41 @@ def safe_name(control_id: str) -> str:
 
 def truthy(value) -> bool:
     return str(value).strip().lower() in ("yes", "y", "true", "1", "applicable", "included")
+
+
+# --- HTTP ---------------------------------------------------------------------
+
+CREDENTIAL_HEADERS = {"authorization", "cookie", "apikey", "x-api-key", "proxy-authorization"}
+
+
+def same_origin(a: str, b: str) -> bool:
+    """Same scheme, host and effective port. A URL that merely starts with the base (`https://us.probo.com.evil`)
+    or uses another port is a different origin, and never gets the base's credentials."""
+    pa, pb = urllib.parse.urlsplit(a), urllib.parse.urlsplit(b)
+    default = {"https": 443, "http": 80}
+    try:
+        ports = (pa.port or default.get(pa.scheme.lower()), pb.port or default.get(pb.scheme.lower()))
+    except ValueError:
+        return False
+    return (pa.scheme.lower(), (pa.hostname or "").lower(), ports[0]) == (pb.scheme.lower(), (pb.hostname or "").lower(), ports[1]) \
+        and bool(pa.hostname)
+
+
+class _CredentialSafeRedirect(urllib.request.HTTPRedirectHandler):
+    """Follow redirects, but never carry credentials to another origin (urllib forwards them by default)."""
+
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        new = super().redirect_request(req, fp, code, msg, headers, newurl)
+        if new is not None and not same_origin(req.full_url, newurl):
+            for store in (new.headers, new.unredirected_hdrs):
+                for k in [k for k in store if k.lower() in CREDENTIAL_HEADERS]:
+                    del store[k]
+        return new
+
+
+OPENER = urllib.request.build_opener(_CredentialSafeRedirect())
+
+
+def urlopen(req, timeout: int):
+    """urllib.request.urlopen, with credentials dropped on cross-origin redirects."""
+    return OPENER.open(req, timeout=timeout)

@@ -19,6 +19,7 @@ from __future__ import annotations
 import base64
 import json
 import re
+import unicodedata
 from pathlib import Path
 
 from .capture import git_read
@@ -79,7 +80,9 @@ def scan(repo: Path) -> dict:
     buckets: set[str] = set()
     supabase = {"url": None, "anon_key_in": None}
     tracked = _git_tracked(repo)
-    files = [p for p in _files(repo) if tracked is None or p.relative_to(repo).as_posix() in tracked]
+    # Compare in one Unicode form: macOS file names are decomposed, git reports them composed.
+    tracked = {unicodedata.normalize("NFC", t) for t in tracked} if tracked is not None else None
+    files = [p for p in _files(repo) if tracked is None or unicodedata.normalize("NFC", p.relative_to(repo).as_posix()) in tracked]
     for path in files:
         rel = path.relative_to(repo).as_posix()
         if _is_env_file(path):
@@ -152,8 +155,8 @@ def _files(repo: Path):
 
 def _git_tracked(repo: Path) -> set[str] | None:
     """Files git tracks, so build output and local-only files are not scanned. None outside git."""
-    out = git_read(repo, "ls-files")
-    return set(out.splitlines()) if out is not None else None
+    out = git_read(repo, "ls-files", "-z")  # NUL-separated: no quoting of non-ASCII or special file names
+    return {p for p in out.split("\0") if p} if out is not None else None
 
 
 def _is_env_file(path: Path) -> bool:
