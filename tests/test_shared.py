@@ -366,3 +366,18 @@ class PopulationIds(unittest.TestCase):
             w = BundleWriter(Path(tmp) / "b", "test")
             with self.assertRaises(AuditError):
                 w.add_population("hires", [{"id": "H-1", "date": "2026-01-02"}, {"id": "H-1", "date": "2026-01-03"}], title="Hires")
+
+
+
+class PrivacyPopulations(unittest.TestCase):
+    def test_population_csv_with_full_name_is_harvested(self):
+        from lib import privacy
+
+        with tempfile.TemporaryDirectory() as tmp:
+            bundle = Path(tmp)
+            (bundle / "populations").mkdir()
+            (bundle / "populations" / "hires.csv").write_text("id,date,full_name,email\nH-1,2026-02-01,José García,jose@example.com\n"
+                                                               "H-2,2026-03-01,Li Wu,li@example.com\n")
+            names = privacy.forbidden(bundle, "system.yaml", set())
+            self.assertTrue(privacy.scan("José García was onboarded.", names))
+            self.assertTrue(privacy.scan("Li Wu was onboarded.", names))

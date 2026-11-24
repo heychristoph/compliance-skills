@@ -105,8 +105,9 @@ def forbidden(bundle: Path, description_file: str, allowed: set[str]) -> set[str
         if path.parent.name == "populations" and path.stem in ("hires", "terminations"):
             for row in csv.DictReader(text.splitlines()):
                 _add_named(row.get("name") or "", found)
-        elif path.suffix.lower() == ".csv":
-            # Any CSV export (an HR list captured as an export): the same person fields as JSON and YAML.
+        if path.suffix.lower() == ".csv":
+            # Every CSV, populations included (an HR list with full_name, first_name/last_name, email, ...):
+            # the same person fields as JSON and YAML.
             try:
                 _walk(list(csv.DictReader(text.splitlines())), found)
             except csv.Error:
