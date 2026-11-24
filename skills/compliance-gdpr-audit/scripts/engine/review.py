@@ -128,6 +128,10 @@ def _check_workpaper(eng: Engagement, cid: str, wp: dict, plan_row: dict | None)
         errors.append(f"{where}: design.rationale is empty")
     if not design["evidence"]:
         errors.append(f"{where}: design.evidence must cite at least one artifact (policy, procedure, record or configuration)")
+    elif design["effective"] is True and concl in ("conforming", "deviations") and all(
+            eng.artifacts.get(e, {}).get("obtained") == "inquiry" for e in design["evidence"]):
+        errors.append(f"{where}: design.evidence cites only the organization's answers; an effective design needs the "
+                      "documented procedure, configuration or record that shows it")
     errors += cite(design["evidence"], "design.evidence")
     if design["effective"] is False and concl != "design-gap":
         errors.append(f"{where}: design.effective is false, so conclusion must be 'design-gap'")

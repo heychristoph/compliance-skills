@@ -9,6 +9,8 @@ for every included unit.
 
 from __future__ import annotations
 
+from collections import Counter
+
 from common import sampling
 from common.sampling import FREQUENCIES, NATURES
 from core import CLI, PROFILE, REQ_PREFIX, AuditError, Engagement, dump_json, load_json, load_requirements, read_csv, write_csv
@@ -155,7 +157,7 @@ def _validated_plan(eng: Engagement) -> tuple[list[dict], list[str]]:
             errors.append(f"{where}: population {r['population']} is not in the bundle")
         elif r.get("population"):
             ids = [x["id"] for x in eng.population(r["population"])]
-            dupes = sorted({i for i in ids if ids.count(i) > 1})
+            dupes = sorted(i for i, n in Counter(ids).items() if n > 1)
             if dupes:
                 errors.append(f"{where}: population {r['population']} repeats item IDs {dupes[:5]}; each event must appear once")
         if r.get("sample_size"):
