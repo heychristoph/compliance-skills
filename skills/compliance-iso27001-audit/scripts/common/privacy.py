@@ -32,7 +32,11 @@ INTRODUCED = re.compile(
 )
 BY_NAME = re.compile(r"\bby ([A-Z][a-z]{2,} [A-Z][a-z]{2,})\b")
 # JSON keys whose value is a person's name (platform exports, git history).
-PERSON_KEYS = {"full_name", "employee", "candidate", "requester", "author"}
+# Field names compared without case or separators ("Full Name", "fullName", "full_name" are one key).
+PERSON_KEYS = {"fullname", "employee", "employeename", "candidate", "requester", "author", "displayname", "personname", "contactname"}
+GIVEN_KEYS = {"firstname", "givenname", "forename", "first", "vorname"}
+FAMILY_KEYS = {"lastname", "familyname", "surname", "last", "nachname"}
+EMAIL_KEYS = {"email", "emailaddress", "mail", "workemail"}
 GENERIC_LOCAL = {"security", "support", "admin", "info", "noreply", "no-reply", "hello", "contact", "privacy", "legal", "sales", "billing", "postmaster"}
 TEXT_SUFFIXES = {".md", ".txt", ".csv", ".json", ".yaml", ".yml"}
 
@@ -197,14 +201,24 @@ def _harvest_prose(text: str, found: set[str]) -> None:
         found.add(match.group(1))
 
 
+def _key(key) -> str:
+    return re.sub(r"[^a-z]", "", str(key).lower())
+
+
 def _walk(obj, found: set[str]) -> None:
     if isinstance(obj, dict):
+        fields = {_key(k): v for k, v in obj.items() if isinstance(v, str)}
         # A people register (records connector, HR export): a `name` next to an email address is a person,
         # whether or not they joined or left in the period.
-        if isinstance(obj.get("name"), str) and any(isinstance(obj.get(k), str) and "@" in obj[k] for k in ("email", "email_address", "mail")):
-            _add_named(obj["name"], found)
+        if fields.get("name") and any("@" in fields.get(k, "") for k in EMAIL_KEYS):
+            _add_named(fields["name"], found)
+        # Given and family name in separate fields (first_name, last_name): the person is both together.
+        given = next((fields[k] for k in GIVEN_KEYS if fields.get(k)), "")
+        family = next((fields[k] for k in FAMILY_KEYS if fields.get(k)), "")
+        if given.strip() and family.strip():
+            _add_named(f"{given} {family}", found)
         for key, value in obj.items():
-            if key in PERSON_KEYS and isinstance(value, str):
+            if _key(key) in PERSON_KEYS and isinstance(value, str):
                 _add_named(value, found)
             else:
                 _walk(value, found)

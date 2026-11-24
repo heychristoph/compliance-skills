@@ -381,3 +381,17 @@ class PrivacyPopulations(unittest.TestCase):
             names = privacy.forbidden(bundle, "system.yaml", set())
             self.assertTrue(privacy.scan("José García was onboarded.", names))
             self.assertTrue(privacy.scan("Li Wu was onboarded.", names))
+
+
+    def test_separate_first_and_last_name_fields_are_combined(self):
+        from lib import privacy
+
+        with tempfile.TemporaryDirectory() as tmp:
+            bundle = Path(tmp)
+            (bundle / "evidence").mkdir()
+            (bundle / "evidence" / "hr.csv").write_text("first_name,last_name,email\nJosé,García,jose@example.com\nLi,Wu,li@example.com\n")
+            (bundle / "evidence" / "hr.json").write_text('[{"firstName": "Dana", "lastName": "van Dijk"}]')
+            (bundle / "evidence" / "hr.yaml").write_text("- Given Name: Mara\n  Surname: Lindqvist\n")
+            names = privacy.forbidden(bundle, "system.yaml", set())
+            for who in ("José García", "Li Wu", "Dana van Dijk", "Mara Lindqvist"):
+                self.assertTrue(privacy.scan(f"{who} approved it.", names), who)
