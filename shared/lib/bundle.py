@@ -22,6 +22,14 @@ from .io import AuditError, dump_json, dump_yaml, now_utc, schema_errors, sha256
 CONTROL_COLUMNS = ["id", "title", "description", "criteria", "owner", "frequency", "nature", "population", "source_ref"]
 SOA_COLUMNS = ["control", "applicable", "justification", "status", "reference"]
 
+def safe_filename(name: str, fallback: str = "file") -> str:
+    """A file name a source supplied, reduced to a plain basename: no directories, no traversal,
+    no control characters. Evidence from Vanta, Probo or a folder can never write outside the bundle."""
+    base = re.sub(r"[\x00-\x1f\x7f]", "", str(name or "")).replace("\\", "/").split("/")[-1].strip()
+    base = base.lstrip(".") or fallback
+    return base[:150]
+
+
 def slug(text: str) -> str:
     return re.sub(r"[^a-z0-9]+", "-", text.lower()).strip("-")[:60] or "item"
 
@@ -164,7 +172,7 @@ class BundleWriter:
                  obtained: str = "direct", source_ref: str = "", filename: str | None = None, capture: dict | None = None) -> str:
         """Copy a file into bundle/evidence/ and register it. Returns the artifact ID."""
         artifact_id = self._new_id(source_ref, title, sha256_file(Path(src)) if self._previous else None)
-        dest = self.dir / "evidence" / f"{artifact_id}_{filename or Path(src).name}"
+        dest = self._evidence_path(artifact_id, filename or Path(src).name)
         dest.parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(src, dest)
         self._register(dest, artifact_id, kind=kind, title=title, controls=controls, requirements=requirements, date=date,
@@ -175,12 +183,19 @@ class BundleWriter:
                   date: str | None = None, obtained: str = "direct", source_ref: str = "") -> str:
         data = content.encode() if isinstance(content, str) else content
         artifact_id = self._new_id(source_ref, title, hashlib.sha256(data).hexdigest() if self._previous else None)
-        dest = self.dir / "evidence" / f"{artifact_id}_{filename}"
+        dest = self._evidence_path(artifact_id, filename)
         dest.parent.mkdir(parents=True, exist_ok=True)
         dest.write_bytes(data)
         self._register(dest, artifact_id, kind=kind, title=title, controls=controls, requirements=requirements, date=date,
                        obtained=obtained, source_ref=source_ref)
         return artifact_id
+
+    def _evidence_path(self, artifact_id: str, filename: str) -> Path:
+        evidence = (self.dir / "evidence").resolve()
+        dest = evidence / f"{artifact_id}_{safe_filename(filename)}"
+        if dest.resolve().parent != evidence:
+            raise AuditError(f"evidence file name {filename!r} would leave the bundle")
+        return self.dir / "evidence" / dest.name
 
     def add_download(self, url: str, filename: str, *, title: str, headers: dict | None = None, **meta) -> str | None:
         """Download a file into the bundle. On failure, records a warning and returns None."""
@@ -192,12 +207,12 @@ class BundleWriter:
                 self.warn(f"could not download '{title}': {e}")
                 return None
             artifact_id = self._new_id(meta.get("source_ref") or "", title, sha256_file(tmp))
-            dest = self.dir / "evidence" / f"{artifact_id}_{filename}"
+            dest = self._evidence_path(artifact_id, filename)
             tmp.rename(dest)
             self._register(dest, artifact_id, title=title, **{"kind": "evidence", **meta})
             return artifact_id
         artifact_id = self._new_id()
-        dest = self.dir / "evidence" / f"{artifact_id}_{filename}"
+        dest = self._evidence_path(artifact_id, filename)
         try:
             self.http_download(url, dest, headers=headers)
         except AuditError as e:
@@ -241,6 +256,9 @@ class BundleWriter:
                   obtained: str = "direct", source_ref: str = "", media_type: str | None = None, capture: dict | None = None) -> None:
         if any(a["id"] == artifact_id for a in self.artifacts):
             raise AuditError(f"Duplicate artifact ID {artifact_id}; population names must be unique.")
+        root = self.dir.resolve()
+        if root not in path.resolve().parents:
+            raise AuditError(f"{path} is outside the bundle")
         entry = {
             "id": artifact_id,
             "path": path.relative_to(self.dir).as_posix(),

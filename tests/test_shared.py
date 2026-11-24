@@ -289,3 +289,22 @@ class QaBinding(unittest.TestCase):
             self.assertEqual(before, qa_binding(wp, {**arts, "EV-0009": {"sha256": "changed"}}), "uncited artifacts do not matter")
             for changed in ("PO-hires", "EV-0001", "EV-0002"):
                 self.assertNotEqual(before, qa_binding(wp, {**arts, changed: {"sha256": "changed"}}), changed)
+
+
+class BundleFilenames(unittest.TestCase):
+    def test_source_file_names_cannot_leave_the_bundle(self):
+        from lib.bundle import BundleWriter, safe_filename
+
+        for bad, want in (("x/../../../engagement.yaml", "engagement.yaml"), ("..", "file"), ("..\\..\\a.txt", "a.txt"),
+                          (".env", "env"), ("ok name.pdf", "ok name.pdf")):
+            self.assertEqual(safe_filename(bad), want)
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "engagement.yaml").write_text("keep")
+            w = BundleWriter(root / "bundle.staging", "test")
+            w.add_bytes(b"evil", "x/../../../engagement.yaml", title="t")
+            w.http_download = lambda url, dest, headers=None: Path(dest).write_bytes(b"evil")
+            w.add_download("https://example.invalid/f", "../../engagement.yaml", title="d")
+            self.assertEqual((root / "engagement.yaml").read_text(), "keep")
+            self.assertTrue(all((root / "bundle.staging" / a["path"]).resolve().parent == (root / "bundle.staging" / "evidence").resolve()
+                                for a in w.artifacts))
