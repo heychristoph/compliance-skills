@@ -183,6 +183,10 @@ class Platform(Connector):
         raise PrepError(f"'{measure['name']}' has {len(docs)} evidence requests in Vanta; choose one with --document "
                         f"({', '.join(docs) or 'none: add one in Vanta first'}).")
 
+    def listed_uploads(self, target: str) -> set[str] | None:
+        """Vanta's evidence count counts documents, not files: the document's own upload list is the check."""
+        return {u.get("id") for u in self.pages(f"/documents/{target}/uploads")}
+
     def upload_evidence(self, measure_id: str, path: Path) -> str:
         """measure_id is the Vanta document (evidence request) the file belongs to; see evidence_target."""
         out = http_multipart(f"{self.api}/documents/{measure_id}/uploads", {"description": path.name}, {"file": path}, self.headers)

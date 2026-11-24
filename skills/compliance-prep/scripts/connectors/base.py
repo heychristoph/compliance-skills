@@ -117,5 +117,10 @@ class Connector:
             raise PrepError(f"The {self.name} connector attaches evidence to the measure; drop --document.")
         return measure["id"]
 
+    def listed_uploads(self, target: str) -> set[str] | None:
+        """IDs of the files on an upload target, or None when the platform cannot list them
+        (then `prep.py evidence` compares the measure's evidence count before and after)."""
+        return None
+
     def upload_evidence(self, measure_id: str, path: Path) -> str:
         self._unsupported("upload evidence")
