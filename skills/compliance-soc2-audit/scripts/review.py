@@ -135,8 +135,9 @@ def _check_workpaper(eng: Engagement, cid: str, wp: dict, plan_row: dict | None)
         if not wp["attributes"]:
             errors.append(f"{where}: attributes is empty; define what must be true for each sampled item")
         planned = wp["plan"]["sample"]
-        if not planned and eng.report_type != 1 and concl == "no-exceptions":
-            errors.append(f"{where}: the sample is empty (no events in the period), so operating effectiveness was not tested; "
+        if not planned and concl == "no-exceptions":
+            what = "implementation as of the examination date" if eng.report_type == 1 else "operating effectiveness"
+            errors.append(f"{where}: the sample is empty (no events to examine), so {what} was not tested; "
                           "conclude 'not-tested' with a scope_limitation saying why")
         tested = [i["id"] for i in wp["items"]]
         if sorted(tested) != sorted(planned):

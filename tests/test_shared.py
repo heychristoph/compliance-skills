@@ -308,3 +308,15 @@ class BundleFilenames(unittest.TestCase):
             self.assertEqual((root / "engagement.yaml").read_text(), "keep")
             self.assertTrue(all((root / "bundle.staging" / a["path"]).resolve().parent == (root / "bundle.staging" / "evidence").resolve()
                                 for a in w.artifacts))
+
+
+class PrivacyFolding(unittest.TestCase):
+    def test_names_match_across_case_folding_and_normalization(self):
+        from lib import privacy
+
+        names = {"Anna Groß", "José Núñez"}
+        self.assertTrue(privacy.scan("Anna Groß approved the policy.", names))
+        self.assertTrue(privacy.scan("ANNA GROSS approved it.", names))
+        self.assertTrue(privacy.scan("José Núñez signed.", names), "decomposed accents")
+        self.assertFalse(privacy.scan("Annabel Grossmann approved it.", names))
+        self.assertNotIn("Gross", privacy.redact("Reviewed by ANNA GROSS.", names))

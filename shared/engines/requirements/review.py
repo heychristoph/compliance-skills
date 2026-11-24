@@ -157,8 +157,8 @@ def _check_workpaper(eng: Engagement, cid: str, wp: dict, plan_row: dict | None)
         if not wp["attributes"]:
             errors.append(f"{where}: attributes is empty; define what must be true for each sampled item")
         planned = wp["plan"]["sample"]
-        if not planned and not eng.point_in_time and concl == "conforming":
-            errors.append(f"{where}: the sample is empty (no events in the records period), so operation was not audited; "
+        if not planned and concl == "conforming":
+            errors.append(f"{where}: the sample is empty (no events to examine), so operation was not audited; "
                           "conclude 'not-audited' with a scope_limitation saying why")
         tested = [i["id"] for i in wp["items"]]
         if sorted(tested) != sorted(planned):

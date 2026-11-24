@@ -13,6 +13,7 @@ from __future__ import annotations
 import csv
 import json
 import re
+import unicodedata
 from pathlib import Path
 
 from .io import load_yaml
@@ -112,11 +113,11 @@ def forbidden(bundle: Path, description_file: str, allowed: set[str]) -> set[str
             except csv.Error:
                 pass
     allowed = {n for n in allowed if n}
-    exact = {a.casefold() for a in allowed}
-    squashed = {re.sub(r"[^a-z]", "", a.casefold()) for a in allowed}  # "maralindqvist" for an email local part
+    exact = {fold(a) for a in allowed}
+    squashed = {re.sub(r"[^a-z]", "", fold(a)) for a in allowed}  # "maralindqvist" for an email local part
     kept = set()
     for name in found:
-        key = name.casefold()
+        key = fold(name)
         # Only the allowed identities themselves are exempt (the named representative, the organizations and
         # vendors). Sharing a first name or a word with one of them exempts nobody.
         if key in exact or (" " not in key and key in squashed):
@@ -128,6 +129,16 @@ def forbidden(bundle: Path, description_file: str, allowed: set[str]) -> set[str
     return kept
 
 
+def fold(text: str) -> str:
+    """Unicode-normalized, case-folded text, so 'Groß', 'GROSS' and 'gross' (or a decomposed 'é') compare equal."""
+    return unicodedata.normalize("NFKC", unicodedata.normalize("NFKC", text).casefold())
+
+
+def _named(name: str, text: str) -> bool:
+    """Whether a person's name appears in the text as whole words, after folding both sides."""
+    return re.search(rf"(?<!\w){re.escape(fold(name))}(?!\w)", fold(text)) is not None
+
+
 def redact(text: str, names: set[str]) -> str:
     """Replace a leaked email, phone number or person in a report index entry."""
     if not text:
@@ -136,6 +147,8 @@ def redact(text: str, names: set[str]) -> str:
     cleaned = PHONE.sub("[redacted]", cleaned)
     for name in sorted(names, key=len, reverse=True):
         cleaned = re.sub(rf"\b{re.escape(name)}\b", "[redacted]", cleaned, flags=re.I)
+        if _named(name, cleaned):  # a spelling the plain match missed ('Gross' for 'Groß'): drop the whole entry
+            return "[redacted]"
     return cleaned
 
 
@@ -145,9 +158,8 @@ def leaks(text: str, names: set[str]) -> list[str]:
         found.append(f"contains the email address {match.group(0)}.")
     for match in PHONE.finditer(text):
         found.append(f"contains the phone number {match.group(0)}.")
-    low = text.casefold()
     for name in sorted(names):
-        if re.search(rf"\b{re.escape(name)}\b", low, flags=re.I):
+        if _named(name, text):
             found.append(f"names {name}.")
     return found
 
