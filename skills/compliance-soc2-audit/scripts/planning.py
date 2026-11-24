@@ -124,10 +124,15 @@ def _validated_plan(eng: Engagement) -> list[dict]:
         if r.get("population") and r["population"] not in eng.artifacts:
             errors.append(f"{where}: population {r['population']} is not in the bundle")
         elif r.get("population"):
-            ids = [x["id"] for x in eng.population(r["population"])]
+            pop_rows = eng.population(r["population"])
+            ids = [x["id"] for x in pop_rows]
             dupes = sorted(i for i, n in Counter(ids).items() if n > 1)
             if dupes:
                 errors.append(f"{where}: population {r['population']} repeats item IDs {dupes[:5]}; each event must appear once")
+            bad = [x["id"] for x in pop_rows if sampling.parse_date(x.get("date")) is None]
+            if bad:
+                errors.append(f"{where}: population {r['population']} has items without a valid date {bad[:5]}; correct them "
+                              "(YYYY-MM-DD) so no event drops out of the sample unseen")
         if r.get("sample_size"):
             if not r["sample_size"].isdigit():
                 errors.append(f"{where}: sample_size must be a whole number or empty")

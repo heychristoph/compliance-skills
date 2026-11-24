@@ -17,7 +17,7 @@ import urllib.error
 import urllib.request
 from pathlib import Path
 
-from .io import AuditError, dump_json, dump_yaml, now_utc, schema_errors, sha256_file, write_csv, urlopen
+from .io import AuditError, dump_json, dump_yaml, now_utc, parse_date, schema_errors, sha256_file, write_csv, urlopen
 
 CONTROL_COLUMNS = ["id", "title", "description", "criteria", "owner", "frequency", "nature", "population", "source_ref"]
 SOA_COLUMNS = ["control", "applicable", "justification", "status", "reference"]
@@ -160,6 +160,9 @@ class BundleWriter:
         for i, row in enumerate(rows):
             if not row.get("id") or not row.get("date"):
                 raise AuditError(f"Population '{name}' row {i + 1} needs non-empty 'id' and 'date' columns.")
+            if parse_date(row["date"]) is None:
+                raise AuditError(f"Population '{name}' row {i + 1} ({row['id']}) has an invalid date {row['date']!r}; "
+                                 "use YYYY-MM-DD so the event is neither lost nor misplaced in the period.")
             if str(row["id"]) in seen:
                 raise AuditError(f"Population '{name}' row {i + 1} repeats item ID {row['id']}; each event must appear once.")
             seen.add(str(row["id"]))

@@ -395,3 +395,12 @@ class PrivacyPopulations(unittest.TestCase):
             names = privacy.forbidden(bundle, "system.yaml", set())
             for who in ("José García", "Li Wu", "Dana van Dijk", "Mara Lindqvist"):
                 self.assertTrue(privacy.scan(f"{who} approved it.", names), who)
+
+    def test_a_population_date_must_be_a_real_date(self):
+        from lib.bundle import BundleWriter
+        from lib.io import AuditError
+
+        with tempfile.TemporaryDirectory() as tmp:
+            w = BundleWriter(Path(tmp) / "b", "test")
+            with self.assertRaises(AuditError):
+                w.add_population("hires", [{"id": "H-1", "date": "2026-02-01"}, {"id": "H-2", "date": "2026-02-30"}], title="Hires")
