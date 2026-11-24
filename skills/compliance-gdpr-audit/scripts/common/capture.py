@@ -18,6 +18,7 @@ then inquiry (answer).
 from __future__ import annotations
 
 import json
+import os
 import re
 import shlex
 import subprocess
@@ -104,12 +105,173 @@ def entries(root: Path) -> list[tuple[Path, dict]]:
     return out
 
 
+# Read-only command forms capture may run: program -> the subcommand prefixes allowed. Anything
+# else is refused (fail closed): interpreters, scripts and unknown tools can write whatever their
+# arguments look like. To add a tool, add its read-only forms here, never a whole program.
+READ_ONLY = {
+    # Only commands that read committed history: anything that compares against the working tree (status,
+    # diff, blame) can run the repository's own clean/textconv filter programs.
+    "git": [["log"], ["show"], ["ls-files"], ["rev-parse"], ["describe"], ["shortlog"]],
+    "gh": [["api"], ["repo", "view"], ["pr", "list"], ["pr", "view"], ["run", "list"], ["run", "view"], ["secret", "list"],
+           ["ruleset", "list"], ["ruleset", "view"], ["api", "--paginate"]],
+    "supabase": [["projects", "list"], ["db", "dump"], ["inspect"], ["functions", "list"], ["secrets", "list"], ["branches", "list"]],
+    # npm only: yarn and pnpm can load executables and hooks from the repository (yarnPath, .pnpmfile.cjs).
+    "npm": [["audit"], ["ls"], ["outdated"]],
+    "vercel": [["env", "ls"], ["project", "ls"], ["ls"], ["inspect"]],
+    "netlify": [["status"], ["sites:list"]],
+    "firebase": [["projects:list"], ["apps:list"]],
+}
+
+
+# Options that make an allowed command run a helper program or write a file. Refused anywhere in the command.
+UNSAFE_OPTIONS = {
+    "git": ("--ext-diff", "--textconv", "--output", "--exec", "--upload-pack", "--receive-pack", "-c", "--config-env",
+            "--exec-path", "--git-dir", "--work-tree", "--open-files-in-pager", "-O"),
+    "supabase": ("-f", "--file", "-o", "--output"),
+    "npm": ("fix", "--fix"),
+}
+# Help and browser switches start viewers or browsers, some of them configurable by the repository.
+HELP = {"--help", "-h", "help", "--man", "--web", "-w", "--info"}
+# Git runs with helpers switched off, whatever the repository's own config says.
+GIT_NO_VERIFIER = "/nonexistent/compliance-skills-capture-disabled"
+GIT_SAFE = ["-c", "diff.external=", "-c", "core.pager=cat", "-c", "core.fsmonitor=false", "-c", "core.hooksPath=/dev/null",
+            "-c", "pager.log=false", "-c", "pager.diff=false", "-c", "pager.show=false",
+            # Signature verification runs a configurable program: never show or verify signatures.
+            "-c", "log.showSignature=false", "-c", f"gpg.program={GIT_NO_VERIFIER}", "-c", f"gpg.openpgp.program={GIT_NO_VERIFIER}",
+            "-c", f"gpg.ssh.program={GIT_NO_VERIFIER}", "-c", f"gpg.x509.program={GIT_NO_VERIFIER}", "--no-pager"]
+GIT_NO_HELPERS = {"log": ["--no-ext-diff", "--no-textconv", "--diff-merges=off"],
+                  "show": ["--no-ext-diff", "--no-textconv", "--diff-merges=off"]}
+# git options a capture may use, per subcommand. Anything else is refused (fail closed): many git options
+# run configurable programs (diff, textconv, merge drivers, signature verifiers, pagers, viewers).
+_HISTORY = {"--oneline", "--stat", "--shortstat", "--numstat", "--name-only", "--name-status", "--summary", "--no-merges",
+            "--first-parent", "--reverse", "--decorate", "--no-decorate", "--abbrev-commit", "--follow", "-s", "--no-patch"}
+_HISTORY_VALUED = ("--date=", "--since=", "--until=", "--after=", "--before=", "--max-count=", "--format=", "--pretty=",
+                   "--author=", "--grep=", "--abbrev=")
+GIT_OPTIONS = {
+    "log": (_HISTORY, _HISTORY_VALUED, {"-n"}),
+    "show": (_HISTORY, _HISTORY_VALUED, set()),
+    "shortlog": ({"-s", "-n", "-e", "--summary", "--numbered", "--email", "--no-merges"}, ("--since=", "--until=", "--format="), set()),
+    "ls-files": ({"-z", "--cached"}, (), set()),
+    "rev-parse": ({"--is-inside-work-tree", "--show-toplevel", "--abbrev-ref", "--short"}, ("--short=",), set()),
+    "describe": ({"--tags", "--always", "--long"}, ("--abbrev=",), set()),
+}
+
+
+def _check_git_options(sub: str, rest: list[str]) -> None:
+    flags, prefixes, valued = GIT_OPTIONS.get(sub, (set(), (), set()))
+    i = 0
+    while i < len(rest):
+        a = rest[i]
+        if a == "--":
+            return  # paths follow
+        if not a.startswith("-"):
+            i += 1
+            continue
+        if a in flags or a.startswith(prefixes) or re.fullmatch(r"-\d+", a):
+            i += 1
+        elif a in valued:
+            i += 2
+        else:
+            raise AuditError(f"git {sub} option {a} is not allowed in a capture")
+
+
+def harden(command: list[str]) -> list[str]:
+    """The command as capture runs it: git with external helpers, pagers and hooks disabled."""
+    if Path(command[0]).name != "git" or len(command) < 2:
+        return command
+    sub = command[1]
+    return [command[0], *GIT_SAFE, sub, *GIT_NO_HELPERS.get(sub, []), *command[2:]]
+
+
+def git_read(repo: Path, *args: str, timeout: int = 30) -> str | None:
+    """Run a read-only git command in `repo` the way capture does: git from PATH outside the repository,
+    helpers, pagers, hooks and signature verifiers disabled. stdout, or None when git fails."""
+    try:
+        git = resolve_program("git", repo)
+        env = {k: v for k, v in os.environ.items() if k not in ("GIT_EXTERNAL_DIFF", "GIT_PAGER", "PAGER", "GIT_CONFIG_PARAMETERS")}
+        out = subprocess.run(harden([git, *args]), cwd=str(repo), capture_output=True, text=True, encoding="utf-8",
+                             errors="surrogateescape", timeout=timeout, env={**env, "GIT_PAGER": "cat", "PAGER": "cat", "GIT_TERMINAL_PROMPT": "0"})
+    except (AuditError, OSError, subprocess.SubprocessError):
+        return None
+    return out.stdout if out.returncode == 0 else None
+
+
+# gh api: only these options, so no combination can change the method or add a body (-X, -f, -F,
+# --input, headers such as X-HTTP-Method-Override, or short-option clusters like -iXDELETE).
+GH_API_FLAGS = {"--paginate", "--slurp", "-i", "--include", "--silent", "--verbose"}
+GH_API_VALUED = {"--jq", "-q"}
+
+
+def _check_gh_api(rest: list[str]) -> None:
+    i = 0
+    while i < len(rest):
+        a = rest[i]
+        if not a.startswith("-"):
+            i += 1
+            continue
+        if a in GH_API_FLAGS:
+            i += 1
+        elif a in GH_API_VALUED:
+            i += 2
+        elif a.startswith("--jq="):
+            i += 1
+        else:
+            raise AuditError(f"gh api option {a} is not allowed in a capture; allowed: {', '.join(sorted(GH_API_FLAGS | GH_API_VALUED))}")
+
+
+def resolve_program(name: str, cwd: Path | None) -> str:
+    """The trusted executable for a bare program name: found only in absolute PATH entries outside the
+    assessed repository, never a path the caller supplies (`./git`) and never a relative PATH entry."""
+    import shutil
+
+    if os.sep in name or (os.altsep and os.altsep in name) or name in (".", ".."):
+        raise AuditError(f"give the program by name ({Path(name).name}), not by path; capture runs the installed one")
+    blocked = [Path(cwd).resolve()] if cwd else []  # the assessed repository; relative PATH entries are skipped below
+    safe = []
+    for entry in os.environ.get("PATH", "").split(os.pathsep):
+        if not entry or not os.path.isabs(entry):
+            continue
+        resolved = Path(entry).resolve()
+        if any(resolved == b or b in resolved.parents for b in blocked):
+            continue
+        safe.append(str(resolved))
+    found = shutil.which(name, path=os.pathsep.join(safe))
+    if not found:
+        raise AuditError(f"{name} is not installed (or only found inside the assessed repository)")
+    return found
+
+
 def check_read_only(command: list[str]) -> None:
+    if not command:
+        raise AuditError("no command given")
     text = " ".join(command)
     if SHELL_META.search(text):
         raise AuditError("capture runs one command without a shell; remove pipes, redirects and substitutions")
-    hit = MUTATING.search(" ".join([Path(command[0]).name, *command[1:]]))
-    if hit:
+    if os.sep in command[0] or (os.altsep and os.altsep in command[0]):
+        raise AuditError(f"give the program by name ({Path(command[0]).name}), not by path; capture runs the installed one")
+    program = command[0]
+    forms = READ_ONLY.get(program)
+    args = [a for a in command[1:] if not a.startswith("-")]
+    # The allowed form must be the literal start of the command: no options before the subcommand,
+    # because they can switch the program into another mode (`git --help log`).
+    if not forms or not any(command[1:1 + len(f)] == f for f in forms):
+        allowed = "; ".join(f"{p} {' '.join(f)}" for p, fs in READ_ONLY.items() for f in fs)
+        raise AuditError(f"`{' '.join(command[:3])}` is not a known read-only command; capture only runs: {allowed}. "
+                         "For anything else, run it yourself and capture the output as an export (`--via export --file`).")
+    if HELP & set(command[1:]):
+        raise AuditError("help and browser switches are not allowed in a capture")
+    if program == "gh" and args[:1] == ["api"]:
+        _check_gh_api(command[2:])
+    unsafe = [a for a in command[1:] for o in UNSAFE_OPTIONS.get(program, ()) if a == o or a.startswith(o + "=")
+              or (o.startswith("--") and a.startswith(o))]
+    if program == "git":
+        _check_git_options(command[1], command[2:])
+        # Signature options and %G format placeholders make git run the signature verifier.
+        unsafe += [a for a in command[1:] if a.startswith(("--show-signature", "--verify")) or "%G" in a]
+    if unsafe:
+        raise AuditError(f"{', '.join(sorted(set(unsafe)))} would run a helper program or write a file; not allowed in a capture")
+    hit = MUTATING.search(" ".join(command[1:]))
+    if hit and not (program == "gh" and args[:1] == ["api"]):
         raise AuditError(f"'{hit.group(0)}' could change the system; capture only runs read-only commands. "
                          "If this command only reads, capture its output as an export instead and say so in the title.")
 
@@ -117,7 +279,11 @@ def check_read_only(command: list[str]) -> None:
 def _run(command: list[str], cwd: Path | None = None) -> tuple[bytes, str, int]:
     check_read_only(command)
     try:
-        out = subprocess.run(command, capture_output=True, timeout=CLI_TIMEOUT, cwd=str(cwd) if cwd else None)
+        env = {k: v for k, v in os.environ.items() if k not in ("GIT_EXTERNAL_DIFF", "GIT_PAGER", "PAGER", "GIT_CONFIG_PARAMETERS")}
+        run_cmd = harden(command)
+        run_cmd[0] = resolve_program(command[0], cwd)
+        out = subprocess.run(run_cmd, capture_output=True, timeout=CLI_TIMEOUT, cwd=str(cwd) if cwd else None,
+                             env={**env, "GIT_PAGER": "cat", "PAGER": "cat", "GIT_TERMINAL_PROMPT": "0"})
     except FileNotFoundError as e:
         raise AuditError(f"{command[0]} is not installed or not on PATH") from e
     except subprocess.TimeoutExpired as e:
@@ -137,6 +303,15 @@ def _payload(payload: bytes | None, file: Path | None) -> bytes:
 
 
 # --- CLI -----------------------------------------------------------------------------
+
+
+def split_command(argv: list[str]) -> tuple[list[str], list[str]]:
+    """`capture <dir> --via cli ... -- <command>`: argparse (before Python 3.13) cannot resume a trailing
+    positional after options, so engines split the command off first and pass it back in."""
+    if "capture" in argv and "--" in argv and argv.index("capture") < argv.index("--"):
+        i = argv.index("--")
+        return argv[:i], argv[i + 1:]
+    return argv, []
 
 
 def add_parser(sub) -> None:

@@ -67,6 +67,21 @@ class CleanTemplate(unittest.TestCase):
         self.assertIn("SOC 2 Criteria, AI Audited", names)
 
 
+class ScopeDecisionRemoved(unittest.TestCase):
+    def test_decision_dropped_from_real_framework_leaves_the_copy(self):
+        r = Records()
+        r.edit("frameworks/soc-2.yaml", lambda f: f["controls"][0].update(applicable=False, justification="Out of scope."))
+        r.sync_ai_framework()
+        self.assertNotIn("AI_FRAMEWORK_DRIFT", r.codes("error"))
+        r.edit("frameworks/soc-2.yaml", lambda f: [f["controls"][0].pop(k) for k in ("applicable", "justification")])
+        self.assertIn("AI_FRAMEWORK_DRIFT", r.codes("error"), "a stale exclusion in the AI copy is drift")
+        r.sync_ai_framework()
+        self.assertNotIn("AI_FRAMEWORK_DRIFT", r.codes("error"))
+        ai = next(f for f in Path(r.dir / "records" / "frameworks").glob("*.yaml") if "ai-audited" in f.name)
+        cc61 = next(c for c in yaml.safe_load(ai.read_text())["controls"] if c["ref"] == "CC6.1")
+        self.assertNotIn("applicable", cc61)
+
+
 class PlantedDefects(unittest.TestCase):
     def setUp(self):
         self.r = Records()
@@ -155,3 +170,59 @@ class PlantedDefects(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class VantaEvidenceTarget(unittest.TestCase):
+    def test_upload_goes_to_the_measures_document(self):
+        from connectors.vanta import Platform  # noqa: E402
+        from core import PrepError  # noqa: E402
+
+        v = Platform.__new__(Platform)
+        one = {"id": "control-1", "name": "MFA", "document_ids": ["document-1"]}
+        self.assertEqual(v.evidence_target(one, None), "document-1")
+        self.assertEqual(v.evidence_target(one, "document-1"), "document-1")
+        with self.assertRaises(PrepError):
+            v.evidence_target(one, "document-9")
+        with self.assertRaises(PrepError):
+            v.evidence_target({**one, "document_ids": ["d1", "d2"]}, None)
+
+
+class VantaUploadCheck(unittest.TestCase):
+    def test_uploads_are_checked_on_the_document(self):
+        from connectors.vanta import Platform  # noqa: E402
+
+        v = Platform.__new__(Platform)
+        v.pages = lambda path, **_: iter([{"id": "u1"}, {"id": "u2"}]) if path == "/documents/document-1/uploads" else iter([])
+        self.assertEqual(v.listed_uploads("document-1"), {"u1", "u2"})
+
+    def test_upload_to_an_already_complete_document_passes(self):
+        import argparse
+        import prep  # noqa: E402
+
+        files = {"u0"}
+
+        class Fake:
+            def evidence_target(self, m, doc):
+                return "document-1"
+
+            def listed_uploads(self, target):
+                return set(files)
+
+            def upload_evidence(self, target, path):
+                files.add(f"u{len(files)}")
+                return f"u{len(files) - 1}"
+
+            def snapshot(self):
+                return snap
+
+        snap = {"measures": [{"id": "control-1", "name": "MFA", "evidence_count": 1, "document_ids": ["document-1"]}]}
+        with tempfile.TemporaryDirectory() as tmp:
+            f = Path(tmp) / "export.csv"
+            f.write_text("x")
+            original = prep.load
+            prep.load = lambda args: ({}, Fake(), snap)
+            try:
+                prep.cmd_evidence(argparse.Namespace(measure="control-1", files=[str(f), str(f)], document=None))
+            finally:
+                prep.load = original
+        self.assertEqual(len(files), 3)

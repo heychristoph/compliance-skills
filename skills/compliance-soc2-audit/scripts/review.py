@@ -12,7 +12,7 @@ import random
 from collections import defaultdict
 
 from core import AuditError, Engagement, dump_json, dump_yaml, load_json, load_yaml, parse_date, read_csv, schema_errors, sha256_file
-from planning import expected_plan
+from planning import _validated_plan, expected_plan
 import privacy
 
 DONE = ("no-exceptions", "exceptions", "design-deficiency", "not-tested")
@@ -25,6 +25,16 @@ def validate(eng: Engagement, final: bool = False) -> tuple[list[str], list[str]
     if not plan_rows:
         return ["No testplan.csv. Run `soc2.py plan` and `soc2.py sample` first."], []
     workpapers = eng.load_workpapers()
+    # The rules `sample` enforces (who may leave a unit out, frequencies, populations) hold at validation and sign-off too.
+    try:
+        _validated_plan(eng)
+    except AuditError as e:
+        errors += [line.strip() for line in str(e).splitlines()[1:]] or [str(e)]
+    current = {c["id"] for c in eng.controls}
+    for cid in sorted(set(plan_rows) - current):
+        errors.append(f"testplan.csv: {cid} is no longer in the bundle's control matrix; re-run `soc2.py plan` and `soc2.py sample`")
+    for cid in sorted(current - set(plan_rows)):
+        errors.append(f"testplan.csv: {cid} is in the control matrix but not planned; re-run `soc2.py plan`")
 
     for cid in plan_rows:
         if cid not in workpapers:
@@ -35,6 +45,9 @@ def validate(eng: Engagement, final: bool = False) -> tuple[list[str], list[str]
         warnings += w
 
     if final:
+        from common.io import bundle_integrity
+
+        errors += bundle_integrity(eng.bundle, eng.manifest)
         errors += _check_opinion(eng, workpapers)
         errors += _check_qa(eng, workpapers)
         system = eng.system
@@ -76,6 +89,13 @@ def _check_workpaper(eng: Engagement, cid: str, wp: dict, plan_row: dict | None)
         return [f"{where}: control {cid} is not in testplan.csv"], warnings
     if wp["plan"] != expected_plan(eng, plan_row):
         errors.append(f"{where}: plan does not match testplan.csv and the sampling seed; do not edit `plan`, re-run `soc2.py sample`")
+    control = next((c for c in eng.controls if c["id"] == cid), None)
+    if control is None:
+        errors.append(f"{where}: {cid} is no longer in the bundle's control matrix; re-run `soc2.py plan` and `soc2.py sample`, "
+                      "which drop it")
+    elif (wp.get("control") != control["description"] or wp.get("criteria") != control["criteria"]):
+        errors.append(f"{where}: the control's description or criteria changed since this workpaper was written; "
+                      f"re-run `soc2.py sample --force` and test it again")
 
     concl = wp["conclusion"]
     if concl == "pending":
@@ -93,6 +113,10 @@ def _check_workpaper(eng: Engagement, cid: str, wp: dict, plan_row: dict | None)
         errors.append(f"{where}: design.rationale is empty")
     if not design["evidence"]:
         errors.append(f"{where}: design.evidence must cite at least one artifact (policy, procedure or configuration)")
+    elif design["effective"] is True and concl in ("no-exceptions", "exceptions") and all(
+            eng.artifacts.get(e, {}).get("obtained") == "inquiry" for e in design["evidence"]):
+        errors.append(f"{where}: design.evidence cites only the organization's answers; an effective design needs the "
+                      "documented procedure, configuration or record that shows it")
     errors += cite(design["evidence"], "design.evidence")
     if design["effective"] is False and concl != "design-deficiency":
         errors.append(f"{where}: design.effective is false, so conclusion must be 'design-deficiency'")
@@ -104,10 +128,24 @@ def _check_workpaper(eng: Engagement, cid: str, wp: dict, plan_row: dict | None)
 
     if not wp["procedures"]:
         errors.append(f"{where}: procedures is empty; list what was done (inquiry, inspection, observation, reperformance)")
+    elif all(p["method"] == "inquiry" for p in wp["procedures"]):
+        errors.append(f"{where}: inquiry alone does not support a conclusion; add inspection, observation or reperformance")
+    cited = set(design["evidence"]) | {e for i in wp["items"] for e in i["evidence"]}
+    tiers = {eng.artifacts[i].get("obtained") for i in cited if i in eng.artifacts}
+    if concl == "no-exceptions" and tiers and tiers <= {"inquiry"}:
+        errors.append(f"{where}: the organization's answers alone cannot support 'no-exceptions'; cite corroborating evidence, "
+                      "or conclude 'not-tested' with the reason")
     if concl != "design-deficiency":
         if not wp["attributes"]:
             errors.append(f"{where}: attributes is empty; define what must be true for each sampled item")
         planned = wp["plan"]["sample"]
+        if not planned and concl == "no-exceptions":
+            what = "implementation as of the examination date" if eng.report_type == 1 else "operating effectiveness"
+            errors.append(f"{where}: the sample is empty (no events to examine), so {what} was not tested; "
+                          "conclude 'not-tested' with a scope_limitation saying why")
+        if wp["items"] and concl == "no-exceptions" and not any(i["results"].get(k) == "pass" for i in wp["items"] for k in wp["attributes"]):
+            errors.append(f"{where}: no sampled item passes an attribute (all n/a), so nothing was tested; "
+                          "conclude 'not-tested' with a scope_limitation saying why")
         tested = [i["id"] for i in wp["items"]]
         if sorted(tested) != sorted(planned):
             missing, extra = sorted(set(planned) - set(tested)), sorted(set(tested) - set(planned))
@@ -118,8 +156,15 @@ def _check_workpaper(eng: Engagement, cid: str, wp: dict, plan_row: dict | None)
             missing_attrs = sorted(set(wp["attributes"]) - set(item["results"]))
             if missing_attrs:
                 errors.append(f"{where}: item {item['id']} has no result for attributes {missing_attrs}")
+            undefined = sorted(set(item["results"]) - set(wp["attributes"]))
+            if undefined:
+                errors.append(f"{where}: item {item['id']} has results for attributes {undefined} that `attributes` does not define")
             if not item["evidence"] and any(v == "pass" for v in item["results"].values()):
                 errors.append(f"{where}: item {item['id']} passes an attribute but cites no evidence; a pass must be supported")
+            elif any(v == "pass" for v in item["results"].values()) and all(
+                    eng.artifacts.get(ev, {}).get("obtained") == "inquiry" for ev in item["evidence"]):
+                errors.append(f"{where}: item {item['id']} passes on the organization's answers alone; cite the record that shows "
+                              "the item complied, or do not pass it")
             errors += cite(item["evidence"], f"item {item['id']}")
             if any(v == "n/a" for v in item["results"].values()) and not item.get("note"):
                 errors.append(f"{where}: item {item['id']} marks an attribute n/a without a note explaining why")
@@ -138,6 +183,13 @@ def _check_workpaper(eng: Engagement, cid: str, wp: dict, plan_row: dict | None)
                 errors.append(f"{where}: population_check is required; test completeness of {wp['plan']['population']['source']} against a source record")
             else:
                 errors += cite(pc["evidence"], "population_check")
+                if not (pc.get("rationale") or "").strip():
+                    errors.append(f"{where}: population_check.rationale is empty; say what the population was compared with")
+                independent = [e for e in pc["evidence"] if e != wp["plan"]["population"]["source"]
+                               and eng.artifacts.get(e, {}).get("obtained") != "inquiry"]
+                if pc["complete"] is not False and not independent:
+                    errors.append(f"{where}: population_check cites no independent record; a complete population must be "
+                                  "compared with a record other than the population itself, not only the organization's answer")
                 if pc["complete"] is False and "population" not in excepted:
                     errors.append(f"{where}: population_check.complete is false, so add an exception with item 'population'")
 
@@ -174,7 +226,19 @@ def _check_opinion(eng: Engagement, workpapers: dict) -> list[str]:
         errors.append("opinion.json: a disclaimer needs scope_limitations")
     if kind != "unmodified" and not op["basis"].strip():
         errors.append("opinion.json: basis is required for a modified opinion")
-    uncovered = sorted(in_scope - {x for wp in workpapers.values() for x in wp["criteria"]} - {c["criterion"] for c in op["criteria_not_met"]})
+    untested = sorted(cid for cid, wp in workpapers.items() if wp.get("conclusion") == "not-tested")
+    if untested and not op["scope_limitations"]:
+        errors.append(f"opinion.json: controls {untested} were not tested; state why in scope_limitations, which also rules out "
+                      "an unmodified opinion")
+    not_met = {c["criterion"] for c in op["criteria_not_met"]}
+    tested = {x for wp in workpapers.values() if wp.get("conclusion") not in ("not-tested", "design-deficiency") for x in wp["criteria"]}
+    deficient_only = {x for wp in workpapers.values() if wp.get("conclusion") == "design-deficiency" for x in wp["criteria"]} - tested
+    missing = sorted(deficient_only - not_met)
+    if missing:
+        errors.append(f"opinion.json: criteria {missing} are addressed only by controls with a design deficiency; "
+                      "list them in criteria_not_met (references/evaluating.md)")
+    untested_only = {x for cid in untested for x in workpapers[cid]["criteria"]} - tested - deficient_only
+    uncovered = sorted(in_scope - tested - deficient_only - untested_only - not_met)
     if uncovered:
         errors.append(f"opinion.json: criteria {uncovered} have no tested control; list them in criteria_not_met or add controls")
     return errors
@@ -192,8 +256,8 @@ def _check_qa(eng: Engagement, workpapers: dict) -> list[str]:
         r = latest.get(cid)
         if not r:
             errors.append(f"{cid}: no QA review")
-        elif r["workpaper_sha256"] != sha256_file(eng.workpaper_path(cid)):
-            errors.append(f"{cid}: workpaper changed after QA review; QA must review it again")
+        elif r["workpaper_sha256"] != eng.qa_binding(cid):
+            errors.append(f"{cid}: workpaper or the evidence it cites changed after QA review; QA must review it again")
         elif r["verdict"] != "agree":
             errors.append(f"{cid}: QA disagrees ({'; '.join(r['issues'])[:200]}); resolve, then re-review")
     return errors
@@ -211,7 +275,7 @@ def record_qa(eng: Engagement, control_id: str, verdict: str, issues: list[str],
         raise AuditError(f"--checked cites artifacts not in the bundle: {unknown}")
     qa = load_json(eng.qa_path) if eng.qa_path.exists() else {"schema_version": 1, "reviews": []}
     qa["reviews"] = [r for r in qa["reviews"] if r["control_id"] != control_id]
-    qa["reviews"].append({"control_id": control_id, "workpaper_sha256": sha256_file(path), "verdict": verdict,
+    qa["reviews"].append({"control_id": control_id, "workpaper_sha256": eng.qa_binding(control_id), "verdict": verdict,
                           "issues": issues, "evidence_checked": checked, "reviewed_by": reviewer})
     qa["reviews"].sort(key=lambda r: r["control_id"])
     dump_json(qa, eng.qa_path)

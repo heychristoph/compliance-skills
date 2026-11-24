@@ -1,0 +1,14 @@
+# gitleaks settings for the secret scan (.github/workflows/secrets.yml), read from the base branch.
+[extend]
+useDefault = true
+
+# Deliberate fakes, not secrets: the app-assessment fixture plants a fake Supabase service-role
+# key for the scanner to find, and codescan.py holds the patterns it looks for.
+[allowlist]
+description = "Planted test keys and scanner patterns"
+paths = [
+  '''^evals/app/make_fixture\.py$''',
+  '''^evals/app/fixtures/''',
+  '''^shared/lib/codescan\.py$''',
+  '''^skills/[^/]+/scripts/common/codescan\.py$''',
+]

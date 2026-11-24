@@ -27,6 +27,11 @@ def report_system(eng: Engagement) -> dict | None:
 def fragments(eng: Engagement) -> list[tuple[str, str]]:
     """Every string that can reach the PDF, with a label for the error."""
     out = []
+    cfg = eng.config
+    mgmt = cfg.get("management") or {}
+    out += [("engagement service organization", cfg.get("service_organization") or ""), ("engagement system", cfg.get("system") or ""),
+            ("management title", mgmt.get("title") or ""), ("sign-off model", (cfg.get("signoff") or {}).get("model") or "")]
+    out += [(f"subservice organization {s.get('name')}", shared.flatten(s)) for s in cfg.get("subservice_organizations") or []]
     system = report_system(eng)
     if system:
         out.append(("system description", shared.flatten(system)))
@@ -71,6 +76,16 @@ def check(eng: Engagement) -> tuple[list[str], list[str]]:
         for hit in shared.leaks(text, forbidden):
             errors.append(f"{label}: {hit} The customer report does not identify that person. Keep it in the workpaper observations.")
     return errors, warnings
+
+
+def guard(eng: Engagement, data: dict) -> None:
+    """Last gate before the PDF: no string of the assembled report may identify a person or hold contact details."""
+    from core import AuditError
+
+    hits = shared.scan(data, _forbidden(eng))
+    if hits:
+        raise AuditError("The report would identify someone or show contact details:\n  " + "\n  ".join(hits[:20])
+                         + "\nFix the source (workpaper, opinion, system.yaml or engagement.yaml), then render again.")
 
 
 def redact(text: str, eng: Engagement) -> str:

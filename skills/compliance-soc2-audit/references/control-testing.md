@@ -56,4 +56,4 @@ An automated control (MFA): one item, `instance-1`. Inspect the identity provide
 
 A quarterly control with a missing quarter: the item `2026-Q2` has no evidence. Mark it `fail` with no evidence, add the exception "No evidence that the second-quarter access review was performed.", conclude `exceptions`.
 
-An event control where the population is empty: the sample is empty. Conclude `not-tested` with scope limitation "No terminations occurred during the period, so the operating effectiveness of the control could not be tested."
+An event control where the population is empty: the sample is empty. Conclude `not-tested` with scope limitation "No terminations occurred during the period, so the operating effectiveness of the control could not be tested." In a Type 1 the same holds for implementation: with no event on or before the examination date, conclude `not-tested` with that reason.

@@ -22,6 +22,7 @@ import os
 import urllib.parse
 
 from ..bundle import BundleWriter, slug
+from ..sampling import event_window
 from ..io import AuditError, parse_date
 
 PAGE_SIZE = 100  # API maximum per page.
@@ -61,6 +62,7 @@ def pull(writer: BundleWriter, options: dict, engagement) -> None:
         audit_id = audits[0]["id"]
     writer.source = f"{api} audit {audit_id}"
     start, end = engagement.period
+    in_scope = event_window(engagement)
 
     # Controls
     rows, by_name = [], {}
@@ -78,10 +80,10 @@ def pull(writer: BundleWriter, options: dict, engagement) -> None:
     for p in pages(f"/audits/{audit_id}/personnel/people"):
         s, e = parse_date(p.get("startDate")), parse_date(p.get("endDate"))
         row = {"name": p.get("name", ""), "email": p.get("email", ""), "job_title": p.get("jobTitle") or "", "status": str(p.get("employmentStatus") or "")}
-        if s and start <= s <= end:
-            hires.append({"id": f"H-{slug(p['id'])[-8:]}", "date": s.isoformat(), **row})
-        if e and start <= e <= end:
-            terms.append({"id": f"T-{slug(p['id'])[-8:]}", "date": e.isoformat(), **row})
+        if s and in_scope(s):
+            hires.append({"id": f"H-{slug(p['id'])}", "date": s.isoformat(), **row})
+        if e and in_scope(e):
+            terms.append({"id": f"T-{slug(p['id'])}", "date": e.isoformat(), **row})
     pop_hires = writer.add_population("hires", hires, title="New hires in period (Vanta people)", source_ref="vanta:personnel/people")
     pop_terms = writer.add_population("terminations", terms, title="Terminations in period (Vanta people)", source_ref="vanta:personnel/people")
 
@@ -90,8 +92,8 @@ def pull(writer: BundleWriter, options: dict, engagement) -> None:
         for ch in pages(f"/audits/{audit_id}/assets/code-changes"):
             code = ch.get("codeChange") or {}
             closed = parse_date(code.get("closedAt"))
-            if closed and start <= closed <= end:
-                changes.append({"id": f"CH-{slug(ch['id'])[-8:]}", "date": closed.isoformat(), "identifier": code.get("identifier", ""),
+            if closed and in_scope(closed):
+                changes.append({"id": f"CH-{slug(ch['id'])}", "date": closed.isoformat(), "identifier": code.get("identifier", ""),
                                 "repository": code.get("repository", ""), "service": code.get("service", "")})
     except AuditError as e:
         writer.warn(f"code changes: {e}")

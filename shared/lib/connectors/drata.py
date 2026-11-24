@@ -22,6 +22,7 @@ import os
 import urllib.parse
 
 from ..bundle import BundleWriter, slug
+from ..sampling import event_window
 from ..io import AuditError, parse_date
 
 TAGS = {"soc2": "SOC_2", "iso27001": "ISO270012022", "gdpr": "GDPR", "nis2": "NIS2"}
@@ -56,6 +57,7 @@ def pull(writer: BundleWriter, options: dict, engagement) -> None:
         ws = workspaces[0]["id"]
     writer.source = f"{api} workspace {ws}"
     start, end = engagement.period
+    in_scope = event_window(engagement)
 
     fw = writer.framework
     tag = options.get("framework_tag", TAGS.get(fw.name, fw.name.upper()))
@@ -81,9 +83,9 @@ def pull(writer: BundleWriter, options: dict, engagement) -> None:
         s, e = parse_date(p.get("startedAt")), parse_date(p.get("separatedAt"))
         user = p.get("user") or {}
         row = {"name": f"{user.get('firstName', '')} {user.get('lastName', '')}".strip(), "email": user.get("email", ""), "status": p.get("employmentStatus", "")}
-        if s and start <= s <= end:
+        if s and in_scope(s):
             hires.append({"id": f"H-{p['id']}", "date": s.isoformat(), **row})
-        if e and start <= e <= end:
+        if e and in_scope(e):
             terms.append({"id": f"T-{p['id']}", "date": e.isoformat(), **row})
     pop_hires = writer.add_population("hires", hires, title="New hires in period (Drata personnel)", source_ref="drata:personnel")
     pop_terms = writer.add_population("terminations", terms, title="Terminations in period (Drata personnel)", source_ref="drata:personnel")

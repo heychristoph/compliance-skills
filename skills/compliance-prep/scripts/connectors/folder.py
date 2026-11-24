@@ -204,6 +204,12 @@ class Platform(Connector):
         c["applicable"], c["justification"] = applicable, justification or ""
         path.write_text(yaml.safe_dump(f, sort_keys=False, allow_unicode=True))
 
+    def remove_applicability(self, statement_id: str) -> None:
+        path, f, c = self._control(statement_id)
+        c.pop("applicable", None)
+        c.pop("justification", None)
+        path.write_text(yaml.safe_dump(f, sort_keys=False, allow_unicode=True))
+
     def create_audit(self, framework_id: str, name: str, firm: str, state: str) -> str:
         audits = self.read("audits.yaml")
         audit_id = f"audit-{len(audits) + 1}"

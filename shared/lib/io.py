@@ -6,6 +6,8 @@ import csv
 import datetime as dt
 import hashlib
 import json
+import urllib.parse
+import urllib.request
 from pathlib import Path
 
 import yaml
@@ -64,6 +66,35 @@ def write_csv(path: Path, rows: list[dict], fieldnames: list[str]) -> None:
         writer.writerows(rows)
 
 
+def qa_binding(workpaper: Path, artifacts: dict) -> str:
+    """What a QA review is bound to: the workpaper's bytes and the content hash of every artifact it cites
+    (evidence lists anywhere in it, and the population it was sampled from). If a cited artifact keeps its ID
+    but its content changes on a new ingest, the review no longer holds."""
+    raw = workpaper.read_bytes()
+    cited: set[str] = set()
+
+    def walk(x):
+        if isinstance(x, dict):
+            for k, v in x.items():
+                if k == "evidence" and isinstance(v, list):
+                    cited.update(i for i in v if isinstance(i, str))
+                else:
+                    walk(v)
+        elif isinstance(x, list):
+            for v in x:
+                walk(v)
+
+    wp = json.loads(raw)
+    walk(wp)
+    pop = (wp.get("plan") or {}).get("population") or {}
+    if pop.get("source"):
+        cited.add(pop["source"])
+    h = hashlib.sha256(raw)
+    for i in sorted(cited):
+        h.update(f"\0{i}\0{(artifacts.get(i) or {}).get('sha256', '')}".encode())
+    return h.hexdigest()
+
+
 def sha256_file(path: Path) -> str:
     h = hashlib.sha256()
     with open(path, "rb") as f:
@@ -98,6 +129,21 @@ def schema_errors(data, schema_name: str, schemas_dir: Path = SCHEMAS) -> list[s
     return errors
 
 
+def bundle_integrity(bundle: Path, manifest: dict) -> list[str]:
+    """Every registered evidence file is present and unchanged since ingest.
+
+    Run at every gate a report passes (final validation, sign-off, render), not only at `check`:
+    a conclusion must never outlive the evidence it cites."""
+    errors = []
+    for a in manifest.get("artifacts") or []:
+        path = bundle / a["path"]
+        if not path.exists():
+            errors.append(f"{a['id']}: evidence file {a['path']} is missing from the bundle; restore it or re-ingest and re-test")
+        elif sha256_file(path) != a["sha256"]:
+            errors.append(f"{a['id']}: evidence file {a['path']} changed after ingest (hash mismatch); re-ingest and re-test the units citing it")
+    return errors
+
+
 def tool_version() -> str:
     """Version of the shared code and catalogs (shared/lib/VERSION), stamped on engagements."""
     path = LIB / "VERSION"
@@ -110,3 +156,41 @@ def safe_name(control_id: str) -> str:
 
 def truthy(value) -> bool:
     return str(value).strip().lower() in ("yes", "y", "true", "1", "applicable", "included")
+
+
+# --- HTTP ---------------------------------------------------------------------
+
+CREDENTIAL_HEADERS = {"authorization", "cookie", "apikey", "x-api-key", "proxy-authorization"}
+
+
+def same_origin(a: str, b: str) -> bool:
+    """Same scheme, host and effective port. A URL that merely starts with the base (`https://us.probo.com.evil`)
+    or uses another port is a different origin, and never gets the base's credentials."""
+    pa, pb = urllib.parse.urlsplit(a), urllib.parse.urlsplit(b)
+    default = {"https": 443, "http": 80}
+    try:
+        ports = (pa.port or default.get(pa.scheme.lower()), pb.port or default.get(pb.scheme.lower()))
+    except ValueError:
+        return False
+    return (pa.scheme.lower(), (pa.hostname or "").lower(), ports[0]) == (pb.scheme.lower(), (pb.hostname or "").lower(), ports[1]) \
+        and bool(pa.hostname)
+
+
+class _CredentialSafeRedirect(urllib.request.HTTPRedirectHandler):
+    """Follow redirects, but never carry credentials to another origin (urllib forwards them by default)."""
+
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        new = super().redirect_request(req, fp, code, msg, headers, newurl)
+        if new is not None and not same_origin(req.full_url, newurl):
+            for store in (new.headers, new.unredirected_hdrs):
+                for k in [k for k in store if k.lower() in CREDENTIAL_HEADERS]:
+                    del store[k]
+        return new
+
+
+OPENER = urllib.request.build_opener(_CredentialSafeRedirect())
+
+
+def urlopen(req, timeout: int):
+    """urllib.request.urlopen, with credentials dropped on cross-origin redirects."""
+    return OPENER.open(req, timeout=timeout)

@@ -295,6 +295,12 @@ class Engagement:
 
     # workpapers
 
+    def qa_binding(self, control_id: str) -> str:
+        """The hash a QA review of this workpaper is bound to (the workpaper and every artifact it cites)."""
+        from common.io import qa_binding
+
+        return qa_binding(self.workpaper_path(control_id), self.artifacts)
+
     def workpaper_path(self, control_id: str) -> Path:
         return self.workpapers / f"{safe_name(control_id)}.json"
 
@@ -314,6 +320,7 @@ class Engagement:
         files = [self.config_path.name]
         files += [p.relative_to(self.root).as_posix() for p in [self.manifest_path, self.description_path, self.testplan_path, self.findings_path, self.qa_path]]
         files += [p.relative_to(self.root).as_posix() for p in self.workpaper_files()]
+        files.append("review/stack.yaml")  # the sub-processor annex is built from it
         for rel in files:
             path = self.root / rel
             if not path.exists():

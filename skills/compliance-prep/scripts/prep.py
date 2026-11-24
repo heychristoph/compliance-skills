@@ -148,12 +148,24 @@ def cmd_evidence(args):
     config, connector, snap = load(args)
     m = find_measure(snap, args.measure)
     before = m["evidence_count"]
+    target = connector.evidence_target(m, args.document)
+    listed_before = connector.listed_uploads(target)
+    uploaded: list[str] = []
     for f in args.files:
         path = Path(f)
         if not path.is_file():
             raise PrepError(f"{path} is not a file.")
-        evidence_id = connector.upload_evidence(m["id"], path)
+        evidence_id = connector.upload_evidence(target, path)
         print(f"attached {path.name} to '{m['name']}' ({evidence_id})")
+        uploaded.append(evidence_id)
+    if listed_before is not None:  # the platform lists the files on the target itself: check those
+        listed = connector.listed_uploads(target) or set()
+        missing = [i for i in uploaded if i and i not in listed]
+        if missing or len(listed - listed_before) < len(uploaded):
+            raise PrepError(f"The platform lists {len(listed - listed_before)} new of {len(uploaded)} uploaded files. "
+                            "Check it before calling it done; do not upload again blindly.")
+        print(f"all {len(uploaded)} files are listed on the evidence request")
+        return
     after = find_measure(connector.snapshot(), m["id"])["evidence_count"]
     print(f"evidence files on '{m['name']}': {before} -> {after}")
     if after < before + len(args.files):
@@ -198,6 +210,7 @@ def main(argv=None) -> int:
     p = sub.add_parser("evidence")
     p.add_argument("measure", help="measure id or (part of its) name")
     p.add_argument("files", nargs="+")
+    p.add_argument("--document", help="Vanta: the evidence request (document id) of the measure to upload to")
     p.set_defaults(fn=cmd_evidence)
     p = sub.add_parser("snapshot")
     p.add_argument("-o", "--output")

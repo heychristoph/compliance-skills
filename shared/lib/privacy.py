@@ -12,6 +12,7 @@ from __future__ import annotations
 import csv
 import json
 import re
+import unicodedata
 from pathlib import Path
 
 from .io import load_yaml
@@ -30,7 +31,11 @@ INTRODUCED = re.compile(
 )
 BY_NAME = re.compile(r"\bby ([A-Z][a-z]{2,} [A-Z][a-z]{2,})\b")
 # JSON keys whose value is a person's name (platform exports, git history).
-PERSON_KEYS = {"full_name", "employee", "candidate", "requester", "author"}
+# Field names compared without case or separators ("Full Name", "fullName", "full_name" are one key).
+PERSON_KEYS = {"fullname", "employee", "employeename", "candidate", "requester", "author", "displayname", "personname", "contactname"}
+GIVEN_KEYS = {"firstname", "givenname", "forename", "first", "vorname"}
+FAMILY_KEYS = {"lastname", "familyname", "surname", "last", "nachname"}
+EMAIL_KEYS = {"email", "emailaddress", "mail", "workemail"}
 GENERIC_LOCAL = {"security", "support", "admin", "info", "noreply", "no-reply", "hello", "contact", "privacy", "legal", "sales", "billing", "postmaster"}
 TEXT_SUFFIXES = {".md", ".txt", ".csv", ".json", ".yaml", ".yml"}
 
@@ -79,7 +84,7 @@ def forbidden(bundle: Path, description_file: str, allowed: set[str]) -> set[str
     for path in bundle.rglob("*"):
         if not path.is_file() or path.suffix.lower() not in TEXT_SUFFIXES:
             continue
-        text = path.read_text(encoding="utf-8", errors="replace")
+        text = path.read_text(encoding="utf-8", errors="replace").removeprefix("\ufeff")  # Excel's UTF-8 BOM
         for match in EMAIL.finditer(text):
             local = match.group(0).split("@", 1)[0].lower()
             if re.fullmatch(r"[a-z]{9,}", local) and local not in GENERIC_LOCAL:
@@ -94,20 +99,48 @@ def forbidden(bundle: Path, description_file: str, allowed: set[str]) -> set[str
                 _walk(json.loads(text), found)
             except json.JSONDecodeError:
                 pass
+        if path.suffix.lower() in (".yaml", ".yml"):
+            try:
+                import yaml
+
+                _walk(yaml.safe_load(text), found)
+            except Exception:  # an unparsable file is still scanned for emails above
+                pass
         if path.parent.name == "populations" and path.stem in ("hires", "terminations"):
             for row in csv.DictReader(text.splitlines()):
-                _add_person(row.get("name") or "", found)
+                _add_named(row.get("name") or "", found)
+        if path.suffix.lower() == ".csv":
+            # Every CSV, populations included (an HR list with full_name, first_name/last_name, email, ...):
+            # the same person fields as JSON and YAML.
+            try:
+                _walk(list(csv.DictReader(text.splitlines())), found)
+            except csv.Error:
+                pass
     allowed = {n for n in allowed if n}
-    tokens = {word.casefold() for name in allowed for word in re.split(r"[^A-Za-z]+", name) if len(word) > 2}
+    exact = {fold(a) for a in allowed}
+    squashed = {re.sub(r"[^a-z]", "", fold(a)) for a in allowed}  # "maralindqvist" for an email local part
     kept = set()
     for name in found:
-        if any(name.casefold() == a.casefold() or name.casefold() in a.casefold() for a in allowed):
+        key = fold(name)
+        # Only the allowed identities themselves are exempt (the named representative, the organizations and
+        # vendors). Sharing a first name or a word with one of them exempts nobody.
+        if key in exact or (" " not in key and key in squashed):
             continue
-        first = name.split()[0].casefold() if name.split() else ""
-        if first and first in tokens:
+        # Part of an allowed organization's name ("Web Services" in "Amazon Web Services"), as whole words.
+        if " " in key and any(re.search(rf"\b{re.escape(key)}\b", a) for a in exact):
             continue
         kept.add(name)
     return kept
+
+
+def fold(text: str) -> str:
+    """Unicode-normalized, case-folded text, so 'Groß', 'GROSS' and 'gross' (or a decomposed 'é') compare equal."""
+    return unicodedata.normalize("NFKC", unicodedata.normalize("NFKC", text).casefold())
+
+
+def _named(name: str, text: str) -> bool:
+    """Whether a person's name appears in the text as whole words, after folding both sides."""
+    return re.search(rf"(?<!\w){re.escape(fold(name))}(?!\w)", fold(text)) is not None
 
 
 def redact(text: str, names: set[str]) -> str:
@@ -118,6 +151,8 @@ def redact(text: str, names: set[str]) -> str:
     cleaned = PHONE.sub("[redacted]", cleaned)
     for name in sorted(names, key=len, reverse=True):
         cleaned = re.sub(rf"\b{re.escape(name)}\b", "[redacted]", cleaned, flags=re.I)
+        if _named(name, cleaned):  # a spelling the plain match missed ('Gross' for 'Groß'): drop the whole entry
+            return "[redacted]"
     return cleaned
 
 
@@ -127,11 +162,24 @@ def leaks(text: str, names: set[str]) -> list[str]:
         found.append(f"contains the email address {match.group(0)}.")
     for match in PHONE.finditer(text):
         found.append(f"contains the phone number {match.group(0)}.")
-    low = text.casefold()
     for name in sorted(names):
-        if re.search(rf"\b{re.escape(name)}\b", low, flags=re.I):
+        if _named(name, text):
             found.append(f"names {name}.")
     return found
+
+
+def scan(obj, names: set[str], where: str = "report") -> list[str]:
+    """Every leak in a nested structure of strings (the assembled report data), with its location."""
+    hits = []
+    if isinstance(obj, str):
+        hits += [f"{where}: {h}" for h in leaks(obj, names)]
+    elif isinstance(obj, dict):
+        for k, v in obj.items():
+            hits += scan(v, names, f"{where}.{k}")
+    elif isinstance(obj, list):
+        for i, v in enumerate(obj):
+            hits += scan(v, names, f"{where}[{i}]")
+    return hits
 
 
 def flatten(value) -> str:
@@ -152,11 +200,25 @@ def _harvest_prose(text: str, found: set[str]) -> None:
         found.add(match.group(1))
 
 
+def _key(key) -> str:
+    return re.sub(r"[^a-z]", "", str(key).lower())
+
+
 def _walk(obj, found: set[str]) -> None:
     if isinstance(obj, dict):
+        fields = {_key(k): v for k, v in obj.items() if isinstance(v, str)}
+        # A people register (records connector, HR export): a `name` next to an email address is a person,
+        # whether or not they joined or left in the period.
+        if fields.get("name") and any("@" in fields.get(k, "") for k in EMAIL_KEYS):
+            _add_named(fields["name"], found)
+        # Given and family name in separate fields (first_name, last_name): the person is both together.
+        given = next((fields[k] for k in GIVEN_KEYS if fields.get(k)), "")
+        family = next((fields[k] for k in FAMILY_KEYS if fields.get(k)), "")
+        if given.strip() and family.strip():
+            _add_named(f"{given} {family}", found)
         for key, value in obj.items():
-            if key in PERSON_KEYS and isinstance(value, str):
-                _add_person(value, found)
+            if _key(key) in PERSON_KEYS and isinstance(value, str):
+                _add_named(value, found)
             else:
                 _walk(value, found)
     elif isinstance(obj, list):
@@ -165,6 +227,15 @@ def _walk(obj, found: set[str]) -> None:
 
 
 def _add_person(value: str, found: set[str]) -> None:
+    """A name from free text: only the clear "Given Family" shape, to avoid flagging ordinary words."""
     value = value.strip()
     if PERSON.match(value):
+        found.add(value)
+
+
+def _add_named(value: str, found: set[str]) -> None:
+    """A name from a field that holds a person (full_name, a people register): any spelling counts,
+    accents, particles and short names included (José García, Dana van Dijk, Li Wu)."""
+    value = " ".join(str(value).split())
+    if 2 <= len(value) <= 80 and "@" not in value and any(ch.isalpha() for ch in value) and not any(ch.isdigit() for ch in value):
         found.add(value)

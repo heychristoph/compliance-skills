@@ -117,6 +117,13 @@
           }
         }
       }
+    },
+    "id_history": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Every evidence ID any ingest of this engagement has used; never reassigned"
     }
   }
 }

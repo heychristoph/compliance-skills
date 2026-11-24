@@ -19,7 +19,7 @@ import urllib.error
 import urllib.request
 from urllib.parse import quote, urlparse
 
-from .io import AuditError, now_utc
+from .io import AuditError, now_utc, urlopen
 
 TIMEOUT = 20
 
@@ -33,20 +33,53 @@ def supabase_anon(url: str, key: str, tables: list[str], buckets: list[str]) -> 
     for t in names:
         status, rng = _request("HEAD", f"{base}/rest/v1/{quote(t)}?select=*",
                                {**headers, "Prefer": "count=exact", "Range-Unit": "items", "Range": "0-0"})
-        count = _count(rng)
-        out_tables.append({"table": t, "status": status, "visible_rows": count,
-                           "exposed_in_api": t in exposed,
-                           "result": "readable by anyone" if count else ("not readable anonymously" if status in (200, 206, 401, 403, 404) else "unknown")})
+        count = _count(rng) if status in (200, 206) else None
+        out_tables.append({"table": t, "status": status, "visible_rows": count, "exposed_in_api": t in exposed, "result": _outcome(status, count)})
     out_buckets = []
     for b in sorted(set(buckets)):
         status, body = _request("POST", f"{base}/storage/v1/object/list/{quote(b)}", {**headers, "Content-Type": "application/json"},
                                 json.dumps({"prefix": "", "limit": 1, "offset": 0}).encode(), want_body=True)
         listable = status == 200 and isinstance(body, list) and len(body) > 0
-        out_buckets.append({"bucket": b, "status": status, "listable_by_anyone": listable})
+        out_buckets.append({"bucket": b, "status": status, "listable_by_anyone": listable, "result": _bucket_outcome(status, body)})
     return {"probe": "supabase-anon", "project": urlparse(base).netloc, "at": now_utc(), "api_schema_status": openapi_status,
             "tables": out_tables, "buckets": out_buckets,
             "summary": {"tables_readable_by_anyone": [t["table"] for t in out_tables if t["visible_rows"]],
-                        "buckets_listable_by_anyone": [b["bucket"] for b in out_buckets if b["listable_by_anyone"]]}}
+                        "tables_no_rows_visible": [t["table"] for t in out_tables if t["visible_rows"] == 0],
+                        "tables_denied": [t["table"] for t in out_tables if t["status"] in (401, 403)],
+                        "tables_unknown": [t["table"] for t in out_tables if t["result"] == "unknown"],
+                        "buckets_listable_by_anyone": [b["bucket"] for b in out_buckets if b["listable_by_anyone"]],
+                        "buckets_no_objects_visible": [b["bucket"] for b in out_buckets if b["result"].startswith("no objects visible")],
+                        "buckets_denied": [b["bucket"] for b in out_buckets if b["result"].startswith("denied")],
+                        "buckets_unknown": [b["bucket"] for b in out_buckets if b["result"] == "unknown"]},
+            "note": ("'no rows visible' and 'no objects visible' prove only that an anonymous caller saw nothing at the time: "
+                     "an empty table or bucket without protection looks the same. Only 'denied' shows the API refused anonymous "
+                     "access; 'unknown' proves nothing.")}
+
+
+def _bucket_outcome(status: int, body) -> str:
+    if status in (401, 403):
+        return "denied to anonymous callers"
+    if status == 200 and isinstance(body, list) and body:
+        return "listable by anyone (objects visible)"
+    if status == 200 and isinstance(body, list):
+        return "no objects visible anonymously (an empty bucket looks the same)"
+    if status in (400, 404) and isinstance(body, dict) and "not found" in json.dumps(body).lower():
+        return "bucket not found"
+    return "unknown"  # an error, an unparsable answer or an unexpected status proves nothing
+
+
+def _outcome(status: int, count: int | None) -> str:
+    if status in (401, 403):
+        return "denied to anonymous callers"
+    if status == 404:
+        return "not exposed through the API"
+    if status in (200, 206) and count is None:
+        return "unknown"  # answered, but without a row count
+    if status in (200, 206) and count > 0:
+        return f"readable by anyone ({count} rows)"
+    if status in (200, 206):
+        return "no rows visible anonymously (an empty table looks the same)"
+    return "unknown"
 
 
 def _openapi_tables(base: str, headers: dict) -> tuple[list[str], int]:
@@ -55,15 +88,16 @@ def _openapi_tables(base: str, headers: dict) -> tuple[list[str], int]:
     return sorted(p.strip("/") for p in paths if p.strip("/") and not p.startswith("/rpc/")), status
 
 
-def _count(content_range: str | None) -> int:
+def _count(content_range: str | None) -> int | None:
+    """Rows in a Content-Range header ("0-0/42", "*/0"); None when the header is missing or has no total."""
     m = re.search(r"/(\d+)$", content_range or "")
-    return int(m.group(1)) if m else 0
+    return int(m.group(1)) if m else None
 
 
 def _request(method: str, url: str, headers: dict, data: bytes | None = None, want_body: bool = False):
     req = urllib.request.Request(url, data=data, method=method, headers=headers)
     try:
-        with urllib.request.urlopen(req, timeout=TIMEOUT) as resp:
+        with urlopen(req, timeout=TIMEOUT) as resp:
             if want_body:
                 raw = resp.read()
                 try:

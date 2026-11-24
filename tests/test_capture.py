@@ -42,7 +42,10 @@ class Capture(unittest.TestCase):
     def test_every_route_gets_its_tier(self):
         self.assertEqual(self.capture("--via", "mcp", "--server", "supabase", "--tool", "get_advisors", "--args", '{"type": "security"}',
                                       "--title", "Security advisors", "--requirement", "Art.32(1)(b)", stdin='[{"name": "rls_disabled"}]').returncode, 0)
-        self.assertEqual(self.capture("--via", "cli", "--title", "Python version", "--", sys.executable, "--version").returncode, 0)
+        self.assertNotEqual(self.capture("--via", "cli", "--title", "Python version", "--", "git", "--version").returncode, 0,
+                         "git --version is not a listed read-only form")
+        r = self.capture("--via", "cli", "--title", "Inside a git checkout", "--cwd", str(ROOT), "--", "git", "rev-parse", "--is-inside-work-tree")
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
         shot = self.tmp / "shot.png"
         shot.write_bytes(b"png")
         self.assertEqual(self.capture("--via", "export", "--file", shot, "--title", "Auth settings").returncode, 0)
@@ -51,13 +54,21 @@ class Capture(unittest.TestCase):
         r = run(sys.executable, GDPR, "ingest", self.eng)
         self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
         tiers = {a["title"]: a["obtained"] for a in self.manifest()["artifacts"] if a["kind"] == "evidence"}
-        self.assertEqual(tiers, {"Security advisors": "captured", "Python version": "captured", "Auth settings": "client", "Restore test": "inquiry"})
+        self.assertEqual(tiers, {"Security advisors": "captured", "Inside a git checkout": "captured", "Auth settings": "client", "Restore test": "inquiry"})
         mcp = next(a for a in self.manifest()["artifacts"] if a["title"] == "Security advisors")
         self.assertEqual(mcp["capture"]["tool"], "get_advisors")
         self.assertEqual(mcp["requirements"], ["Art.32(1)(b)"])
 
     def test_mutating_commands_are_refused(self):
-        for cmd in (["git", "push"], ["supabase", "db", "reset"], ["rm", "-rf", "x"], ["echo", "hi;", "ls"]):
+        for cmd in (["git", "push"], ["supabase", "db", "reset"], ["rm", "-rf", "x"], ["echo", "hi;", "ls"],
+                    [sys.executable, "-c", "open('proof.txt', 'a').close()"], ["node", "-e", "1"], ["gh", "api", "-X", "DELETE", "repos/a/b"],
+                    ["gh", "api", "repos/a/b/issues", "-f", "title=x"], ["git", "diff", "--ext-diff"], ["git", "log", "--output=x"],
+                    ["git", "-c", "diff.external=x", "log"], ["supabase", "db", "dump", "-f", "out.sql"], ["npm", "audit", "fix"],
+                    ["gh", "api", "repos/a/b/subscription", "-XDELETE"], ["git", "blame", "data.txt"], ["git", "diff"], ["git", "status"],
+                    ["git", "--help", "log"], ["git", "-p", "log"], ["yarn", "audit"], ["pnpm", "audit"], ["gh", "repo", "view", "--web"],
+                    ["gh", "api", "repos/a/b", "-iXDELETE"], ["gh", "api", "repos/a/b", "-if", "title=x"], ["gh", "api", "repos/a/b", "-H", "X-HTTP-Method-Override: DELETE"],
+                    ["./git", "log"], ["/tmp/git", "log"], ["git", "log", "--show-signature"], ["git", "log", "--format=%G?"],
+                    ["git", "show", "--remerge-diff"], ["git", "log", "--diff-merges=remerge"], ["git", "log", "-p"], ["git", "log", "--cc"]):
             r = self.capture("--via", "cli", "--title", "x", "--", *cmd)
             self.assertNotEqual(r.returncode, 0, cmd)
         self.assertFalse((self.eng / "intake").exists() and list((self.eng / "intake").glob("*.meta.json")))
@@ -103,6 +114,25 @@ class Iteration(unittest.TestCase):
         after = self.ids()
         self.assertEqual({k: after[k] for k in before}, before, "unchanged evidence keeps its ID")
         self.assertNotIn(after["Third"], before.values(), "new evidence gets a new ID")
+
+    def test_retired_ids_are_never_reused(self):
+        """EV-0001 disappears in one re-ingest; a later re-ingest must not give that ID to other evidence."""
+        import sys as _s
+        _s.path.insert(0, str(ROOT / "shared"))
+        from lib.bundle import BundleWriter
+
+        d = self.tmp / "b"
+        first = BundleWriter(d / "1", "t")
+        first.add_bytes("a", "a.txt", title="A", source_ref="a")
+        m1 = first.finish()
+        second = BundleWriter(d / "2", "t")
+        second.keep_ids_from(m1)
+        second.add_bytes("b", "b.txt", title="B", source_ref="b")   # A is gone, B is new
+        m2 = second.finish()
+        third = BundleWriter(d / "3", "t")
+        third.keep_ids_from(m2)
+        new = third.add_bytes("c", "c.txt", title="C", source_ref="c")
+        self.assertNotIn(new, {"EV-0001", "EV-0002"}, "an ID used by an earlier ingest was reassigned")
 
     def test_rollforward_carries_settings_and_requires_followup(self):
         nxt = self.tmp / "next"
@@ -189,3 +219,34 @@ class SeveralSources(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class HostileGitConfig(unittest.TestCase):
+    def test_git_reads_never_run_the_repository_verifier(self):
+        sys.path.insert(0, str(ROOT / "shared"))
+        from lib.capture import git_read  # noqa: E402
+        from lib.connectors.records import _Git  # noqa: E402
+
+        with tempfile.TemporaryDirectory() as tmp:
+            repo, marker = Path(tmp) / "repo", Path(tmp) / "ran"
+            repo.mkdir()
+            verifier = repo / "verify.sh"
+            verifier.write_text(f"#!/bin/sh\ntouch {marker}\n")
+            verifier.chmod(0o755)
+            git = lambda *a, **k: subprocess.run(["git", "-C", str(repo), *a], check=True, capture_output=True, text=True, **k)
+            git("init", "-q")
+            for k, v in (("log.showSignature", "true"), ("gpg.program", str(verifier)), ("core.pager", f"touch {marker}"),
+                         ("user.name", "T"), ("user.email", "t@example.invalid")):
+                git("config", k, v)
+            (repo / "a.txt").write_text("a")
+            git("add", "a.txt")
+            git("commit", "-qm", "first")
+            # Re-write HEAD as a commit carrying a (fake) signature, so showing it would invoke the verifier.
+            raw = git("cat-file", "commit", "HEAD").stdout
+            head, _, msg = raw.partition("\n\n")
+            sig = "gpgsig -----BEGIN PGP SIGNATURE-----\n \n -----END PGP SIGNATURE-----"
+            sha = git("hash-object", "-t", "commit", "-w", "--stdin", input=f"{head}\n{sig}\n\n{msg}").stdout.strip()
+            git("update-ref", "HEAD", sha)
+            self.assertIn("first", git_read(repo, "log", "--format=%s"))
+            self.assertTrue(_Git(repo).log())
+            self.assertFalse(marker.exists(), "a repository-configured helper ran")

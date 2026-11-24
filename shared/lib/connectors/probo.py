@@ -37,7 +37,8 @@ import urllib.parse
 import urllib.request
 
 from ..bundle import BundleWriter, slug
-from ..io import AuditError, parse_date
+from ..sampling import event_window
+from ..io import AuditError, parse_date, same_origin, urlopen
 
 PAGE_SIZE = 100  # Largest page the API accepts; keeps request count low for big orgs.
 
@@ -100,7 +101,7 @@ class ProboMCP:
             headers["Mcp-Session-Id"] = self.session_id
         req = urllib.request.Request(self.url, data=json.dumps(body).encode(), headers=headers, method="POST")
         try:
-            with urllib.request.urlopen(req, timeout=60) as resp:
+            with urlopen(req, timeout=60) as resp:
                 self.session_id = resp.headers.get("Mcp-Session-Id") or self.session_id
                 raw = resp.read().decode()
                 ctype = resp.headers.get("Content-Type", "")
@@ -132,7 +133,7 @@ def evidence_file(base: str, token: str, evidence_id: str) -> dict | None:
         method="POST",
     )
     try:
-        with urllib.request.urlopen(req, timeout=60) as resp:
+        with urlopen(req, timeout=60) as resp:
             payload = json.loads(resp.read().decode())
     except (urllib.error.URLError, json.JSONDecodeError, TimeoutError):
         return None
@@ -184,6 +185,7 @@ def pull(writer: BundleWriter, options: dict, engagement) -> None:
     writer.source = f"{base} organization {org}"
     api = ProboMCP(base, token)
     start, end = engagement.period
+    in_scope = event_window(engagement)
     failed_tools = set()
 
     def fetch(tool: str, key: str, **arguments) -> tuple[list, str | None]:
@@ -289,10 +291,10 @@ def pull(writer: BundleWriter, options: dict, engagement) -> None:
         contract = p.get("contract") or {}
         s, e = parse_date(contract.get("start")), parse_date(contract.get("end"))
         base_row = {"name": p.get("full_name", ""), "email": p.get("email_address", ""), "position": p.get("position") or "", "state": p.get("state", "")}
-        if s and start <= s <= end:
-            hires.append({"id": f"H-{slug(p['id'])[-8:]}", "date": s.isoformat(), **base_row})
-        if e and start <= e <= end:
-            terms.append({"id": f"T-{slug(p['id'])[-8:]}", "date": e.isoformat(), **base_row})
+        if s and in_scope(s):
+            hires.append({"id": f"H-{slug(p['id'])}", "date": s.isoformat(), **base_row})
+        if e and in_scope(e):
+            terms.append({"id": f"T-{slug(p['id'])}", "date": e.isoformat(), **base_row})
     pop_hires = writer.add_population("hires", hires, title="New hires in period (Probo people, contract start)", source_ref="probo:listUsers")
     pop_terms = writer.add_population("terminations", terms, title="Terminations in period (Probo people, contract end)", source_ref="probo:listUsers")
     writer.add_bytes(json.dumps(people, indent=2), "people.json", title="Probo people export (all)", source_ref="probo:listUsers")
@@ -300,7 +302,7 @@ def pull(writer: BundleWriter, options: dict, engagement) -> None:
     vendors = list(api.pages("listThirdParties", "thirdParties", organization_id=org))
     writer.add_population(
         "vendors",
-        [{"id": f"V-{slug(v['id'])[-8:]}", "date": (v.get("created_at") or "")[:10], "name": v["name"], "category": v.get("category") or ""} for v in vendors if v.get("created_at")],
+        [{"id": f"V-{slug(v['id'])}", "date": (v.get("created_at") or "")[:10], "name": v["name"], "category": v.get("category") or ""} for v in vendors if v.get("created_at")],
         title="Third parties (Probo)",
         source_ref="probo:listThirdParties",
     )
@@ -309,7 +311,7 @@ def pull(writer: BundleWriter, options: dict, engagement) -> None:
     pop_ncs = None
     if findings_error is None:
         export(findings, "findings-register", "Findings register (Probo): nonconformities, observations and exceptions", hint("findings"), "probo:listFindings")
-        ncs = [{"id": f.get("reference_id") or f"NC-{slug(f['id'])[-8:]}", "date": (f.get("identified_on") or f.get("created_at") or "")[:10],
+        ncs = [{"id": f.get("reference_id") or f"NC-{slug(f['id'])}", "date": (f.get("identified_on") or f.get("created_at") or "")[:10],
                 "kind": f.get("kind"), "status": f.get("status"), "source": f.get("source") or ""}
                for f in findings if f.get("kind") in ("MAJOR_NONCONFORMITY", "MINOR_NONCONFORMITY") and (f.get("identified_on") or f.get("created_at"))]
         pop_ncs = writer.add_population("nonconformities", ncs, title="Nonconformities identified (Probo findings)", source_ref="probo:listFindings")
@@ -353,7 +355,7 @@ def pull(writer: BundleWriter, options: dict, engagement) -> None:
                 file_url = urllib.parse.urljoin(base + "/", file_url)
             if not filename:
                 filename = os.path.basename(urllib.parse.urlparse(file_url).path) or f"{slug(title)}.bin"
-            headers = {"Authorization": f"Bearer {token}"} if file_url.startswith(base) else None
+            headers = {"Authorization": f"Bearer {token}"} if same_origin(file_url, base) else None
             writer.add_download(file_url, filename, title=title, headers=headers, controls=[cid], date=date, obtained="direct", source_ref=ref)
 
     # Task comments are part of the control record. A screenshot without the comment is incomplete.
@@ -458,7 +460,7 @@ def pull(writer: BundleWriter, options: dict, engagement) -> None:
                 if not urllib.parse.urlparse(url).scheme:
                     url = urllib.parse.urljoin(base + "/", url)
                 name = audit.get("report_filename") or f"{slug(audit.get('name') or audit['id'])}-report.pdf"
-                headers = {"Authorization": f"Bearer {token}"} if url.startswith(base) else None
+                headers = {"Authorization": f"Bearer {token}"} if same_origin(url, base) else None
                 writer.add_download(url, name, title=f"Audit report: {audit.get('name') or audit['id']}", headers=headers, requirements=hint("audits"),
                                     date=((audit.get("audit_dates") or {}).get("end") or "")[:10] or None, obtained="direct", source_ref=f"probo:audit/{audit['id']}")
 

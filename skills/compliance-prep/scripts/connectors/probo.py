@@ -31,6 +31,7 @@ import urllib.error
 import urllib.request
 from pathlib import Path
 
+from common.io import urlopen
 from core import PrepError, http_json, http_multipart, secret
 
 from .base import Connector, empty_snapshot
@@ -135,7 +136,7 @@ class Platform(Connector):
             headers["Mcp-Session-Id"] = self._mcp_session
         req = urllib.request.Request(f"{self.base}/api/mcp/v1", data=json.dumps(body).encode(), headers=headers, method="POST")
         try:
-            with urllib.request.urlopen(req, timeout=120) as resp:
+            with urlopen(req, timeout=120) as resp:
                 self._mcp_session = resp.headers.get("Mcp-Session-Id") or self._mcp_session or ""
                 raw, ctype = resp.read().decode(), resp.headers.get("Content-Type", "")
         except urllib.error.HTTPError as e:

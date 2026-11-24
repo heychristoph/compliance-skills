@@ -7,6 +7,8 @@ into workpaper skeletons with a seeded, repeatable sample for every control.
 
 from __future__ import annotations
 
+from collections import Counter
+
 from common import sampling
 from common.sampling import FREQUENCIES, NATURES
 from core import AuditError, Engagement, dump_json, load_json, read_csv, write_csv
@@ -40,17 +42,28 @@ def sample(eng: Engagement, force: bool = False) -> list[str]:
     rows = _validated_plan(eng)
     controls = {c["id"]: c for c in eng.controls}
     log = []
+    for path in eng.workpaper_files():
+        cid = load_json(path).get("control_id", path.stem)
+        if cid in controls:
+            continue
+        if load_json(path).get("conclusion") not in (None, "pending") and not force:
+            raise AuditError(f"{cid}: no longer in the control matrix but its workpaper has results. "
+                             "Re-run with --force to discard them.")
+        path.unlink()
+        log.append(f"{cid}: no longer in the control matrix; workpaper removed")
     for row in rows:
         c = controls[row["control_id"]]
         planned = expected_plan(eng, row)
         path = eng.workpaper_path(c["id"])
         if path.exists():
             wp = load_json(path)
-            if wp.get("plan") == planned:
+            same_control = wp.get("control") == c["description"] and wp.get("criteria") == c["criteria"]
+            if wp.get("plan") == planned and same_control:
                 continue
+            what = "the test plan" if same_control else "the control's description or criteria"
             if wp.get("conclusion") not in (None, "pending") and not force:
-                raise AuditError(f"{c['id']}: the test plan changed but the workpaper already has results. "
-                                 "Re-run with --force to discard them, or restore the previous testplan.csv row.")
+                raise AuditError(f"{c['id']}: {what} changed but the workpaper already has results. "
+                                 "Re-run with --force to discard them and test again, or restore the previous version.")
         dump_json(skeleton(c, planned), path)
         log.append(f"{c['id']}: {planned['sample_size']} of {planned['population']['size'] if planned['population'] else 1} ({row['frequency']}, {row['nature']})")
     return log
@@ -63,8 +76,13 @@ def expected_plan(eng: Engagement, row: dict) -> dict:
     population = None
     if row["population"]:
         population = (row["population"], [r["id"] for r in eng.population(row["population"]) if sampling.in_period(r.get("date"), start, end, point)])
-    return sampling.plan(seed=f"{eng.config['sampling_seed']}:{row['control_id']}", freq=row["frequency"], nature=row["nature"],
+    planned = sampling.plan(seed=f"{eng.config['sampling_seed']}:{row['control_id']}", freq=row["frequency"], nature=row["nature"],
                          start=start, end=end, point_in_time=point, population=population, sample_size=row["sample_size"])
+    if planned["population"] and planned["population"]["source"] in eng.artifacts:
+        planned["population"]["sha256"] = eng.artifacts[planned["population"]["source"]]["sha256"]
+    # Results hold for this audit type and these dates only: moving the as-of date or the period means testing again.
+    planned["window"] = {"audit_type": f"type{eng.report_type}", "start": start.isoformat(), "end": end.isoformat()}
+    return planned
 
 def skeleton(control: dict, planned: dict) -> dict:
     return {
@@ -105,6 +123,16 @@ def _validated_plan(eng: Engagement) -> list[dict]:
             errors.append(f"{where}: event-driven controls need a population artifact ID (PO-...)")
         if r.get("population") and r["population"] not in eng.artifacts:
             errors.append(f"{where}: population {r['population']} is not in the bundle")
+        elif r.get("population"):
+            pop_rows = eng.population(r["population"])
+            ids = [x["id"] for x in pop_rows]
+            dupes = sorted(i for i, n in Counter(ids).items() if n > 1)
+            if dupes:
+                errors.append(f"{where}: population {r['population']} repeats item IDs {dupes[:5]}; each event must appear once")
+            bad = [x["id"] for x in pop_rows if sampling.parse_date(x.get("date")) is None]
+            if bad:
+                errors.append(f"{where}: population {r['population']} has items without a valid date {bad[:5]}; correct them "
+                              "(YYYY-MM-DD) so no event drops out of the sample unseen")
         if r.get("sample_size"):
             if not r["sample_size"].isdigit():
                 errors.append(f"{where}: sample_size must be a whole number or empty")

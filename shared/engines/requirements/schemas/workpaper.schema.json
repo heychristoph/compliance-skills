@@ -56,6 +56,15 @@
         "frequency": {
           "type": "string"
         },
+        "window": {
+          "type": "object",
+          "description": "Audit type and date boundaries the plan was drawn for; a changed as-of date or period makes it stale",
+          "properties": {
+            "audit_type": {"type": "string"},
+            "start": {"type": "string"},
+            "end": {"type": "string"}
+          }
+        },
         "nature": {
           "type": "string"
         },
@@ -76,6 +85,10 @@
             },
             "size": {
               "type": "integer"
+            },
+            "sha256": {
+              "type": "string",
+              "description": "Content hash of the population artifact the sample was drawn from"
             }
           }
         },

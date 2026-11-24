@@ -15,7 +15,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent / "skills" / "compliance-soc2-audit" / "scripts"))
 
-from core import Engagement, dump_json, sha256_file  # noqa: E402
+from core import Engagement, dump_json  # noqa: E402
 
 
 def main(root: str, truth_path: str) -> None:
@@ -59,7 +59,7 @@ def main(root: str, truth_path: str) -> None:
         if pop and pop["source"].startswith("PO-") and eng.report_type == 2:
             gap = next((d for d in mine if d["kind"] == "population"), None)
             roster = [a["id"] for a in evidence if "roster" in a.get("source_ref", "")]
-            wp["population_check"] = {"complete": gap is None, "rationale": "Compared the population to the system of record.", "evidence": roster or [pop["source"]]}
+            wp["population_check"] = {"complete": gap is None, "rationale": "Compared the population to the system of record.", "evidence": roster or [a["id"] for a in evidence if a["id"] != pop["source"] and a.get("obtained") != "inquiry"][:1] or [pop["source"]]}
             if gap:
                 wp["exceptions"].append({"item": "population", "description": gap["note"] + ".", "evidence": roster, "management_response": None})
         wp["conclusion"] = "exceptions" if wp["exceptions"] else "no-exceptions"
@@ -69,7 +69,7 @@ def main(root: str, truth_path: str) -> None:
         wp["prepared_by"] = "oracle (evals/oracle.py)"
         dump_json(wp, eng.workpaper_path(cid))
 
-    reviews = [{"control_id": cid, "workpaper_sha256": sha256_file(eng.workpaper_path(cid)), "verdict": "agree", "issues": [],
+    reviews = [{"control_id": cid, "workpaper_sha256": eng.qa_binding(cid), "verdict": "agree", "issues": [],
                 "evidence_checked": [], "reviewed_by": "oracle"} for cid in eng.load_workpapers()]
     dump_json({"schema_version": 1, "reviews": reviews}, eng.qa_path)
 

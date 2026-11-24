@@ -46,6 +46,7 @@ options:
 | Action | How |
 |---|---|
 | AI framework, controls, links, scope decisions, audit record | MCP: `addFramework`, `addControl`, `linkControl`, `unlinkControl`, `addApplicabilityStatement`, `updateApplicabilityStatement`, `addAudit` |
+| Removing a scope decision the real framework dropped | Manual: delete the applicability statement on the AI framework's control in Probo. Until then `check` reports `AI_FRAMEWORK_DRIFT`. |
 | Evidence file | console multipart `uploadInternalControlEvidence` (`uploadMeasureEvidence` before v0.304) (`prep.py evidence`) |
 | Everything else (measures, risks, vendors, documents, tasks) | the Probo MCP tools directly, as the workflow needs |
 

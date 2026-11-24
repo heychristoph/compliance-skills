@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import csv
 import json
 import shutil
 import subprocess
@@ -77,6 +78,173 @@ class RecordsConnector(unittest.TestCase):
         self.assertTrue((eng / "bundle" / "system.yaml").exists())
         r = run(sys.executable, SOC2, "check", eng)
         self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+
+    def test_type1_keeps_events_up_to_the_as_of_date(self):
+        eng = self.tmp / "type1"
+        r = run(sys.executable, SOC2, "init", eng, "--org", "Example Inc.", "--system", "Example", "--type", "1",
+                "--as-of", "2026-06-30", "--connector", "records", "--option", f"path={self.records}")
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        r = run(sys.executable, SOC2, "ingest", eng)
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertIn("H-joiner", (eng / "bundle" / "populations" / "hires.csv").read_text())
+        self.assertIn("T-leaver", (eng / "bundle" / "populations" / "terminations.csv").read_text())
+
+    def test_failed_replacement_keeps_the_previous_bundle(self):
+        eng = self.tmp / "replace"
+        run(sys.executable, SOC2, "init", eng, "--org", "Example Inc.", "--system", "Example", "--type", "1",
+            "--as-of", "2026-06-30", "--connector", "records", "--option", f"path={self.records}")
+        self.assertEqual(run(sys.executable, SOC2, "ingest", eng).returncode, 0)
+        before = (eng / "bundle" / "manifest.json").read_text()
+        shutil.rmtree(self.records / "frameworks")  # the source now fails
+        r = run(sys.executable, SOC2, "ingest", eng, "--replace")
+        self.assertNotEqual(r.returncode, 0)
+        self.assertEqual((eng / "bundle" / "manifest.json").read_text(), before, "the previous bundle stays in place")
+        self.assertFalse((eng / "bundle.staging").exists())
+        self.assertFalse(list(eng.glob("bundle.replaced-*")), "nothing is archived when the replacement fails")
+
+    def test_changed_control_invalidates_its_tested_workpaper(self):
+        eng = self.tmp / "changed"
+        run(sys.executable, SOC2, "init", eng, "--org", "Example Inc.", "--system", "Example", "--type", "1",
+            "--as-of", "2026-06-30", "--connector", "records", "--option", f"path={self.records}")
+        run(sys.executable, SOC2, "ingest", eng)
+        run(sys.executable, SOC2, "plan", eng)
+        plan = eng / "testplan.csv"
+        with plan.open() as f:
+            rows = list(csv.DictReader(f))
+        for row in rows:
+            row.update(frequency="annual", nature="manual")
+        with plan.open("w", newline="") as f:
+            w = csv.DictWriter(f, fieldnames=list(rows[0]))
+            w.writeheader()
+            w.writerows(rows)
+        r = run(sys.executable, SOC2, "sample", eng)
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        wp_path = eng / "workpapers" / "mfa.json"
+        wp = json.loads(wp_path.read_text())
+        wp["conclusion"] = "no-exceptions"
+        wp_path.write_text(json.dumps(wp))
+        measures = (self.records / "measures.yaml").read_text().replace("Every account with admin rights", "Every employee account", 1)
+        (self.records / "measures.yaml").write_text(measures)
+        r = run(sys.executable, SOC2, "ingest", eng, "--replace")
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        r = run(sys.executable, SOC2, "sample", eng)
+        self.assertNotEqual(r.returncode, 0, "a tested workpaper must not survive a changed control silently")
+        self.assertIn("description or criteria changed", r.stdout + r.stderr)
+        r = run(sys.executable, SOC2, "validate", eng)
+        self.assertIn("description or criteria changed", r.stdout + r.stderr)
+
+    def test_removed_control_cannot_keep_its_workpaper(self):
+        eng = self.tmp / "removed"
+        run(sys.executable, SOC2, "init", eng, "--org", "Example Inc.", "--system", "Example", "--type", "1",
+            "--as-of", "2026-06-30", "--connector", "records", "--option", f"path={self.records}")
+        run(sys.executable, SOC2, "ingest", eng)
+        run(sys.executable, SOC2, "plan", eng)
+        plan = eng / "testplan.csv"
+        with plan.open() as f:
+            rows = list(csv.DictReader(f))
+        for row in rows:
+            row.update(frequency="annual", nature="manual")
+        with plan.open("w", newline="") as f:
+            w = csv.DictWriter(f, fieldnames=list(rows[0]))
+            w.writeheader()
+            w.writerows(rows)
+        self.assertEqual(run(sys.executable, SOC2, "sample", eng).returncode, 0)
+        wp_path = eng / "workpapers" / "scanning.json"
+        wp = json.loads(wp_path.read_text())
+        wp["conclusion"] = "no-exceptions"
+        wp_path.write_text(json.dumps(wp))
+        measures = yaml.safe_load((self.records / "measures.yaml").read_text())
+        (self.records / "measures.yaml").write_text(yaml.safe_dump([m for m in measures if m["id"] != "scanning"], sort_keys=False))
+        self.assertEqual(run(sys.executable, SOC2, "ingest", eng, "--replace").returncode, 0)
+        out = run(sys.executable, SOC2, "validate", eng)
+        self.assertIn("scanning is no longer in the bundle's control matrix", out.stdout + out.stderr)
+        run(sys.executable, SOC2, "plan", eng)
+        r = run(sys.executable, SOC2, "sample", eng)
+        self.assertNotEqual(r.returncode, 0, "results of a removed control are not discarded silently")
+        r = run(sys.executable, SOC2, "sample", eng, "--force")
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertFalse(wp_path.exists())
+
+    def test_changed_population_records_need_a_new_test(self):
+        eng = self.tmp / "population"
+        run(sys.executable, SOC2, "init", eng, "--org", "Example Inc.", "--system", "Example", "--type", "2",
+            "--start", "2026-01-01", "--end", "2026-06-30", "--connector", "records", "--option", f"path={self.records}")
+        run(sys.executable, SOC2, "ingest", eng)
+        run(sys.executable, SOC2, "plan", eng)
+        plan = eng / "testplan.csv"
+        with plan.open() as f:
+            rows = list(csv.DictReader(f))
+        for row in rows:
+            row.update(frequency="annual", nature="manual")
+        rows[0].update(frequency="event", population="PO-hires")
+        with plan.open("w", newline="") as f:
+            w = csv.DictWriter(f, fieldnames=list(rows[0]))
+            w.writeheader()
+            w.writerows(rows)
+        self.assertEqual(run(sys.executable, SOC2, "sample", eng).returncode, 0)
+        wp_path = eng / "workpapers" / f"{rows[0]['control_id']}.json"
+        wp = json.loads(wp_path.read_text())
+        wp["conclusion"] = "no-exceptions"
+        wp_path.write_text(json.dumps(wp))
+        people = (self.records / "people.yaml").read_text().replace("Sam Joiner", "Someone Else")
+        (self.records / "people.yaml").write_text(people)
+        self.assertEqual(run(sys.executable, SOC2, "ingest", eng, "--replace").returncode, 0)
+        out = run(sys.executable, SOC2, "validate", eng)
+        self.assertIn("plan does not match", out.stdout + out.stderr)
+        self.assertNotEqual(run(sys.executable, SOC2, "sample", eng).returncode, 0, "same IDs, different records: retest")
+
+    def test_moved_as_of_date_needs_a_new_test(self):
+        eng = self.tmp / "moved"
+        run(sys.executable, SOC2, "init", eng, "--org", "Example Inc.", "--system", "Example", "--type", "1",
+            "--as-of", "2026-01-31", "--connector", "records", "--option", f"path={self.records}")
+        run(sys.executable, SOC2, "ingest", eng)
+        run(sys.executable, SOC2, "plan", eng)
+        plan = eng / "testplan.csv"
+        with plan.open() as f:
+            rows = list(csv.DictReader(f))
+        for row in rows:
+            row.update(frequency="continuous", nature="automated")
+        with plan.open("w", newline="") as f:
+            w = csv.DictWriter(f, fieldnames=list(rows[0]))
+            w.writeheader()
+            w.writerows(rows)
+        self.assertEqual(run(sys.executable, SOC2, "sample", eng).returncode, 0)
+        wp_path = eng / "workpapers" / f"{rows[0]['control_id']}.json"
+        wp = json.loads(wp_path.read_text())
+        wp["conclusion"] = "no-exceptions"
+        wp_path.write_text(json.dumps(wp))
+        cfg = eng / "engagement.yaml"
+        cfg.write_text(cfg.read_text().replace("2026-01-31", "2026-11-24"))
+        out = run(sys.executable, SOC2, "validate", eng)
+        self.assertIn("plan does not match", out.stdout + out.stderr)
+        self.assertNotEqual(run(sys.executable, SOC2, "sample", eng).returncode, 0, "results for another date are not kept")
+
+    def test_full_audit_cannot_drop_a_unit_after_sampling(self):
+        eng = self.tmp / "dropped"
+        run(sys.executable, ISO, "init", eng, "--org", "Example Inc.", "--scope", "The Example platform.", "--type", "stage2",
+            "--start", "2026-01-01", "--end", "2026-06-30", "--connector", "records", "--option", f"path={self.records}")
+        run(sys.executable, ISO, "ingest", eng)
+        run(sys.executable, ISO, "plan", eng)
+        plan = eng / "testplan.csv"
+        with plan.open() as f:
+            rows = list(csv.DictReader(f))
+        for row in rows:
+            row.update(frequency="annual", nature="manual")
+        with plan.open("w", newline="") as f:
+            w = csv.DictWriter(f, fieldnames=list(rows[0]))
+            w.writeheader()
+            w.writerows(rows)
+        self.assertEqual(run(sys.executable, ISO, "sample", eng).returncode, 0)
+        rows[0]["include"] = "no"
+        with plan.open("w", newline="") as f:
+            w = csv.DictWriter(f, fieldnames=list(rows[0]))
+            w.writeheader()
+            w.writerows(rows)
+        for wp in (eng / "workpapers").glob("*.json"):
+            if json.loads(wp.read_text())["control_id"] == rows[0]["control_id"]:
+                wp.unlink()
+        out = run(sys.executable, ISO, "validate", eng)
+        self.assertIn("only a partial audit", out.stdout + out.stderr)
 
     def test_iso_engagement_prefers_ai_audited_framework_and_builds_soa(self):
         eng = self.tmp / "iso"

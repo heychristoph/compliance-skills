@@ -11,6 +11,8 @@ import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 
+from common.io import urlopen  # credentials are never forwarded on a cross-origin redirect
+
 CONFIG_NAME = "prep.yaml"
 
 
@@ -65,7 +67,7 @@ def http_json(url: str, *, method: str = "GET", headers: dict | None = None, bod
     if data is not None:
         req.add_header("Content-Type", "application/json")
     try:
-        with urllib.request.urlopen(req, timeout=timeout) as resp:
+        with urlopen(req, timeout=timeout) as resp:
             raw = resp.read()
             return json.loads(raw) if raw else None
     except urllib.error.HTTPError as e:
@@ -100,7 +102,7 @@ def http_multipart(url: str, fields: dict[str, str], files: dict[str, Path], hea
     body, ctype = multipart(fields, files)
     req = urllib.request.Request(url, data=body, method="POST", headers={**headers, "Content-Type": ctype})
     try:
-        with urllib.request.urlopen(req, timeout=timeout) as resp:
+        with urlopen(req, timeout=timeout) as resp:
             raw = resp.read()
             return json.loads(raw) if raw else None
     except urllib.error.HTTPError as e:
